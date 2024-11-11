@@ -1,13 +1,47 @@
 <?php
-// functions.php
-add_action('wp_enqueue_scripts', 'my_theme_enqueue_styles');
-function my_theme_enqueue_styles() {
-    wp_enqueue_style('parent-style', get_template_directory_uri() . '/style.css');
-    wp_enqueue_style('child-style',
-        get_stylesheet_directory_uri() . '/style.css',
-        array('parent-style')
-    );
+// Load additional PHP files
+$includes = [
+    '/inc/custom-post-types.php',
+    '/inc/shortcodes.php', 
+    '/inc/woocommerce.php',
+    '/inc/helpers.php'
+];
+
+foreach ($includes as $file) {
+    if (file_exists(get_stylesheet_directory() . $file)) {
+        require_once get_stylesheet_directory() . $file;
+    }
 }
+
+// Proper way to enqueue parent theme styles and scripts
+function flatsome_child_enqueue_styles() {
+    // Get parent theme version for cache busting
+    $parent_theme = wp_get_theme('flatsome');
+    $theme_version = $parent_theme->get('Version');
+
+    // Enqueue Flatsome styles and scripts
+    wp_enqueue_style('flatsome-main', get_template_directory_uri() . '/style.css', array(), $theme_version);
+    wp_enqueue_style('flatsome-child', get_stylesheet_directory_uri() . '/style.css', array('flatsome-main'));
+    
+    // Custom CSS
+    wp_enqueue_style('custom-styles',
+        get_stylesheet_directory_uri() . '/assets/css/custom.css',
+        array('flatsome-child'),
+        filemtime(get_stylesheet_directory() . '/assets/css/custom.css')
+    );
+    
+    // Custom JS
+    wp_enqueue_script('custom-scripts',
+        get_stylesheet_directory_uri() . '/assets/js/custom.js',
+        array('jquery'),
+        filemtime(get_stylesheet_directory() . '/assets/js/custom.js'),
+        true
+    );
+
+    // Optional: Enqueue Flatsome scripts you want to modify
+    wp_enqueue_script('flatsome-js', get_template_directory_uri() . '/assets/js/flatsome.js', array('jquery'), $theme_version);
+}
+add_action('wp_enqueue_scripts', 'flatsome_child_enqueue_styles');
 
 // Category Page Configuration
 add_filter('flatsome_custom_css', 'custom_category_css');
@@ -74,46 +108,10 @@ function render_category_products_grid($atts) {
     return ob_get_clean();
 }
 
-// Other Stuff Suggested
-
-function flatsome_child_enqueue_styles() {
-    // Parent theme CSS
-    wp_enqueue_style('flatsome-main', get_template_directory_uri() . '/style.css');
-    
-    // Child theme CSS
-    wp_enqueue_style('flatsome-child', 
-        get_stylesheet_directory_uri() . '/style.css',
-        array('flatsome-main'),
-        wp_get_theme()->get('Version')
-    );
-    
-    // Custom CSS
-    wp_enqueue_style('custom-styles',
-        get_stylesheet_directory_uri() . '/assets/css/custom.css',
-        array('flatsome-child'),
-        filemtime(get_stylesheet_directory() . '/assets/css/custom.css')
-    );
-    
-    // Custom JS
-    wp_enqueue_script('custom-scripts',
-        get_stylesheet_directory_uri() . '/assets/js/custom.js',
-        array('jquery'),
-        filemtime(get_stylesheet_directory() . '/assets/js/custom.js'),
-        true
-    );
-}
-add_action('wp_enqueue_scripts', 'flatsome_child_enqueue_styles');
-
-// Load additional PHP files
-$includes = [
-    '/inc/custom-post-types.php',
-    '/inc/shortcodes.php',
-    '/inc/woocommerce.php',
-    '/inc/helpers.php'
-];
-
-foreach ($includes as $file) {
-    if (file_exists(get_stylesheet_directory() . $file)) {
-        require_once get_stylesheet_directory() . $file;
-    }
+// Add theme support for Flatsome features
+add_action('after_setup_theme', 'custom_flatsome_options');
+function custom_flatsome_options() {
+    add_theme_support('flatsome-advanced');
+    add_theme_support('flatsome-sticky-header');
+    add_theme_support('wc-product-gallery-zoom');
 }
