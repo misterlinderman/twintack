@@ -1,7 +1,7 @@
 <?php
 get_header();
 
-if (have_rows('header_configuration')) {
+if (function_exists('have_rows') && have_rows('header_configuration')) {
     get_template_part('template-parts/header/header', 'flexible');
 }
 

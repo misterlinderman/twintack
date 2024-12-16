@@ -1,0 +1,33 @@
+html {
+    font-size: $font-size-base;
+    line-height: $line-height-base;
+}
+
+body {
+    font-family: $font-family-base;
+    color: $color-text;
+    background-color: $color-background;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: $container-max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-unit;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+a {
+    color: $color-primary;
+    text-decoration: none;
+    transition: $transition-base;
+
+    &:hover {
+        color: $color-primary-dark;
+    }
+}
