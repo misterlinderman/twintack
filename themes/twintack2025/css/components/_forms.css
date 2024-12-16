@@ -1,0 +1,14 @@
+.product-custom-form {
+    background: #f8f9fa;
+    padding: calc(var(--spacing-unit) * 2);
+    border-radius: var(--border-radius);
+    margin: calc(var(--spacing-unit) * 2) 0;
+}
+
+.gform_wrapper {
+    margin: 0 !important;
+}
+
+.gfield {
+    margin-bottom: var(--spacing-unit) !important;
+}

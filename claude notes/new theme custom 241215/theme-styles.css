@@ -1,0 +1,113 @@
+/* Base styles */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --baseball-primary: #002D72;
+    --baseball-secondary: #E31837;
+    --fishing-primary: #00529B;
+    --fishing-secondary: #00A3E0;
+    --spacing-unit: 1rem;
+    --border-radius: 4px;
+}
+
+/* Category Layout */
+.category-hero {
+    padding: calc(var(--spacing-unit) * 4) 0;
+    background-size: cover;
+    background-position: center;
+    color: white;
+}
+
+.category-hero.baseball {
+    background-color: var(--baseball-primary);
+}
+
+.category-hero.fishing {
+    background-color: var(--fishing-primary);
+}
+
+.category-navigation {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.category-menu-items {
+    display: flex;
+    gap: var(--spacing-unit);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Product Grid */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: calc(var(--spacing-unit) * 2);
+    padding: calc(var(--spacing-unit) * 2) 0;
+}
+
+.product-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Variant Display */
+.product-variant {
+    position: relative;
+    overflow: hidden;
+}
+
+.product-variant img {
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease;
+}
+
+.product-variant:hover img {
+    transform: scale(1.05);
+}
+
+/* Role-based Price Display */
+.role-price {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.role-price-label {
+    font-size: 0.875em;
+    color: var(--secondary-color);
+}
+
+/* Custom Form Styling */
+.product-custom-form {
+    background: #f8f9fa;
+    padding: calc(var(--spacing-unit) * 2);
+    border-radius: var(--border-radius);
+    margin: calc(var(--spacing-unit) * 2) 0;
+}
+
+.gform_wrapper {
+    margin: 0 !important;
+}
+
+.gfield {
+    margin-bottom: var(--spacing-unit) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .category-menu-items {
+        flex-direction: column;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}

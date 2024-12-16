@@ -1,0 +1,27 @@
+.category-hero {
+    padding: calc(var(--spacing-unit) * 4) 0;
+    background-size: cover;
+    background-position: center;
+    color: white;
+}
+
+.category-hero.baseball {
+    background-color: var(--baseball-primary);
+}
+
+.category-hero.fishing {
+    background-color: var(--fishing-primary);
+}
+
+.category-navigation {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.category-menu-items {
+    display: flex;
+    gap: var(--spacing-unit);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
