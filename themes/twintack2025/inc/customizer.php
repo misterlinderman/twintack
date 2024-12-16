@@ -31,6 +31,22 @@ function twintack2025_customize_register( $wp_customize ) {
 			)
 		);
 	}
+
+	$wp_customize->add_section('header_marquee', array(
+		'title' => __('Header Marquee', 'twintack2025'),
+		'priority' => 30,
+	));
+
+	$wp_customize->add_setting('header_marquee_slides', array(
+		'default' => array(),
+		'sanitize_callback' => 'twintack2025_sanitize_marquee_slides'
+	));
+
+	$wp_customize->add_control(new TwinTack_Marquee_Control($wp_customize, 'header_marquee_slides', array(
+		'section' => 'header_marquee',
+		'label' => __('Marquee Slides', 'twintack2025'),
+		'description' => __('Add slides for the header marquee rotation', 'twintack2025')
+	)));
 }
 add_action( 'customize_register', 'twintack2025_customize_register' );
 

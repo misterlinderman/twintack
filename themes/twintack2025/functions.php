@@ -170,6 +170,14 @@ function twintack2025_scripts() {
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
 	}
+
+	wp_enqueue_script(
+		'twintack2025-header',
+		get_template_directory_uri() . '/js/header.js',
+		array(),
+		filemtime(get_template_directory() . '/js/header.js'),
+		true
+	);
 }
 add_action( 'wp_enqueue_scripts', 'twintack2025_scripts' );
 
