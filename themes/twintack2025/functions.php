@@ -188,6 +188,7 @@ require_once get_template_directory() . '/inc/template-functions.php';
 require_once get_template_directory() . '/inc/customizer.php';
 require_once get_template_directory() . '/inc/class-twintack-role-pricing.php';
 require_once get_template_directory() . '/inc/class-twintack-custom-products.php';
+require_once get_template_directory() . '/inc/class-twintack-product-forms.php';
 
 /**
  * Load Jetpack compatibility file.
@@ -195,3 +196,29 @@ require_once get_template_directory() . '/inc/class-twintack-custom-products.php
 if ( defined( 'JETPACK__VERSION' ) ) {
 	require_once get_template_directory() . '/inc/jetpack.php';
 }
+
+// Add category template support
+function twintack_category_template($template) {
+    if (is_product_category()) {
+        $category = get_queried_object();
+        $template_name = '';
+        
+        if (strpos(strtolower($category->name), 'baseball') !== false) {
+            $template_name = 'category-baseball.php';
+        } elseif (strpos(strtolower($category->name), 'fishing') !== false) {
+            $template_name = 'category-fishing.php';
+        }
+        
+        if ($template_name) {
+            $new_template = locate_template("templates/$template_name");
+            if (!empty($new_template)) {
+                return $new_template;
+            }
+        }
+    }
+    return $template;
+}
+add_filter('template_include', 'twintack_category_template');
+
+// Add to your existing functions.php
+require get_template_directory() . '/inc/class-category-customizer.php';

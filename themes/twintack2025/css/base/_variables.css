@@ -4,3 +4,19 @@ header#masthead {
 ;
 }
 
+header#masthead .header-content .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    flex-direction: row;
+}
+
+ul#primary-menu {
+    display: flex
+;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    flex-direction: row;
+}
