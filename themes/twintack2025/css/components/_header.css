@@ -63,4 +63,50 @@
     flex: 1 1 auto;
     display: flex;
     justify-content: flex-end;
+}
+
+.flexible-header {
+    position: relative;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.flexible-header.image-header {
+    padding: 60px 0;
+}
+
+.flexible-header.video-header {
+    padding: 0;
+}
+
+.video-header .video-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.video-header .container {
+    position: relative;
+    z-index: 2;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.header-content {
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+@media (max-width: 768px) {
+    .flexible-header {
+        min-height: 300px;
+    }
 } 
