@@ -31,3 +31,42 @@ a {
         color: $color-primary-dark;
     }
 }
+
+/* Base styles */
+:root {
+    --bs-primary: #{$primary};
+    --bs-secondary: #{$secondary};
+    --bs-baseball-primary: #002D72;
+    --bs-baseball-secondary: #E31837;
+    --bs-fishing-primary: #00529B;
+    --bs-fishing-secondary: #00A3E0;
+}
+
+// Use Bootstrap's spacing utilities
+.category-hero {
+    padding: var(--bs-spacing-5) 0;
+    background-size: cover;
+    background-position: center;
+    color: var(--bs-white);
+}
+
+// Use Bootstrap's grid system
+.product-grid {
+    @include make-row();
+    
+    > * {
+        @include make-col-ready();
+        
+        @include media-breakpoint-up(sm) {
+            @include make-col(6);
+        }
+        
+        @include media-breakpoint-up(md) {
+            @include make-col(4);
+        }
+        
+        @include media-breakpoint-up(lg) {
+            @include make-col(3);
+        }
+    }
+}

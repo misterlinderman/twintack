@@ -1,8 +1,12 @@
 <?php
 get_header();
 
-if (function_exists('have_rows') && have_rows('header_configuration')) {
+// Check if ACF is active and we have header fields
+if (function_exists('get_field') && have_rows('header_configuration')) {
     get_template_part('template-parts/header/header', 'flexible');
+} else {
+    // Fallback header if needed
+    get_template_part('template-parts/header/header', 'default');
 }
 
 // Get other homepage sections

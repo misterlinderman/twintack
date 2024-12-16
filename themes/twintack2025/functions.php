@@ -115,6 +115,10 @@ function twintack2025_setup() {
 
 	// Add custom image sizes
 	add_image_size('product-variant-thumb', 300, 300, true);
+
+	// Add after register_nav_menus:
+	require_once get_template_directory() . '/inc/header/class-header-blocks.php';
+	require_once get_template_directory() . '/inc/header/class-header-configuration.php';
 }
 add_action( 'after_setup_theme', 'twintack2025_setup' );
 
@@ -154,6 +158,23 @@ add_action( 'widgets_init', 'twintack2025_widgets_init' );
  * Enqueue scripts and styles.
  */
 function twintack2025_scripts() {
+	// Enqueue Bootstrap CSS
+	wp_enqueue_style(
+		'bootstrap',
+		'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
+		array(),
+		'5.3.2'
+	);
+
+	// Enqueue Bootstrap JS and Popper.js (required for Bootstrap)
+	wp_enqueue_script(
+		'bootstrap-bundle',
+		'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
+		array('jquery'),
+		'5.3.2',
+		true
+	);
+
 	// Enqueue the main CSS file
 	wp_enqueue_style(
 		'twintack2025-main',
@@ -162,7 +183,7 @@ function twintack2025_scripts() {
 		filemtime(get_template_directory() . '/css/main.css')
 	);
 	
-	wp_enqueue_style( 'twintack2025-style', get_stylesheet_uri(), array(), _S_VERSION );
+	wp_enqueue_style( 'twintack2025-style', get_stylesheet_uri(), array('bootstrap'), _S_VERSION );
 	wp_style_add_data( 'twintack2025-style', 'rtl', 'replace' );
 
 	wp_enqueue_script( 'twintack2025-navigation', get_template_directory_uri() . '/js/navigation.js', array(), _S_VERSION, true );

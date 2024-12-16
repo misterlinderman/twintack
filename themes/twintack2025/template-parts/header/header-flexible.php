@@ -9,16 +9,20 @@ if (have_rows('header_configuration')):
             ?>
             
             <div class="category-hero flexible-header image-header" <?php if($background_image): ?>style="background-image: url('<?php echo esc_url($background_image['url']); ?>');"<?php endif; ?>>
-                <div class="container">
-                    <?php if($title): ?>
-                        <h1><?php echo esc_html($title); ?></h1>
-                    <?php endif; ?>
-                    
-                    <?php if($content): ?>
-                        <div class="header-content">
-                            <?php echo wp_kses_post($content); ?>
+                <div class="container-fluid container-xxl">
+                    <div class="row">
+                        <div class="col-12 col-md-10 col-lg-8 mx-auto">
+                            <?php if($title): ?>
+                                <h1 class="display-4"><?php echo esc_html($title); ?></h1>
+                            <?php endif; ?>
+                            
+                            <?php if($content): ?>
+                                <div class="header-content">
+                                    <?php echo wp_kses_post($content); ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
+                    </div>
                 </div>
             </div>
 

@@ -1,25 +1,23 @@
 <?php
 /**
  * Header Blocks Class
- * Handles custom header block registration and rendering
  */
-class Header_Blocks {
+class TwinTack_Header_Blocks {
     private static $instance = null;
-
+    
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
         }
         return self::$instance;
     }
-
+    
     private function __construct() {
         add_action('acf/init', array($this, 'register_header_blocks'));
     }
 
     public function register_header_blocks() {
         if (function_exists('acf_register_block_type')) {
-            // Register flexible header block
             acf_register_block_type(array(
                 'name' => 'flexible-header',
                 'title' => __('Flexible Header', 'twintack2025'),
@@ -37,3 +35,6 @@ class Header_Blocks {
         }
     }
 }
+
+// Initialize the class
+add_action('init', array('TwinTack_Header_Blocks', 'get_instance'));
