@@ -12,56 +12,37 @@ if ( ! defined( '_S_VERSION' ) ) {
 	define( '_S_VERSION', '1.0.0' );
 }
 
+// Include class loader first
+require_once get_template_directory() . '/inc/class-loader.php';
+
+// Include necessary files early
+require_once get_template_directory() . '/inc/custom-header.php';
+require_once get_template_directory() . '/inc/template-tags.php';
+require_once get_template_directory() . '/inc/template-functions.php';
+require_once get_template_directory() . '/inc/customizer.php';
+require_once get_template_directory() . '/inc/class-twintack-role-pricing.php';
+require_once get_template_directory() . '/inc/class-twintack-custom-products.php';
+require_once get_template_directory() . '/inc/class-twintack-product-forms.php';
+require_once get_template_directory() . '/inc/class-category-customizer.php';
+require_once get_template_directory() . '/inc/header/class-header-configuration.php';
+
 /**
  * Sets up theme defaults and registers support for various WordPress features.
- *
- * Note that this function is hooked into the after_setup_theme hook, which
- * runs before the init hook. The init hook is too late for some features, such
- * as indicating support for post thumbnails.
  */
 function twintack2025_setup() {
-	/*
-		* Make theme available for translation.
-		* Translations can be filed in the /languages/ directory.
-		* If you're building a theme based on twintack2025, use a find and replace
-		* to change 'twintack2025' to the name of your theme in all the template files.
-		*/
 	load_theme_textdomain( 'twintack2025', get_template_directory() . '/languages' );
 
-	// Add default posts and comments RSS feed links to head.
 	add_theme_support( 'automatic-feed-links' );
-
-	/*
-		* Let WordPress manage the document title.
-		* By adding theme support, we declare that this theme does not use a
-		* hard-coded <title> tag in the document head, and expect WordPress to
-		* provide it for us.
-		*/
 	add_theme_support( 'title-tag' );
-
-	/*
-		* Enable support for Post Thumbnails on posts and pages.
-		*
-		* @link https://developer.wordpress.org/themes/functionality/featured-images-post-thumbnails/
-		*/
 	add_theme_support( 'post-thumbnails' );
-
-	// This theme uses wp_nav_menu() in one location.
-	register_nav_menus(
-		array(
-			'menu-1' => esc_html__( 'Primary', 'twintack2025' ),
-		)
-	);
-
-	/*
-		* Switch default core markup for search form, comment form, and comments
-		* to output valid HTML5.
-		*/
+	add_theme_support( 'customize-selective-refresh-widgets' );
+	
+	// HTML5 support
 	add_theme_support(
 		'html5',
 		array(
 			'search-form',
-			'comment-form',
+			'comment-form', 
 			'comment-list',
 			'gallery',
 			'caption',
@@ -70,7 +51,7 @@ function twintack2025_setup() {
 		)
 	);
 
-	// Set up the WordPress core custom background feature.
+	// Custom background
 	add_theme_support(
 		'custom-background',
 		apply_filters(
@@ -82,14 +63,7 @@ function twintack2025_setup() {
 		)
 	);
 
-	// Add theme support for selective refresh for widgets.
-	add_theme_support( 'customize-selective-refresh-widgets' );
-
-	/**
-	 * Add support for core custom logo.
-	 *
-	 * @link https://codex.wordpress.org/Theme_Logo
-	 */
+	// Custom logo
 	add_theme_support(
 		'custom-logo',
 		array(
@@ -100,34 +74,26 @@ function twintack2025_setup() {
 		)
 	);
 
-	// Add WooCommerce support
+	// WooCommerce support
 	add_theme_support('woocommerce');
 	add_theme_support('wc-product-gallery-zoom');
 	add_theme_support('wc-product-gallery-lightbox');
 	add_theme_support('wc-product-gallery-slider');
 	
-	// Register custom nav menus
+	// Register nav menus
 	register_nav_menus(array(
-		'primary' => 'Primary Menu',
-		'baseball' => 'Baseball Menu',
-		'fishing' => 'Fishing Menu'
+		'primary' => esc_html__('Primary Menu', 'twintack2025'),
+		'baseball' => esc_html__('Baseball Menu', 'twintack2025'),
+		'fishing' => esc_html__('Fishing Menu', 'twintack2025')
 	));
 
-	// Add custom image sizes
+	// Custom image sizes
 	add_image_size('product-variant-thumb', 300, 300, true);
-
-	// Add after register_nav_menus:
-	require_once get_template_directory() . '/inc/header/class-header-blocks.php';
-	require_once get_template_directory() . '/inc/header/class-header-configuration.php';
 }
 add_action( 'after_setup_theme', 'twintack2025_setup' );
 
 /**
- * Set the content width in pixels, based on the theme's design and stylesheet.
- *
- * Priority 0 to make it available to lower priority callbacks.
- *
- * @global int $content_width
+ * Set the content width
  */
 function twintack2025_content_width() {
 	$GLOBALS['content_width'] = apply_filters( 'twintack2025_content_width', 640 );
@@ -135,9 +101,7 @@ function twintack2025_content_width() {
 add_action( 'after_setup_theme', 'twintack2025_content_width', 0 );
 
 /**
- * Register widget area.
- *
- * @link https://developer.wordpress.org/themes/functionality/sidebars/#registering-a-sidebar
+ * Register widget area
  */
 function twintack2025_widgets_init() {
 	register_sidebar(
@@ -155,10 +119,10 @@ function twintack2025_widgets_init() {
 add_action( 'widgets_init', 'twintack2025_widgets_init' );
 
 /**
- * Enqueue scripts and styles.
+ * Enqueue scripts and styles
  */
 function twintack2025_scripts() {
-	// Enqueue Bootstrap CSS
+	// Bootstrap
 	wp_enqueue_style(
 		'bootstrap',
 		'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
@@ -166,7 +130,6 @@ function twintack2025_scripts() {
 		'5.3.2'
 	);
 
-	// Enqueue Bootstrap JS and Popper.js (required for Bootstrap)
 	wp_enqueue_script(
 		'bootstrap-bundle',
 		'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
@@ -175,7 +138,7 @@ function twintack2025_scripts() {
 		true
 	);
 
-	// Enqueue the main CSS file
+	// Theme styles
 	wp_enqueue_style(
 		'twintack2025-main',
 		get_template_directory_uri() . '/css/main.css',
@@ -186,12 +149,8 @@ function twintack2025_scripts() {
 	wp_enqueue_style( 'twintack2025-style', get_stylesheet_uri(), array('bootstrap'), _S_VERSION );
 	wp_style_add_data( 'twintack2025-style', 'rtl', 'replace' );
 
+	// Theme scripts
 	wp_enqueue_script( 'twintack2025-navigation', get_template_directory_uri() . '/js/navigation.js', array(), _S_VERSION, true );
-
-	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
-		wp_enqueue_script( 'comment-reply' );
-	}
-
 	wp_enqueue_script(
 		'twintack2025-header',
 		get_template_directory_uri() . '/js/header.js',
@@ -199,47 +158,41 @@ function twintack2025_scripts() {
 		filemtime(get_template_directory() . '/js/header.js'),
 		true
 	);
+
+	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
+		wp_enqueue_script( 'comment-reply' );
+	}
 }
 add_action( 'wp_enqueue_scripts', 'twintack2025_scripts' );
 
-// Include necessary files after all functions are defined
-require_once get_template_directory() . '/inc/custom-header.php';
-require_once get_template_directory() . '/inc/template-tags.php';
-require_once get_template_directory() . '/inc/template-functions.php';
-require_once get_template_directory() . '/inc/customizer.php';
-require_once get_template_directory() . '/inc/class-twintack-role-pricing.php';
-require_once get_template_directory() . '/inc/class-twintack-custom-products.php';
-require_once get_template_directory() . '/inc/class-twintack-product-forms.php';
-
 /**
- * Load Jetpack compatibility file.
+ * Load Jetpack compatibility file
  */
 if ( defined( 'JETPACK__VERSION' ) ) {
 	require_once get_template_directory() . '/inc/jetpack.php';
 }
 
-// Add category template support
+/**
+ * Add category template support
+ */
 function twintack_category_template($template) {
-    if (is_product_category()) {
-        $category = get_queried_object();
-        $template_name = '';
-        
-        if (strpos(strtolower($category->name), 'baseball') !== false) {
-            $template_name = 'category-baseball.php';
-        } elseif (strpos(strtolower($category->name), 'fishing') !== false) {
-            $template_name = 'category-fishing.php';
-        }
-        
-        if ($template_name) {
-            $new_template = locate_template("templates/$template_name");
-            if (!empty($new_template)) {
-                return $new_template;
-            }
-        }
-    }
-    return $template;
+	if (is_product_category()) {
+		$category = get_queried_object();
+		$template_name = '';
+		
+		if (strpos(strtolower($category->name), 'baseball') !== false) {
+			$template_name = 'category-baseball.php';
+		} elseif (strpos(strtolower($category->name), 'fishing') !== false) {
+			$template_name = 'category-fishing.php';
+		}
+		
+		if ($template_name) {
+			$new_template = locate_template("templates/$template_name");
+			if (!empty($new_template)) {
+				return $new_template;
+			}
+		}
+	}
+	return $template;
 }
 add_filter('template_include', 'twintack_category_template');
-
-// Add to your existing functions.php
-require get_template_directory() . '/inc/class-category-customizer.php';

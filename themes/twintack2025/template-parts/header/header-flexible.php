@@ -1,54 +1,61 @@
 <?php
-if (have_rows('header_configuration')):
-    while (have_rows('header_configuration')) : the_row();
-        
-        if (get_row_layout() == 'image_header'):
-            $background_image = get_sub_field('background_image');
-            $title = get_sub_field('title');
-            $content = get_sub_field('content');
-            ?>
+// Template part for handling the flexible content header
+function get_flexible_header_content() {
+    if (have_rows('header_configuration_manual')) :
+        while (have_rows('header_configuration_manual')) : the_row();
             
-            <div class="category-hero flexible-header image-header" <?php if($background_image): ?>style="background-image: url('<?php echo esc_url($background_image['url']); ?>');"<?php endif; ?>>
-                <div class="container-fluid container-xxl">
-                    <div class="row">
-                        <div class="col-12 col-md-10 col-lg-8 mx-auto">
-                            <?php if($title): ?>
-                                <h1 class="display-4"><?php echo esc_html($title); ?></h1>
-                            <?php endif; ?>
-                            
-                            <?php if($content): ?>
-                                <div class="header-content">
-                                    <?php echo wp_kses_post($content); ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
+            if (get_row_layout() == 'image_single') :
+                $title = get_sub_field('header_title');
+                $content = get_sub_field('header_content');
+                $bg_image = get_sub_field('background_image');
+                ?>
+                <div class="header-single-image" <?php if ($bg_image) : ?>style="background-image: url('<?php echo esc_url($bg_image); ?>');"<?php endif; ?>>
+                    <div class="header-content">
+                        <?php if ($title) : ?>
+                            <h1><?php echo esc_html($title); ?></h1>
+                        <?php endif; ?>
+                        
+                        <?php if ($content) : ?>
+                            <div class="content-area">
+                                <?php echo wp_kses_post($content); ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
-            </div>
-
-        <?php elseif (get_row_layout() == 'video_header'):
-            $video_embed = get_sub_field('video_embed');
-            $title = get_sub_field('title');
-            $content = get_sub_field('content');
-            ?>
-
-            <div class="category-hero flexible-header video-header">
-                <div class="video-container">
-                    <?php echo do_shortcode($video_embed); ?>
-                </div>
-                <div class="container">
-                    <?php if($title): ?>
-                        <h1><?php echo esc_html($title); ?></h1>
-                    <?php endif; ?>
-                    
-                    <?php if($content): ?>
-                        <div class="header-content">
-                            <?php echo wp_kses_post($content); ?>
+                <?php
+                
+            elseif (get_row_layout() == 'video_single') :
+                $title = get_sub_field('header_title');
+                $content = get_sub_field('header_content');
+                $video = get_sub_field('background_video_upload');
+                $embed = get_sub_field('embed_responsively_shortcode');
+                ?>
+                <div class="header-single-video">
+                    <?php if ($video) : ?>
+                        <video autoplay muted loop playsinline class="background-video">
+                            <source src="<?php echo esc_url($video); ?>" type="video/mp4">
+                        </video>
+                    <?php elseif ($embed) : ?>
+                        <div class="video-embed">
+                            <?php echo do_shortcode($embed); ?>
                         </div>
                     <?php endif; ?>
+                    
+                    <div class="header-content">
+                        <?php if ($title) : ?>
+                            <h1><?php echo esc_html($title); ?></h1>
+                        <?php endif; ?>
+                        
+                        <?php if ($content) : ?>
+                            <div class="content-area">
+                                <?php echo wp_kses_post($content); ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
-            </div>
-
-        <?php endif;
-    endwhile;
-endif; 
+                <?php
+            endif;
+            
+        endwhile;
+    endif;
+}

@@ -3,13 +3,19 @@
  * Header Configuration Class
  */
 class Header_Configuration {
-    /**
-     * Get header configuration for current page
-     */
+    private static $instance = null;
+
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
     public static function get_header_config() {
         $config = array();
 
-        if (is_page()) {
+        if (is_page() && function_exists('get_field')) {
             $manual_config = get_field('header_configuration_manual');
             $selected_config = get_field('select_header_configuration');
 
@@ -23,49 +29,40 @@ class Header_Configuration {
         return $config;
     }
 
-    /**
-     * Parse manual header configuration
-     */
     private static function parse_manual_config($manual_config) {
         $config = array();
 
         if (!empty($manual_config)) {
-            $layout = $manual_config[0];
-            $config['type'] = $layout['acf_fc_layout'];
-            $config['title'] = $layout['header_title'];
-            $config['content'] = $layout['header_content'];
+            foreach ($manual_config as $layout) {
+                $config['type'] = $layout['acf_fc_layout'];
+                $config['title'] = isset($layout['header_title']) ? $layout['header_title'] : '';
+                $config['content'] = isset($layout['header_content']) ? $layout['header_content'] : '';
 
-            if ($config['type'] === 'image_single') {
-                $config['background'] = $layout['background_image'];
-            } elseif ($config['type'] === 'video_single') {
-                $config['video'] = $layout['background_video_upload'];
-                $config['embed'] = $layout['embed_responsively_shortcode'];
+                if ($config['type'] === 'image_single') {
+                    $config['background'] = isset($layout['background_image']) ? $layout['background_image'] : '';
+                } elseif ($config['type'] === 'video_single') {
+                    $config['video'] = isset($layout['background_video_upload']) ? $layout['background_video_upload'] : '';
+                    $config['embed'] = isset($layout['embed_responsively_shortcode']) ? $layout['embed_responsively_shortcode'] : '';
+                }
             }
         }
 
         return $config;
     }
 
-    /**
-     * Parse selected header configuration
-     */
     private static function parse_selected_config($selected_config) {
         $config = array();
-
-        if ($selected_config) {
+        
+        if ($selected_config && function_exists('get_field')) {
             $config['type'] = get_field('image_or_video', $selected_config->ID);
-            $config['background'] = get_field('background_image', $selected_config->ID);
-            $config['embed'] = get_field('embed_responsively_shortcode', $selected_config->ID);
+            $config['title'] = get_field('header_title', $selected_config->ID);
+            $config['content'] = get_field('header_content', $selected_config->ID);
             
-            $show_callout = get_field('header_callout_content', $selected_config->ID);
-            if ($show_callout === 'on') {
-                $config['callout_title'] = get_field('callout_content_title', $selected_config->ID);
-                $config['callout_content'] = get_field('callout_content', $selected_config->ID);
-            }
-
-            $show_links = get_field('header_callout_links', $selected_config->ID);
-            if ($show_links === 'on') {
-                $config['links'] = get_field('callout_links', $selected_config->ID);
+            if (strpos($config['type'], 'image') !== false) {
+                $config['background'] = get_field('background_image', $selected_config->ID);
+            } else {
+                $config['video'] = get_field('background_video_upload', $selected_config->ID);
+                $config['embed'] = get_field('embed_responsively_shortcode', $selected_config->ID);
             }
         }
 

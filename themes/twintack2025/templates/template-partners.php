@@ -17,7 +17,7 @@ if (have_rows('header_configuration')) {
                 <?php 
                 if (have_rows('partners')) :
                     while (have_rows('partners')) : the_row();
-                        get_template_part('template-parts/content', 'partner');
+                        get_template_part('template-parts/content', 'partners');
                     endwhile;
                 endif;
                 ?>

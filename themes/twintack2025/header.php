@@ -1,64 +1,23 @@
 <?php
 /**
- * The header for our theme
- *
- * This is the template that displays all of the <head> section and everything up until <div id="content">
- *
- * @link https://developer.wordpress.org/themes/basics/template-files/#template-partials
- *
- * @package twintack2025
+ * The header template
  */
-
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
-	<meta charset="<?php bloginfo( 'charset' ); ?>">
+	<meta charset="<?php bloginfo('charset'); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="profile" href="https://gmpg.org/xfn/11">
-
 	<?php wp_head(); ?>
 </head>
 
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 <div id="page" class="site">
-	<a class="skip-link screen-reader-text" href="#primary"><?php esc_html_e( 'Skip to content', 'twintack2025' ); ?></a>
+	<a class="skip-link screen-reader-text" href="#primary">
+		<?php esc_html_e('Skip to content', 'twintack2025'); ?>
+	</a>
 
-	<header id="masthead" class="site-header">
-		<div class="header-marquee">
-			<?php
-			// Get marquee slides from customizer
-			$marquee_slides = get_theme_mod('header_marquee_slides', array());
-			if (!empty($marquee_slides)) :
-				foreach ($marquee_slides as $slide) : ?>
-					<div class="marquee-slide" style="background-image: url(<?php echo esc_url($slide['image']); ?>)">
-						<a href="<?php echo esc_url($slide['link']); ?>" class="slide-link">
-							<div class="slide-content">
-								<h2><?php echo esc_html($slide['title']); ?></h2>
-								<p><?php echo esc_html($slide['description']); ?></p>
-							</div>
-						</a>
-					</div>
-				<?php endforeach;
-			endif; ?>
-		</div>
-
-		<div class="header-content">
-			<div class="container">
-				<div class="site-branding">
-					<?php the_custom_logo(); ?>
-				</div>
-
-				<nav id="site-navigation" class="main-navigation">
-					<?php
-					wp_nav_menu(array(
-						'theme_location' => 'primary',
-						'menu_id' => 'primary-menu',
-						'container_class' => 'primary-menu-container'
-					));
-					?>
-				</nav>
-			</div>
-		</div>
-	</header>
+	<?php get_template_part('template-parts/header/header', 'base'); ?>
+</div>
