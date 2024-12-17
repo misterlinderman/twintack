@@ -1,8 +1,11 @@
 /* Base */
-@import 'base/_variables.css';
+@import 'base/_variables.scss';
+@import 'base/_bootstrap-custom.scss';
 @import 'base/_base.css';
 
 /* Components */
+@import 'components/_header.css';
+@import 'components/_navigation.css';
 @import 'components/_category.css';
 @import 'components/_product-grid.css';
 @import 'components/_variants.css';

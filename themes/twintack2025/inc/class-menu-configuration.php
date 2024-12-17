@@ -36,30 +36,18 @@ class Menu_Configuration {
             'hide_empty' => false
         ));
 
-        // Add Baseball dropdown
+        // Add Baseball link
         if (!empty($baseball_cats)) {
-            $items .= '<li class="menu-item menu-item-has-children baseball-menu">';
+            $items .= '<li class="menu-item baseball-menu">';
             $items .= '<a href="' . get_term_link($baseball_cats[0]) . '">Baseball</a>';
-            $items .= '<ul class="sub-menu">';
-            foreach ($baseball_cats as $cat) {
-                $items .= '<li class="menu-item">';
-                $items .= '<a href="' . get_term_link($cat) . '">' . esc_html($cat->name) . '</a>';
-                $items .= '</li>';
-            }
-            $items .= '</ul></li>';
+            $items .= '</li>';
         }
 
-        // Add Fishing dropdown
+        // Add Fishing link 
         if (!empty($fishing_cats)) {
-            $items .= '<li class="menu-item menu-item-has-children fishing-menu">';
+            $items .= '<li class="menu-item fishing-menu">';
             $items .= '<a href="' . get_term_link($fishing_cats[0]) . '">Fishing</a>';
-            $items .= '<ul class="sub-menu">';
-            foreach ($fishing_cats as $cat) {
-                $items .= '<li class="menu-item">';
-                $items .= '<a href="' . get_term_link($cat) . '">' . esc_html($cat->name) . '</a>';
-                $items .= '</li>';
-            }
-            $items .= '</ul></li>';
+            $items .= '</li>';
         }
 
         return $items;

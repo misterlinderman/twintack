@@ -83,3 +83,26 @@
 .fishing-menu > a {
     color: var(--fishing-primary);
 } 
+
+
+/* New Additions for Menu and Header */
+header#masthead .container {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+nav#site-navigation ul li a {
+    color: var(--bs-gray-600);
+    text-decoration: none;
+    font-size: .9em;
+    padding: 5px;
+}
+
+nav#site-navigation ul {
+    list-style: none;
+    margin: 0;
+    padding: 0; 
+}

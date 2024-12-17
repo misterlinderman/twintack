@@ -14,17 +14,17 @@
 			<?php if (get_row_layout() == 'full_width_callout'): ?>
 				<section class="full-width-callout">
 					<div class="container">
-						<?php if ($heading = get_sub_field('heading')): ?>
-							<h2><?php echo esc_html($heading); ?></h2>
+						<?php if ($title = get_sub_field('callout_title')): ?>
+							<h2><?php echo esc_html($title); ?></h2>
 						<?php endif; ?>
 						
-						<?php if ($content = get_sub_field('content')): ?>
+						<?php if ($content = get_sub_field('callout_content')): ?>
 							<div class="callout-content">
 								<?php echo wp_kses_post($content); ?>
 							</div>
 						<?php endif; ?>
 
-						<?php if ($cta = get_sub_field('cta_button')): ?>
+						<?php if ($cta = get_sub_field('callout_cta')): ?>
 							<div class="callout-cta">
 								<a href="<?php echo esc_url($cta['url']); ?>" 
 								   class="button"

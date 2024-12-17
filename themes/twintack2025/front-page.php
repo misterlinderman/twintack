@@ -6,6 +6,7 @@ get_template_part('template-parts/header/header', 'content');
 
 
 // Get other homepage sections
-get_template_part('template-parts/content', 'twintack');
+get_template_part('template-parts/content', 'flexible');
+
 
 get_footer(); 
