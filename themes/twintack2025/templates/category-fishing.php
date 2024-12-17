@@ -1,6 +1,6 @@
 <?php
 /**
- * Template for Baseball category
+ * Template for Fishing category
  */
 
 get_header();

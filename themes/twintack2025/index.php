@@ -13,6 +13,9 @@
  */
 
 get_header();
+
+// Get header configuration and render
+get_template_part('template-parts/header/header', 'base');
 ?>
 
 	<main id="primary" class="site-main">

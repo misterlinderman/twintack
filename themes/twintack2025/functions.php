@@ -196,3 +196,15 @@ function twintack_category_template($template) {
 	return $template;
 }
 add_filter('template_include', 'twintack_category_template');
+
+/**
+ * Load header classes
+ */
+function twintack_load_header_classes() {
+    require_once get_template_directory() . '/inc/header/class-header-configuration.php';
+    require_once get_template_directory() . '/inc/header/class-header-render.php';
+    
+    // Initialize header configuration
+    Header_Configuration::get_instance();
+}
+add_action('after_setup_theme', 'twintack_load_header_classes');

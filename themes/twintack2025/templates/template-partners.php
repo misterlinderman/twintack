@@ -11,19 +11,9 @@ if (have_rows('header_configuration')) {
 ?>
 
 <div class="partners-content">
-    <div class="container">
-        <?php while (have_posts()) : the_post(); ?>
-            <div class="partners-grid">
-                <?php 
-                if (have_rows('partners')) :
-                    while (have_rows('partners')) : the_row();
-                        get_template_part('template-parts/content', 'partners');
-                    endwhile;
-                endif;
-                ?>
-            </div>
-        <?php endwhile; ?>
-    </div>
+    <?php while (have_posts()) : the_post(); ?>
+        <?php get_template_part('template-parts/content', 'flexible'); ?>
+    <?php endwhile; ?>
 </div>
 
 <?php get_footer(); ?> 

@@ -36,24 +36,12 @@ function twintack2025_pingback_header() {
 }
 add_action( 'wp_head', 'twintack2025_pingback_header' );
 
+/**
+ * Custom header function for product lines
+ */
 function get_product_line_header() {
-    $category = get_queried_object();
-    
-    // Check if we're on a product category page and have ACF fields
-    if (is_product_category() && function_exists('get_field')) {
-        // First check for category-specific header configuration
-        if (have_rows('header_configuration', $category)) {
-            get_template_part('template-parts/header/header', 'flexible');
-            return;
-        }
-        
-        // Fallback to default product line headers
-        if (strpos(strtolower($category->name), 'baseball') !== false) {
-            get_template_part('template-parts/header/header', 'baseball');
-        } elseif (strpos(strtolower($category->name), 'fishing') !== false) {
-            get_template_part('template-parts/header/header', 'fishing');
-        } else {
-            get_template_part('template-parts/header/header', 'default');
-        }
+    if (is_product_category()) {
+        // Use the base header template with category-specific configurations
+        get_template_part('template-parts/header/header', 'base');
     }
 }

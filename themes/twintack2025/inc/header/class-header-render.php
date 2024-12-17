@@ -1,7 +1,6 @@
 <?php
 /**
  * Header Render Class
- * Handles the rendering of header components
  */
 class Header_Render {
     private static $instance = null;
@@ -13,49 +12,48 @@ class Header_Render {
         return self::$instance;
     }
 
-    public function render_header_media($config) {
-        if ($config['media_type'] === 'image:Image' && $config['background_image']) {
-            return sprintf(
+    public function render_header($config) {
+        if (!$config) return;
+
+        $output = '<div class="site-header">';
+        
+        // Render background
+        if (!empty($config['background_image'])) {
+            $output .= sprintf(
                 '<div class="site-header__media site-header__media--image" style="background-image: url(%s)"></div>',
                 esc_url($config['background_image'])
             );
-        } elseif ($config['media_type'] === 'video:Video' && $config['video_embed']) {
-            return sprintf(
+        } elseif (!empty($config['embed_shortcode'])) {
+            $output .= sprintf(
                 '<div class="site-header__media site-header__media--video">%s</div>',
-                do_shortcode($config['video_embed'])
+                do_shortcode($config['embed_shortcode'])
             );
         }
-        return '';
-    }
 
-    public function render_header_content($config) {
-        if (!$config['callout_enabled']) {
-            return '';
+        // Render content
+        $output .= '<div class="site-header__content">';
+        if (!empty($config['callout_title'])) {
+            $output .= sprintf('<h1 class="site-header__title">%s</h1>', esc_html($config['callout_title']));
+        }
+        if (!empty($config['callout_content'])) {
+            $output .= sprintf('<div class="site-header__text">%s</div>', wp_kses_post($config['callout_content']));
         }
 
-        ob_start();
-        ?>
-        <div class="site-header__callout">
-            <?php if ($config['callout_title']) : ?>
-                <h2 class="site-header__callout-title"><?php echo esc_html($config['callout_title']); ?></h2>
-            <?php endif; ?>
+        // Render links
+        if (!empty($config['callout_links'])) {
+            $output .= '<div class="site-header__links">';
+            foreach ($config['callout_links'] as $link) {
+                $output .= sprintf(
+                    '<a href="%s" class="button">%s</a>',
+                    esc_url($link['callout_link_url']),
+                    esc_html($link['callout_link_text'])
+                );
+            }
+            $output .= '</div>';
+        }
 
-            <?php if ($config['callout_content']) : ?>
-                <div class="site-header__callout-content"><?php echo wp_kses_post($config['callout_content']); ?></div>
-            <?php endif; ?>
+        $output .= '</div></div>';
 
-            <?php if ($config['links_enabled'] && $config['links']) : ?>
-                <div class="site-header__callout-links">
-                    <?php foreach ($config['links'] as $link) : ?>
-                        <a href="<?php echo esc_url($link['callout_link_url']); ?>" 
-                           class="site-header__callout-link">
-                            <?php echo esc_html($link['callout_link_text']); ?>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-        <?php
-        return ob_get_clean();
+        return $output;
     }
 }
