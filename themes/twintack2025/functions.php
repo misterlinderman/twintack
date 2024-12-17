@@ -208,3 +208,37 @@ function twintack_load_header_classes() {
     Header_Configuration::get_instance();
 }
 add_action('after_setup_theme', 'twintack_load_header_classes');
+
+function twintack_category_body_class($classes) {
+    if (is_product_category() || is_product()) {
+        $term = null;
+        
+        if (is_product_category()) {
+            $term = get_queried_object();
+        } elseif (is_product()) {
+            $terms = get_the_terms(get_the_ID(), 'product_cat');
+            if ($terms) {
+                $term = reset($terms); // Get first category
+            }
+        }
+        
+        if ($term) {
+            if (strpos(strtolower($term->name), 'baseball') !== false) {
+                $classes[] = 'baseball';
+            } elseif (strpos(strtolower($term->name), 'fishing') !== false) {
+                $classes[] = 'fishing';
+            }
+        }
+    }
+    return $classes;
+}
+add_filter('body_class', 'twintack_category_body_class');
+
+/**
+ * Load menu configuration
+ */
+function twintack_load_menu_classes() {
+    require_once get_template_directory() . '/inc/class-menu-configuration.php';
+    Menu_Configuration::get_instance();
+}
+add_action('after_setup_theme', 'twintack_load_menu_classes');

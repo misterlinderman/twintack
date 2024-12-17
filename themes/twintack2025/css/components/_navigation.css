@@ -1,0 +1,85 @@
+.header-main {
+    background: var(--light);
+    border-bottom: 1px solid var(--gray);
+    padding: 1rem 0;
+}
+
+.header-category-nav {
+    background: var(--gray);
+    padding: 0.75rem 0;
+}
+
+.primary-menu-container ul,
+.category-menu-container ul {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.primary-menu-container li,
+.category-menu-container li {
+    position: relative;
+}
+
+.primary-menu-container a {
+    color: var(--text);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.category-menu-container a {
+    color: var(--text);
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+/* Category-specific styling */
+.baseball .header-category-nav {
+    background: var(--baseball-primary);
+}
+
+.baseball .category-menu-container a {
+    color: var(--light);
+}
+
+.fishing .header-category-nav {
+    background: var(--fishing-primary);
+}
+
+.fishing .category-menu-container a {
+    color: var(--light);
+}
+
+.primary-menu-container .menu-item-has-children {
+    position: relative;
+}
+
+.primary-menu-container .sub-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--light);
+    min-width: 200px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 100;
+}
+
+.primary-menu-container .menu-item-has-children:hover > .sub-menu {
+    display: block;
+}
+
+.primary-menu-container .sub-menu .menu-item {
+    padding: 0.5rem 1rem;
+}
+
+/* Category-specific styling */
+.baseball-menu > a {
+    color: var(--baseball-primary);
+}
+
+.fishing-menu > a {
+    color: var(--fishing-primary);
+} 
