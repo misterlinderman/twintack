@@ -195,6 +195,8 @@ function twintack_category_template($template) {
 	}
 	return $template;
 }
+// Remove the duplicate filter
+remove_filter('template_include', 'twintack_template_hierarchy');
 add_filter('template_include', 'twintack_category_template');
 
 /**
