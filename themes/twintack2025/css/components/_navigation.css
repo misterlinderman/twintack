@@ -12,7 +12,6 @@
 .primary-menu-container ul,
 .category-menu-container ul {
     display: flex;
-    gap: 2rem;
     list-style: none;
     margin: 0;
     padding: 0;
