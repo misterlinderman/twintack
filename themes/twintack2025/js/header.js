@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Header scroll effect
     const header = document.querySelector('.site-header');
-    const scrollThreshold = 100;
+    const marquee = document.querySelector('.site-marquee');
+    const scrollThreshold = marquee ? marquee.offsetHeight : 100;
 
     window.addEventListener('scroll', () => {
         if (window.scrollY > scrollThreshold) {
@@ -23,6 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (slides.length > 0) {
         slides[0].classList.add('active');
-        setInterval(rotateSlides, 5000); // Rotate every 5 seconds
+        setInterval(rotateSlides, 5000);
     }
 }); 
