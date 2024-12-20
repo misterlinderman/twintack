@@ -114,7 +114,7 @@
   
   /* Typography */
   body {
-    font-family: 'Industry', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text);
     line-height: 1.6;
     margin: 0;

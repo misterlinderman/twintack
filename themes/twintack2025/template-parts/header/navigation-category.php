@@ -32,6 +32,16 @@ if (is_product()) {
     }
 }
 
+// Add check for parent page IDs
+$body_classes = get_body_class();
+if (in_array('parent-pageid-92', $body_classes)) {
+    $current_category = 'baseball';
+    $show_secondary_nav = true;
+} elseif (in_array('parent-pageid-95', $body_classes)) {
+    $current_category = 'fishing';
+    $show_secondary_nav = true;
+}
+
 if ($show_secondary_nav) : ?>
     <div class="header-category-nav">
         <div class="container">

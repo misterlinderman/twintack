@@ -244,3 +244,43 @@ function twintack_load_menu_classes() {
     Menu_Configuration::get_instance();
 }
 add_action('after_setup_theme', 'twintack_load_menu_classes');
+
+function twintack_get_category_menu($category_type) {
+    if (is_product_category() || is_shop()) {
+        $current_term = get_queried_object();
+        $category_base = '';
+        
+        // Check if current category or its ancestors are baseball/fishing
+        if ($current_term && isset($current_term->term_id)) {
+            $ancestors = get_ancestors($current_term->term_id, 'product_cat');
+            $all_terms = array_merge([$current_term->term_id], $ancestors);
+            
+            foreach ($all_terms as $term_id) {
+                $term = get_term($term_id, 'product_cat');
+                if (strpos(strtolower($term->name), $category_type) !== false) {
+                    $category_base = $category_type;
+                    break;
+                }
+            }
+        }
+        
+        if ($category_base) {
+            get_template_part('template-parts/navigation/category', $category_base);
+        }
+    }
+}
+
+function twintack_body_classes($classes) {
+    // Add admin-bar class if admin bar is showing
+    if (is_admin_bar_showing()) {
+        $classes[] = 'has-admin-bar';
+    }
+    
+    return $classes;
+}
+add_filter('body_class', 'twintack_body_classes');
+
+function twintack2025_enqueue_fonts() {
+    wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap', array(), null);
+}
+add_action('wp_enqueue_scripts', 'twintack2025_enqueue_fonts');

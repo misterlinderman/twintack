@@ -1,8 +1,50 @@
 /* Header container */
 .site-header {
-    position: relative;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
     width: 100%;
-    z-index: 100;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    background: var(--light);
+}
+
+/* Adjust for WordPress admin bar */
+.admin-bar .site-header {
+    top: 32px; /* For desktop */
+}
+
+@media screen and (max-width: 782px) {
+    .admin-bar .site-header {
+        top: 46px; /* For mobile */
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .admin-bar .site-header.scrolled {
+        top: 0; /* When mobile admin bar collapses */
+    }
+}
+
+/* Ensure header stays above other content */
+.site-header {
+    z-index: 9999;
+}
+
+/* Add box shadow when scrolled */
+.site-header.scrolled {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Ensure content below header doesn't jump */
+body {
+    padding-top: 0; /* Remove if you had added any padding */
+}
+
+/* Fix any overflow issues */
+.site-header * {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
 /* Header content area */
@@ -108,4 +150,32 @@
     .site-header__text {
         font-size: 1rem;
     }
+}
+
+.header-callout-container {
+    max-width: var(--container-width, 1200px);
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.header-callout-slider {
+    display: flex;
+    transition: transform 0.3s ease;
+}
+
+.site-header__callout {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+.callout-navigation {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    z-index: 2;
 }

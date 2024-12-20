@@ -47,5 +47,14 @@ class Theme_Setup {
             wp_get_theme()->get('Version'),
             true
         );
+
+        // Bootstrap
+        wp_enqueue_style('bootstrap', get_template_directory_uri() . '/node_modules/bootstrap/dist/css/bootstrap.min.css');
+        wp_enqueue_script('bootstrap', get_template_directory_uri() . '/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js', array('jquery'));
+        
+        // Animation libraries
+        wp_enqueue_style('animate-css', get_template_directory_uri() . '/node_modules/animate.css/animate.min.css');
+        wp_enqueue_style('aos', get_template_directory_uri() . '/node_modules/aos/dist/aos.css');
+        wp_enqueue_script('aos', get_template_directory_uri() . '/node_modules/aos/dist/aos.js');
     }
 }
