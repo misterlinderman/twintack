@@ -42,3 +42,9 @@ span.woocommerce-Price-amount.amount {
     /* text-decoration: none; */
     /* text-align: center; */
 }
+
+.product_meta .sku_wrapper,
+.product_meta .posted_in,
+.product_meta .tagged_as {
+    display: none !important;
+}

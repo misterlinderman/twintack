@@ -7,9 +7,14 @@ if ($header_config) {
     $background_image = get_field('background_image', $header_config->ID);
     $embed_shortcode = get_field('embed_responsively_shortcode', $header_config->ID);
     
+    $header_callout = get_field('header_callout_content', $header_config->ID);
+    
     ?>
     <div class="site-marquee">
-        <?php if ($header_callout === 'on:On') : ?>
+        <?php if ($header_callout === 'on:On') : 
+            $callout_title = get_field('callout_content_title', $header_config->ID);
+            $callout_content = get_field('callout_content', $header_config->ID);
+        ?>
             <div class="marquee-callout">
                 <?php if ($callout_title) : ?>
                     <h2><?php echo esc_html($callout_title); ?></h2>
@@ -37,4 +42,4 @@ if ($header_config) {
     </div>
     <?php
 }
-?> 
+?>
