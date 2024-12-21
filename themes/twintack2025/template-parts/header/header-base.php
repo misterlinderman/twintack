@@ -28,7 +28,11 @@
                 <div class="site-branding">
                     <?php the_custom_logo(); ?>
                 </div>
-
+                <button class="menu-toggle" aria-controls="primary-menu" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
                 <nav id="site-navigation" class="main-navigation">
                     <?php
                     wp_nav_menu(array(

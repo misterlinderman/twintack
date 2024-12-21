@@ -53,6 +53,10 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
 }
 
 .marquee-slide.active {
@@ -91,6 +95,21 @@
 .marquee-slide.active {
     display: inline-block;
 }*/
+.marquee-callout {
+    text-shadow: 2px 2px 4px black;
+}
+
+a.marquee-link {
+    background-color: black;
+    padding: 5px 10px;
+    border-radius: 3px;
+    border: solid 1px white;
+    color: white;
+    text-decoration: none;
+    box-shadow: 2px 2px 2px black;
+}
+
+
 
 /* Content area */
 .site-content {
