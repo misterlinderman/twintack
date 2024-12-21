@@ -1,0 +1,44 @@
+section.layout-full {
+    background-size: cover;
+    background-position: center;
+}
+
+section.layout-full .callout-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+section.layout-full .callout-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    min-height: 450px;
+}
+
+section.layout-full .callout-content {
+    display: flex;
+    flex-direction: column;
+}
+
+section.layout-full .callout-content {
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(0, 0, 0, .5);
+    border-radius: 5px;
+    padding: 20px;
+    width: 40%;
+}
+
+section#homepartners {
+    background-color: black;
+}
+
+section#hometeam {
+    background-color: black;
+}
+
+section.layout-left, section.layout-right {
+    padding: 60px 0;
+}

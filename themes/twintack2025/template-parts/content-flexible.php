@@ -17,10 +17,12 @@ if (have_rows('content_configurations')) :
             $id = get_sub_field('callout_id');
             ?>
             
-            <section class="full-width-callout layout-<?php echo esc_attr($layout); ?>" <?php echo $id ? 'id="' . esc_attr($id) . '"' : ''; ?>>
+            <section class="full-width-callout layout-<?php echo esc_attr($layout); ?>" 
+                <?php echo $id ? 'id="' . esc_attr($id) . '"' : ''; ?>
+                <?php echo ($layout === 'full' && $image) ? 'style="background-image: url(' . esc_url($image) . ');"' : ''; ?>>
                 <div class="container">
                     <div class="callout-wrapper">
-                        <?php if ($image && ($layout === 'left' || $layout === 'full')) : ?>
+                        <?php if ($image && $layout === 'left') : ?>
                             <div class="callout-media">
                                 <img src="<?php echo esc_url($image); ?>" alt="" class="callout-image">
                             </div>

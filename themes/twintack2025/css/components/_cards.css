@@ -87,5 +87,13 @@ img.callout-image {
 .callout-wrapper .callout-content {
   color: white;
   text-align: center;
-  width: 50%;
+  width: 40%;
+}
+
+section.full-width-callout a.button {
+  background-color: white;
+  padding: 5px 10px;
+  border-radius: 3px;
+  color: black;
+  text-decoration: none;
 }
