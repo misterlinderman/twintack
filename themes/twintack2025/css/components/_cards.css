@@ -61,3 +61,31 @@
     font-weight: 600;
     margin-bottom: 0.5rem;
   }
+
+  .callout-wrapper {
+    display: flex
+;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+section#homecallout {
+  background-color: black;
+}
+
+.callout-media {
+  width: 50%;
+  /* display: inline-block; */
+}
+
+img.callout-image {
+  width: 100%;
+}
+
+.callout-wrapper .callout-content {
+  color: white;
+  text-align: center;
+  width: 50%;
+}

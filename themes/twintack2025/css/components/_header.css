@@ -12,7 +12,7 @@
 .site-marquee {
     position: relative;
     z-index: 1;
-    min-height: 400px;
+    min-height: 600px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -30,6 +30,67 @@
     color: white;
     text-align: center;
 }
+
+.site-marquee {
+    position: relative;
+    overflow: hidden;
+}
+
+.marquee-slides {
+    /*position: relative;*/
+    width: 100%;
+    height: 100%;
+}
+
+.marquee-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.marquee-slide.active {
+    opacity: 1;
+    z-index: 1;
+}
+
+.marquee-navigation {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    gap: 10px;
+}
+
+.marquee-nav-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.marquee-nav-dot.active {
+    background: #fff;
+}
+
+/*.marquee-slide {
+    display: none;
+}
+
+.marquee-slide.active {
+    display: inline-block;
+}*/
 
 /* Content area */
 .site-content {
