@@ -175,29 +175,40 @@ if ( defined( 'JETPACK__VERSION' ) ) {
 /**
  * Add category template support
  */
-function twintack_category_template($template) {
-	if (is_product_category()) {
-		$category = get_queried_object();
-		$template_name = '';
-		
-		if (strpos(strtolower($category->name), 'baseball') !== false) {
-			$template_name = 'category-baseball.php';
-		} elseif (strpos(strtolower($category->name), 'fishing') !== false) {
-			$template_name = 'category-fishing.php';
-		}
-		
-		if ($template_name) {
-			$new_template = locate_template("templates/$template_name");
-			if (!empty($new_template)) {
-				return $new_template;
-			}
-		}
-	}
-	return $template;
+function twintack_category_template_loader($template) {
+    if (is_product_category()) {
+        $category = get_queried_object();
+        $template_name = '';
+        
+        // Check category and all parent categories for baseball/fishing
+        $term_list = get_term_parents_list($category->term_id, 'product_cat', array('format' => 'slug'));
+        
+        if (strpos($term_list, 'baseball') !== false) {
+            $template_name = 'category-baseball.php';
+        } elseif (strpos($term_list, 'fishing') !== false) {
+            $template_name = 'category-fishing.php';
+        }
+        
+        if ($template_name) {
+            $new_template = locate_template(array(
+                'templates/' . $template_name,
+                $template_name
+            ));
+            
+            if (!empty($new_template)) {
+                return $new_template;
+            }
+        }
+    }
+    return $template;
 }
-// Remove the duplicate filter
+
+// Remove any existing template filters
 remove_filter('template_include', 'twintack_template_hierarchy');
-add_filter('template_include', 'twintack_category_template');
+remove_filter('template_include', 'twintack_category_template');
+
+// Add our new template loader
+add_filter('template_include', 'twintack_category_template_loader', 99);
 
 /**
  * Load header classes
@@ -284,3 +295,86 @@ function twintack2025_enqueue_fonts() {
     wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap', array(), null);
 }
 add_action('wp_enqueue_scripts', 'twintack2025_enqueue_fonts');
+
+function twintack_load_variation_display() {
+    require_once get_template_directory() . '/inc/class-variation-display.php';
+    TwinTack_Variation_Display::get_instance();
+}
+add_action('after_setup_theme', 'twintack_load_variation_display');
+
+// Add after your existing twintack2025_setup function
+function twintack_variation_setup() {
+    // Load variation display class
+    require_once get_template_directory() . '/inc/class-variation-display.php';
+    TwinTack_Variation_Display::get_instance();
+    
+    // Add variation image size
+    add_image_size('variation-thumbnail', 300, 300, true);
+}
+add_action('after_setup_theme', 'twintack_variation_setup');
+
+function twintack_locate_variation_template($template, $template_name, $template_path) {
+    if ($template_name === 'content-product-variation.php') {
+        $template = get_stylesheet_directory() . '/woocommerce/' . $template_name;
+    }
+    return $template;
+}
+add_filter('wc_get_template', 'twintack_locate_variation_template', 10, 3);
+
+function twintack_setup_variation_display() {
+    if (class_exists('TwinTack_Variation_Display')) {
+        TwinTack_Variation_Display::get_instance();
+    }
+}
+add_action('init', 'twintack_setup_variation_display');
+
+class TwinTack_Category_Display {
+    private static $instance = null;
+
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    private function __construct() {
+        add_action('twintack_product_loop', array($this, 'display_product'));
+    }
+
+    public function display_product() {
+        $product = wc_get_product(get_the_ID());
+        
+        if ($product && $product->is_type('variable')) {
+            $variations = $product->get_available_variations();
+            foreach ($variations as $variation) {
+                $this->display_single_variation($variation, $product);
+            }
+        } else {
+            wc_get_template_part('content', 'product');
+        }
+    }
+
+    private function display_single_variation($variation, $product) {
+        $variation_obj = wc_get_product($variation['variation_id']);
+        if (!$variation_obj) return;
+        
+        echo '<div class="product-variation">';
+        echo '<a href="' . esc_url(add_query_arg('variation_id', $variation['variation_id'], get_permalink($product->get_id()))) . '">';
+        echo wp_get_attachment_image($variation['image_id'], 'woocommerce_thumbnail');
+        echo '<h2 class="woocommerce-loop-product__title">';
+        echo esc_html($product->get_title());
+        if (!empty($variation['attributes'])) {
+            echo ' - ' . implode(', ', $variation['attributes']);
+        }
+        echo '</h2>';
+        echo $variation_obj->get_price_html();
+        echo '</a>';
+        echo '</div>';
+    }
+}
+
+// Initialize the category display
+add_action('after_setup_theme', function() {
+    TwinTack_Category_Display::get_instance();
+});
