@@ -19,12 +19,18 @@ class TwinTack_Variation_Display {
     public function modify_product_query($query) {
         if (!is_admin() && $query->is_main_query() && (is_product_category('baseball') || is_product_category('fishing'))) {
             $query->set('posts_per_page', -1);
+            
+            // Apply consistent ordering for both categories
+            $query->set('orderby', 'menu_order');
+            $query->set('order', 'ASC');
         }
         return $query;
     }
 
     public function add_variations_to_loop($posts) {
-        if (!is_product_category()) return $posts;
+        if (!is_product_category('baseball') && !is_product_category('fishing')) {
+            return $posts;
+        }
 
         $variations_posts = array();
         foreach ($posts as $post) {
@@ -33,8 +39,10 @@ class TwinTack_Variation_Display {
                 $variations = $product->get_available_variations();
                 foreach ($variations as $variation) {
                     $variation_post = get_post($variation['variation_id']);
-                    $variation_post->variation_data = $variation;
-                    $variations_posts[] = $variation_post;
+                    if ($variation_post) {
+                        $variation_post->variation_data = $variation;
+                        $variations_posts[] = $variation_post;
+                    }
                 }
             } else {
                 $variations_posts[] = $post;
@@ -47,6 +55,23 @@ class TwinTack_Variation_Display {
         if (get_post_type($post_id) === 'product_variation') {
             $classes[] = 'product-variation';
             $classes[] = 'product';
+            
+            // Add category-specific classes
+            $parent_id = wp_get_post_parent_id($post_id);
+            if ($parent_id) {
+                $terms = get_the_terms($parent_id, 'product_cat');
+                if ($terms) {
+                    foreach ($terms as $term) {
+                        $classes[] = 'product-cat-' . $term->slug;
+                        // Add specific category class
+                        if (strpos(strtolower($term->name), 'baseball') !== false) {
+                            $classes[] = 'baseball-variation';
+                        } elseif (strpos(strtolower($term->name), 'fishing') !== false) {
+                            $classes[] = 'fishing-variation';
+                        }
+                    }
+                }
+            }
         }
         return $classes;
     }
