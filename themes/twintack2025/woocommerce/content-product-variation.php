@@ -12,19 +12,18 @@ $variation = new WC_Product_Variation($variation_id);
 $variation_data = $variation->get_data();
 ?>
 
-<li <?php wc_product_class('product-variation', $variation); ?>>
-    <a href="<?php echo esc_url(add_query_arg('variation_id', $variation_id, get_permalink($parent_product->get_id()))); ?>">
-        <?php
-        echo $variation->get_image('woocommerce_thumbnail');
-        echo '<h2 class="woocommerce-loop-product__title">' . $parent_product->get_title();
-        
-        if ($variation_data['attributes']) {
-            echo ' - ' . implode(', ', $variation_data['attributes']);
-        }
-        echo '</h2>';
-        
-        echo $variation->get_price_html();
-        ?>
+<li class="product type-product product-variation">
+    <a href="<?php echo esc_url(add_query_arg('variation_id', $variation_id, get_permalink($parent_product->get_id()))); ?>" class="woocommerce-LoopProduct-link woocommerce-loop-product__link">
+        <?php echo $variation->get_image('woocommerce_thumbnail'); ?>
+        <h2 class="woocommerce-loop-product__title">
+            <?php 
+            echo $parent_product->get_title();
+            if ($variation_data['attributes']) {
+                echo ' - ' . implode(', ', $variation_data['attributes']);
+            }
+            ?>
+        </h2>
+        <span class="price"><?php echo $variation->get_price_html(); ?></span>
     </a>
 </li>
 <?php

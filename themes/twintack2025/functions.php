@@ -360,7 +360,7 @@ class TwinTack_Category_Display {
         if (!$variation_obj) return;
         
         echo '<div class="product-variation">';
-        echo '<a href="' . esc_url(add_query_arg('variation_id', $variation['variation_id'], get_permalink($product->get_id()))) . '">';
+        echo '<a class="product-variation-link" href="' . esc_url(add_query_arg('variation_id', $variation['variation_id'], get_permalink($product->get_id()))) . '">';
         echo wp_get_attachment_image($variation['image_id'], 'woocommerce_thumbnail');
         echo '<h2 class="woocommerce-loop-product__title">';
         echo esc_html($product->get_title());
