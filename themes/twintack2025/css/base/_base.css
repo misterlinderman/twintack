@@ -123,7 +123,7 @@
   /* Header Styling */
   .site-header {
     background: var(--secondary);
-    padding: 1rem 0;
+    /*padding: 1rem 0;*/
   }
   
   .site-branding {

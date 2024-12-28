@@ -9,6 +9,10 @@
     padding: 0.75rem 0;
 }
 
+.primary-menu-container li {
+    padding: 0 0 0 1em;
+}
+
 .primary-menu-container ul,
 .category-menu-container ul {
     display: flex;
@@ -111,7 +115,8 @@ nav#site-navigation ul {
     top: 0;
     width: 100%;
     z-index: 1000;
-    background: var(--light);
+    background: rgba(255, 255, 255, 0);
+    height: var(--nav-height);
 }
 
 .header-main .container {

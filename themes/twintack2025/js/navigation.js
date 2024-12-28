@@ -125,3 +125,53 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const header = document.querySelector('.site-header');
+    const navToggle = header.querySelector('.nav-toggle');
+    let lastScroll = 0;
+    const scrollThreshold = 100;
+
+    if (!header || !navToggle) return;
+
+    // Set header height variable
+    const headerHeight = header.offsetHeight;
+    document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+
+    // Toggle navigation
+    navToggle.addEventListener('click', () => {
+        const currentState = header.dataset.navState;
+        header.dataset.navState = currentState === 'closed' ? 'open' : 'closed';
+        navToggle.setAttribute('aria-expanded', currentState === 'closed');
+    });
+
+    // Handle scroll behavior
+    function handleScroll() {
+        const currentScroll = window.pageYOffset;
+        const isExpanded = header.dataset.navState === 'open';
+
+        // Don't hide header when nav is expanded
+        if (isExpanded) return;
+
+        // Add/remove scrolled class based on scroll position
+        if (currentScroll > scrollThreshold) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+
+        lastScroll = currentScroll;
+    }
+
+    // Throttle scroll event
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                handleScroll();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    });
+});
