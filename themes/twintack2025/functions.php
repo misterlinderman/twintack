@@ -24,7 +24,9 @@ require_once get_template_directory() . '/inc/class-twintack-role-pricing.php';
 require_once get_template_directory() . '/inc/class-twintack-custom-products.php';
 require_once get_template_directory() . '/inc/class-twintack-product-forms.php';
 require_once get_template_directory() . '/inc/class-category-customizer.php';
-require_once get_template_directory() . '/inc/header/class-header-configuration.php';
+require_once get_template_directory() . '/inc/header/class-header-configuration.php';//remove once marquee is working
+require_once get_template_directory() . '/inc/marquee/class-marquee-configuration.php';
+require_once get_template_directory() . '/inc/team/class-team-member.php';
 
 /**
  * Sets up theme defaults and registers support for various WordPress features.
@@ -378,3 +380,9 @@ class TwinTack_Category_Display {
 add_action('after_setup_theme', function() {
     TwinTack_Category_Display::get_instance();
 });
+
+function twintack_init_custom_types() {
+    TwinTack_Marquee_Configuration::get_instance();
+    TwinTack_Team_Member::get_instance();
+}
+add_action('after_setup_theme', 'twintack_init_custom_types');
