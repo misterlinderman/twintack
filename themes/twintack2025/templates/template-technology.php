@@ -12,6 +12,9 @@ if (have_rows('header_configuration')) {
 
 <div class="technology-content">
     <?php while (have_posts()) : the_post(); ?>
+        <div class="container">
+            <?php the_content(); ?>
+        </div>
         <?php get_template_part('template-parts/content', 'flexible'); ?>
     <?php endwhile; ?>
 </div>

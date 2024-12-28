@@ -1,6 +1,6 @@
 <?php
 /*
-Template Name: Partners
+Template Name: Story
 */
 
 get_header();
@@ -10,7 +10,7 @@ if (have_rows('header_configuration')) {
 }
 ?>
 
-<div class="partners-content">
+<div class="story-content">
     <?php while (have_posts()) : the_post(); ?>
         <div class="container">
             <?php the_content(); ?>
