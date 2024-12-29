@@ -39,6 +39,21 @@ section#hometeam {
     background-color: black;
 }
 
+section#homestory {
+    background-color: black;
+}
+
+section#htptech {
+    background-color: black;
+}
+
 section.layout-left, section.layout-right {
     padding: 60px 0;
+}
+
+/* Full Width Content */
+section.full-width-content.layout-full {
+    background-color: black;
+    color: white;
+    padding: 3em 2em 2em;
 }
