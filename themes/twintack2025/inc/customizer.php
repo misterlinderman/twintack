@@ -33,7 +33,7 @@ function twintack2025_customize_register( $wp_customize ) {
 	}
 
 	$wp_customize->add_section('header_marquee', array(
-		'title' => __('Header Marquee', 'twintack2025'),
+		'title' => __('Marquee Configuration', 'twintack2025'),
 		'priority' => 30,
 	));
 

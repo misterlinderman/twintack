@@ -12,7 +12,7 @@
 .site-marquee {
     position: relative;
     z-index: 1;
-    min-height: 600px;
+    min-height: 93vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -126,7 +126,7 @@ a.marquee-link {
 
 /* Base header styles */
 .site-header {
-    position: sticky;
+    /*position: sticky;*/
     top: 0;
     width: 100%;
     z-index: 1000;
@@ -317,9 +317,63 @@ a.marquee-link {
     top: 32px;
 }
 
-@media screen and (max-width: 782px) {
-    .admin-bar .site-header {
-        top: 46px;
+div.product-menu a.product-link {
+    padding: 8px 5px 5px 10px;
+    display: inline-block;
+    text-decoration: none;
+    color: white;
+}
+
+div.product-menu a.product-link:hover {
+    color: grey;
+}
+
+.corporate-nav, .category-nav {
+    padding: 0 20%;
+}
+
+.logo-container {
+    margin-left: 20%;
+}
+
+
+@media screen and (max-width: 1640px) {
+    .site-marquee {
+        min-height: 93vh;
+    }
+}
+
+@media screen and (max-width: 1450px) {
+    .site-marquee {
+        min-height: 800px;
+    }
+
+    .corporate-nav, .category-nav {
+        padding: 0 10%;
+    }
+
+    .logo-container {
+        margin-left: 10%;
+    }
+}
+
+@media screen and (max-width: 1100px) {
+    .site-marquee {
+        min-height: 620px;
+    }
+
+    .corporate-nav, .category-nav {
+        padding: 0 10%;
+    }
+
+    .logo-container {
+        margin-left: 10%;
+    }
+}
+
+@media screen and (max-width: 880px) {
+    .site-marquee {
+        min-height: 500px;
     }
 }
 
@@ -327,7 +381,12 @@ a.marquee-link {
     .admin-bar .site-header {
         top: 46px;
     }
+
+    .site-marquee {
+        min-height: 440px;
+    }
 }
+
 @media screen and (max-width: 600px) {
     .admin-bar .site-header.scrolled {
         top: 0;

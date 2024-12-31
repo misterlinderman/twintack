@@ -1,6 +1,6 @@
 <?php
 // Get the selected header configuration from a page
-$header_config = get_field('select_header_configuration');
+$header_config = get_field('select_marquee_configuration');
 
 if ($header_config) {
     // Get fields from the header configuration post
