@@ -43,18 +43,13 @@ if (in_array('parent-pageid-92', $body_classes)) {
 }
 
 if ($show_secondary_nav) : ?>
-    <div class="header-category-nav">
-        <div class="container">
-            <nav class="category-navigation">
-                <?php
-                wp_nav_menu(array(
-                    'theme_location' => $current_category,
-                    'menu_id' => $current_category . '-menu',
-                    'container_class' => 'category-menu-container',
-                    'fallback_cb' => false
-                ));
-                ?>
-            </nav>
-        </div>
-    </div>
+    <nav class="category-menu">
+        <?php
+        wp_nav_menu(array(
+            'theme_location' => $current_category,
+            'menu_class' => 'category-menu',
+            'container_class' => 'category-menu-container'
+        ));
+        ?>
+    </nav>
 <?php endif; ?> 

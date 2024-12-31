@@ -266,7 +266,7 @@ a.marquee-link {
 
 /* Category Navigation */
 .category-nav {
-    background: black;
+    /*background: black;*/
     color: white;
     height: var(--nav-height);
     display: flex;
