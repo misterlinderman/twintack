@@ -35,6 +35,32 @@ header#masthead {
     gap: 3px;
 }
 
+footer#colophon {
+    display: none;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Ensure form elements stay within bounds */
+.gform-theme--framework {
+    overflow-x: hidden;
+}
+
+/* Improve form spacing on mobile */
+@media (max-width: 768px) {
+    .iframe-form-content {
+        padding: 15px 0 0;
+    }
+    
+    .gform-theme--api, .gform-theme--foundation {
+        --gf-form-gap-y: 15px;
+        --gf-field-gap-y: 10px;
+    }
+}
+
 </style>
 
 <div class="iframe-form-content">
@@ -45,3 +71,5 @@ header#masthead {
         <?php get_template_part('template-parts/content', 'flexible'); ?>
     <?php endwhile; ?>
 </div>
+
+<?php get_footer(); ?> 
