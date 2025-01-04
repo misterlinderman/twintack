@@ -11,11 +11,13 @@ if (have_rows('header_configuration')) {
 } else {
     // Fallback to default product header
     get_template_part('template-parts/header/header', 'product');
-}
-
-while (have_posts()) :
+}?>
+<div class="container">
+<?php while (have_posts()) :
     the_post();
-    wc_get_template_part('content', 'single-product');
-endwhile;
-
+        wc_get_template_part('content', 'single-product');
+    endwhile;
+?>
+</div>
+<?php
 get_footer(); 

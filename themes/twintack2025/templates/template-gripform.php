@@ -49,6 +49,32 @@ img {
     overflow-x: hidden;
 }
 
+.gform-theme--api, .gform-theme--framework {
+    --gf-field-img-choice-size-md: 49%;
+}
+
+.gform-theme--framework .gfield--type-image_choice .gfield-choice-image {
+    inline-size: 170px;
+    max-block-size: 170px;
+    max-inline-size: 170px;
+    rotate: -90deg;
+}
+
+.gform-theme--api, .gform-theme--framework {
+    --gf-field-img-choice-size-md: 49%;
+}
+
+.gform-theme--framework .gfield--type-image_choice .gfield-image-choice-wrapper-outer {
+    display: block;
+    min-block-size: 100%;
+    padding-top: 0 !important;
+}
+
+.gfield-choice-image-wrapper {
+    width: 100%;
+    height: 130px;
+}
+
 /* Improve form spacing on mobile */
 @media (max-width: 768px) {
     .iframe-form-content {
