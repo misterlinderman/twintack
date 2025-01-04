@@ -281,6 +281,79 @@ a.marquee-link {
     transform: translateY(0%);
 }
 
+
+/* Top Level Page Navigation Modifications */
+header#masthead .container {
+    display: inherit;
+}
+
+.site-header .corporate-nav {
+    position: inherit;
+}
+
+.site-header .corporate-nav {
+    transform: translateY(-200%);
+}
+
+.site-header .category-nav {
+    transform: translateY(-200%);
+}
+
+.site-header[data-nav-state="open"] .corporate-nav {
+    transform: translateY(-100%);
+}
+
+.site-header[data-nav-state="open"] .category-nav {
+    transform: translateY(-100%);
+}
+
+body.home .site-header .corporate-nav,
+body.page-id-538 .site-header .corporate-nav,
+body.page-id-33 .site-header .corporate-nav,
+body.page-id-34 .site-header .corporate-nav,
+body.page-id-35 .site-header .corporate-nav,
+body.page-id-36 .site-header .corporate-nav {
+    transform: translateY(-100%);
+}
+
+body.home .nav-toggle,
+body.page-id-538 .nav-toggle,
+body.page-id-33 .nav-toggle,
+body.page-id-34 .nav-toggle,
+body.page-id-35 .nav-toggle,
+body.page-id-36 .nav-toggle {
+    display: none;
+}
+
+body.home .category-nav,
+body.page-id-538 .category-nav,
+body.page-id-33 .category-nav,
+body.page-id-34 .category-nav,
+body.page-id-35 .category-nav,
+body.page-id-36 .category-nav {
+    display: none;
+}
+
+header#masthead {
+    background-color: white;
+}
+
+body.home header#masthead,
+body.page-id-538 header#masthead,
+body.page-id-33 header#masthead,
+body.page-id-34 header#masthead,
+body.page-id-35 header#masthead,
+body.page-id-36 header#masthead {
+    background-color: white;
+}
+
+.category-nav {
+    background-color: white;
+    border-radius: 0 0 15px 15px;
+}
+
+
+
 /* Product Selector */
 .product-selector {
     position: relative;
@@ -289,8 +362,8 @@ a.marquee-link {
 
 .select-products {
     background: none;
-    border: 1px solid white;
-    color: white;
+    border: 1px solid black;
+    color: black;
     padding: 0.5rem 1rem;
     display: flex;
     align-items: center;
@@ -328,13 +401,14 @@ div.product-menu a.product-link:hover {
     color: grey;
 }
 
+/*
 .corporate-nav, .category-nav {
     padding: 0 20%;
 }
 
 .logo-container {
     margin-left: 20%;
-}
+}*/
 
 
 @media screen and (max-width: 1640px) {

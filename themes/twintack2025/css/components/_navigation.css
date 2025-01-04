@@ -97,6 +97,10 @@ header#masthead .container {
     align-items: center;
 }
 
+header#masthead .container {
+    display: inherit;
+}
+
 nav#site-navigation ul li a {
     color: var(--bs-gray-600);
     text-decoration: none;
