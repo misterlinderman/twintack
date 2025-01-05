@@ -473,3 +473,10 @@ function enqueue_product_gallery_scripts() {
     }
 }
 add_action('wp_enqueue_scripts', 'enqueue_product_gallery_scripts');
+
+function twintack_enqueue_lightbox_scripts() {
+    if (is_product()) {
+        wp_enqueue_script('twintack-product-lightbox', get_stylesheet_directory_uri() . '/js/product-lightbox.js', array('jquery', 'photoswipe-ui-default'), null, true);
+    }
+}
+add_action('wp_enqueue_scripts', 'twintack_enqueue_lightbox_scripts');

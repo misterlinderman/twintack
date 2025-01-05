@@ -28,9 +28,9 @@ jQuery(document).ready(function($) {
         $this.addClass('active');
 
         // Update the select dropdown if it exists
-        const color = $this.find('.variation-color').text();
-        if (color) {
-            $('select[data-attribute_name="attribute_pa_color"]').val(color.toLowerCase()).trigger('change');
+        const colorSlug = $this.data('color-slug');
+        if (colorSlug) {
+            $('select[data-attribute_name="attribute_pa_color"]').val(colorSlug).trigger('change');
         }
     });
 
