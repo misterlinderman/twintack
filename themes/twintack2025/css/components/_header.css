@@ -140,6 +140,21 @@ a.marquee-link {
     transition: transform 0.3s ease;
 }
 
+.custom-logo-link svg {
+    width: 240px;
+    /*height: 48px;  Matches your SVG's original height */
+    /*fill: currentColor;  This will allow you to change the color using color property */
+}
+
+/* Example of changing color on hover */
+.custom-logo-link:hover svg {
+    fill: white;
+}
+
+path#twintack-logo {
+    fill: white;
+}
+
 /* Category pages - hide main nav by default */
 .tax-product_cat .header-main,
 .single-product .header-main {
@@ -217,7 +232,7 @@ a.marquee-link {
 
 /* Corporate Navigation */
 .corporate-nav {
-    background: white;
+    background: black;
     height: var(--nav-height);
     display: flex;
     justify-content: space-between;
@@ -241,7 +256,7 @@ a.marquee-link {
     gap: 1rem;
     height: var(--nav-height);
     padding: 0 2rem;
-    background: white;
+    background: black;
     position: relative;
     z-index: 2;
     width: 240px;
@@ -267,7 +282,7 @@ a.marquee-link {
 /* Category Navigation */
 .category-nav {
     /*background: black;*/
-    color: white;
+    color: black;
     height: var(--nav-height);
     display: flex;
     justify-content: space-between;
@@ -335,7 +350,7 @@ body.page-id-36 .category-nav {
 }
 
 header#masthead {
-    background-color: white;
+    background-color: black;
 }
 
 body.home header#masthead,
@@ -344,11 +359,11 @@ body.page-id-33 header#masthead,
 body.page-id-34 header#masthead,
 body.page-id-35 header#masthead,
 body.page-id-36 header#masthead {
-    background-color: white;
+    background-color: black;
 }
 
 .category-nav {
-    background-color: white;
+    background-color: black;
     border-radius: 0 0 15px 15px;
 }
 
@@ -362,8 +377,8 @@ body.page-id-36 header#masthead {
 
 .select-products {
     background: none;
-    border: 1px solid black;
-    color: black;
+    border: 1px solid white;
+    color: white;
     padding: 0.5rem 1rem;
     display: flex;
     align-items: center;

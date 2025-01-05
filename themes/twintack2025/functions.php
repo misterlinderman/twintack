@@ -480,3 +480,24 @@ function twintack_enqueue_lightbox_scripts() {
     }
 }
 add_action('wp_enqueue_scripts', 'twintack_enqueue_lightbox_scripts');
+
+function custom_logo_svg() {
+    $custom_logo_id = get_theme_mod('custom_logo');
+    if ($custom_logo_id) {
+        $logo_url = wp_get_attachment_url($custom_logo_id);
+        
+        // Path to your SVG file in the theme directory
+        $svg_path = get_template_directory() . '/twintack-logo-1.svg';
+        
+        if (file_exists($svg_path)) {
+            $svg_content = file_get_contents($svg_path);
+            
+            return sprintf(
+                '<a href="%1$s" class="custom-logo-link" rel="home">%2$s</a>',
+                esc_url(home_url('/')),
+                $svg_content
+            );
+        }
+    }
+    return '';
+}

@@ -25,10 +25,10 @@
     <header id="masthead" class="site-header" data-nav-state="closed">
         <div class="container">
             <div class="logo-container">
-                <?php the_custom_logo(); ?>
+                <?php echo custom_logo_svg(); ?>
                 <button class="nav-toggle" aria-label="Toggle Navigation">
                     <svg class="nav-arrow" viewBox="0 0 24 24" width="24" height="24">
-                        <path d="M7 10l5 5 5-5H7z" fill="currentColor"/>
+                        <path d="M7 10l5 5 5-5H7z" fill="white"/>
                     </svg>
                 </button>
             </div>
