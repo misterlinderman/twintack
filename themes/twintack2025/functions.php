@@ -386,3 +386,90 @@ function twintack_init_custom_types() {
     TwinTack_Team_Member::get_instance();
 }
 add_action('after_setup_theme', 'twintack_init_custom_types');
+
+
+// Functionality for Product Tabs
+add_filter('woocommerce_product_tabs', 'custom_product_tabs', 98);
+function custom_product_tabs($tabs) {
+    // Rename Additional Information tab
+    if (isset($tabs['additional_information'])) {
+        $tabs['additional_information']['title'] = 'Specs';
+    }
+
+    // Optionally reorder tabs
+    $tabs['description']['priority'] = 10;
+    $tabs['additional_information']['priority'] = 20;
+    $tabs['reviews']['priority'] = 30;
+
+    return $tabs;
+}
+
+// Customize the Specs tab content
+add_filter('woocommerce_product_additional_information_heading', 'custom_specs_heading');
+function custom_specs_heading() {
+    return 'Product Specifications'; // Change or remove the heading
+}
+
+// Customize how attributes are displayed
+add_action('woocommerce_product_additional_information', 'custom_specs_content', 5);
+function custom_specs_content() {
+    global $product;
+    
+    // Get product attributes
+    $attributes = $product->get_attributes();
+    
+    // Define attributes to exclude
+    $excluded_attributes = array('weight', 'dimensions', 'pa_weight', 'pa_dimensions');
+    
+    
+}
+
+// Add to functions.php
+add_action('after_setup_theme', 'custom_theme_setup');
+function custom_theme_setup() {
+    // Add WooCommerce support
+    add_theme_support('woocommerce');
+    
+    // Add Product Gallery support
+    add_theme_support('wc-product-gallery-zoom');
+    add_theme_support('wc-product-gallery-lightbox');
+    add_theme_support('wc-product-gallery-slider');
+}
+
+add_action('wp_enqueue_scripts', 'custom_product_gallery_scripts');
+function custom_product_gallery_scripts() {
+    if (is_product()) {
+        wp_enqueue_script('flexslider');
+        wp_enqueue_script('zoom');
+        wp_enqueue_script('photoswipe');
+        wp_enqueue_script('photoswipe-ui-default');
+        
+        // Add your custom gallery script if needed
+        wp_enqueue_script('custom-product-gallery', get_template_directory_uri() . '/assets/js/product-gallery.js', array('jquery'), '1.0.0', true);
+    }
+}
+
+function enqueue_product_carousel_scripts() {
+    if (is_product()) {
+        // Enqueue Slick Slider CSS
+        wp_enqueue_style('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css');
+        wp_enqueue_style('slick-theme', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css');
+        
+        // Enqueue Slick Slider JS
+        wp_enqueue_script('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js', array('jquery'), null, true);
+        
+        // Enqueue custom carousel script
+        wp_enqueue_script('product-carousel', get_stylesheet_directory_uri() . '/js/product-carousel.js', array('jquery', 'slick'), null, true);
+    }
+}
+add_action('wp_enqueue_scripts', 'enqueue_product_carousel_scripts');
+
+function enqueue_product_gallery_scripts() {
+    if (is_product()) {
+        wp_enqueue_style('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css');
+        wp_enqueue_style('slick-theme', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css');
+        wp_enqueue_script('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js', array('jquery'), null, true);
+        wp_enqueue_script('product-carousel', get_stylesheet_directory_uri() . '/js/product-carousel.js', array('jquery', 'slick'), null, true);
+    }
+}
+add_action('wp_enqueue_scripts', 'enqueue_product_gallery_scripts');
