@@ -25,7 +25,7 @@ if ($terms) {
 ?>
 
 <li class="product type-product product-variation <?php echo esc_attr($category); ?>">
-    <a href="<?php echo esc_url(add_query_arg('variation_id', $variation_id, get_permalink($parent_product->get_id()))); ?>" class="woocommerce-LoopProduct-link woocommerce-loop-product__link">
+    <a href="<?php echo esc_url(add_query_arg(['variation_id' => $variation_id], get_permalink($parent_product->get_id()))); ?>" class="woocommerce-LoopProduct-link woocommerce-loop-product__link">
         <?php echo $variation->get_image('woocommerce_thumbnail'); ?>
         <h2 class="woocommerce-loop-product__title">
             <?php 
