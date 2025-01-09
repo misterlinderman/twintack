@@ -53,6 +53,16 @@
     color: var(--baseball-primary);
 }
 
+.baseball .category-menu-container a,
+.fishing .category-menu-container a {
+    color: white;
+}
+
+.baseball .category-menu-container a:hover,
+.fishing .category-menu-container a:hover {
+    color: var(--color);
+}
+
 .fishing .header-category-nav {
     background: var(--fishing-primary);
 }

@@ -56,3 +56,68 @@ tr.woocommerce-product-attributes-item.woocommerce-product-attributes-item--dime
     font-size: 12px;
     color: #666;
 }
+
+
+/* Product Page */
+
+div.product.type-product.product_cat-baseball,
+div.product.type-product.product_cat-fishing {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    justify-content: space-between;
+    align-items: center;
+}
+
+div.product.type-product.product_cat-baseball {
+    background-color: rgb(194, 199, 230);
+}
+
+div.product.type-product.product_cat-fishing {
+    background-color: rgb(199, 185, 185);
+}
+
+.summary.entry-summary {
+    background-color: antiquewhite;
+}
+
+.woocommerce-product-gallery.woocommerce-product-gallery--with-images.images {
+    background-color: lightcyan;
+}
+
+.woocommerce-tabs.wc-tabs-wrapper {
+    background-color: lightgoldenrodyellow;
+}
+
+section.related.products {
+    background-color: aquamarine;
+}
+
+.woocommerce-page div.product div.images {
+    float: none;
+    width: 48%;
+}
+
+.woocommerce-page div.product div.summary {
+    float: none;
+    width: 48%;
+}
+
+.woocommerce-page div.product .woocommerce-tabs {
+    background-color: lightgoldenrodyellow;
+    width: 48%;
+}
+
+/* Product Summary */
+
+.woocommerce div.product .product_title {
+    font-weight: 600;
+}
+
+.woocommerce:where(body:not(.woocommerce-uses-block-theme)) div.product p.price {
+    color: lightcoral;
+    letter-spacing: -1px;
+    font-size: 2em;
+    line-height: 1;
+}
