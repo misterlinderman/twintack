@@ -1,14 +1,17 @@
+/* Full Width Layout */
 section.layout-full {
     background-size: cover;
     background-position: center;
 }
 
+/* Content Layout */
 section.layout-full .callout-content {
     display: flex;
     flex-direction: column;
     width: 100%;
 }
 
+/* Wrapper Styles */
 section.layout-full .callout-wrapper {
     display: flex;
     justify-content: center;
@@ -17,11 +20,7 @@ section.layout-full .callout-wrapper {
     min-height: 450px;
 }
 
-section.layout-full .callout-content {
-    display: flex;
-    flex-direction: column;
-}
-
+/* Content Box Styling */
 section.layout-full .callout-content {
     display: flex;
     flex-direction: column;
@@ -31,23 +30,17 @@ section.layout-full .callout-content {
     width: 40%;
 }
 
-section#homepartners {
-    background-color: black;
-}
-
-section#hometeam {
-    background-color: black;
-}
-
-section#homestory {
-    background-color: black;
-}
-
+/* Section Background Colors */
+section#homepartners,
+section#hometeam,
+section#homestory,
 section#htptech {
     background-color: black;
 }
 
-section.layout-left, section.layout-right {
+/* Layout Spacing */
+section.layout-left,
+section.layout-right {
     padding: 60px 0;
 }
 
