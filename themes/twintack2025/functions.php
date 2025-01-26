@@ -82,12 +82,16 @@ function twintack2025_setup() {
 	add_theme_support('wc-product-gallery-lightbox');
 	add_theme_support('wc-product-gallery-slider');
 	
-	// Register nav menus
+	// Update navigation menus
 	register_nav_menus(array(
-		'primary' => esc_html__('Primary Menu', 'twintack2025'),
-		'baseball' => esc_html__('Baseball Menu', 'twintack2025'),
-		'fishing' => esc_html__('Fishing Menu', 'twintack2025')
+		'primary' => esc_html__('Main Menu', 'twintack2025'),
+		'sport' => esc_html__('Sport Menu', 'twintack2025'),
+		'product' => esc_html__('Product Menu', 'twintack2025')
 	));
+
+	// Remove old menu registrations
+	remove_theme_support('baseball');
+	remove_theme_support('fishing');
 
 	// Custom image sizes
 	add_image_size('product-variant-thumb', 300, 300, true);
@@ -124,6 +128,14 @@ add_action( 'widgets_init', 'twintack2025_widgets_init' );
  * Enqueue scripts and styles
  */
 function twintack2025_scripts() {
+	// Add Archivo Google Font
+	wp_enqueue_style(
+		'archivo-font',
+		'https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap',
+		array(),
+		null
+	);
+
 	// Bootstrap
 	wp_enqueue_style(
 		'bootstrap',
@@ -254,7 +266,38 @@ add_filter('body_class', 'twintack_category_body_class');
  */
 function twintack_load_menu_classes() {
     require_once get_template_directory() . '/inc/class-menu-configuration.php';
-    Menu_Configuration::get_instance();
+    
+    class TwinTack_Menu_Configuration {
+        private static $instance = null;
+        
+        public static function get_instance() {
+            if (null === self::$instance) {
+                self::$instance = new self();
+            }
+            return self::$instance;
+        }
+        
+        private function __construct() {
+            add_filter('nav_menu_css_class', array($this, 'add_menu_item_classes'), 10, 4);
+            add_filter('nav_menu_link_attributes', array($this, 'add_menu_link_attributes'), 10, 4);
+        }
+        
+        public function add_menu_item_classes($classes, $item, $args, $depth) {
+            if ('sport' === $args->theme_location) {
+                $classes[] = 'sport-menu-item';
+            }
+            return $classes;
+        }
+        
+        public function add_menu_link_attributes($atts, $item, $args, $depth) {
+            if ('sport' === $args->theme_location) {
+                $atts['class'] = isset($atts['class']) ? $atts['class'] . ' sport-menu-link' : 'sport-menu-link';
+            }
+            return $atts;
+        }
+    }
+    
+    TwinTack_Menu_Configuration::get_instance();
 }
 add_action('after_setup_theme', 'twintack_load_menu_classes');
 
@@ -487,7 +530,7 @@ function custom_logo_svg() {
         $logo_url = wp_get_attachment_url($custom_logo_id);
         
         // Path to your SVG file in the theme directory
-        $svg_path = get_template_directory() . '/twintack-logo-1.svg';
+        $svg_path = get_template_directory() . '/twintack-logo-2.svg';
         
         if (file_exists($svg_path)) {
             $svg_content = file_get_contents($svg_path);

@@ -20,3 +20,39 @@ ul#primary-menu {
     flex-wrap: nowrap;
     flex-direction: row;
 }
+
+:root {
+    /* Typography */
+    --font-primary: 'Archivo', sans-serif;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-bold: 700;
+}
+
+/* Apply font family site-wide */
+body {
+    font-family: var(--font-primary);
+    font-weight: var(--font-weight-regular);
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Navigation */
+.nav-panels,
+.primary-menu-container,
+.sport-menu-container,
+.product-menu {
+    font-family: var(--font-primary);
+}
+
+/* Buttons */
+button,
+.button,
+.wp-element-button {
+    font-family: var(--font-primary);
+    font-weight: var(--font-weight-medium);
+}
