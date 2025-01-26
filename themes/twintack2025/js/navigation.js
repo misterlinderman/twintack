@@ -180,8 +180,49 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', () => {
     const header = document.querySelector('.site-header');
     const navToggle = header.querySelector('.nav-toggle');
+    const headerControls = header.querySelector('.header-controls');
     
     if (!header || !navToggle) return;
+
+    // Color contrast detection function
+    function getContrastYIQ(r, g, b) {
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return yiq >= 128 ? 'light' : 'dark';
+    }
+
+    // Function to update navigation contrast
+    function updateNavigationContrast() {
+        if (!headerControls) return;
+
+        const elementAtPoint = document.elementFromPoint(
+            headerControls.offsetLeft + (headerControls.offsetWidth / 2),
+            headerControls.offsetTop + (headerControls.offsetHeight / 2)
+        );
+
+        if (elementAtPoint) {
+            const bgColor = window.getComputedStyle(elementAtPoint).backgroundColor;
+            const rgb = bgColor.match(/\d+/g);
+            
+            if (rgb && rgb.length >= 3) {
+                const contrast = getContrastYIQ(
+                    parseInt(rgb[0]), 
+                    parseInt(rgb[1]), 
+                    parseInt(rgb[2])
+                );
+                
+                header.dataset.contrast = contrast;
+            }
+        }
+    }
+
+    // Update contrast on scroll and load
+    window.addEventListener('scroll', () => {
+        if (header.dataset.navState !== 'open') {
+            updateNavigationContrast();
+        }
+    });
+    
+    window.addEventListener('load', updateNavigationContrast);
 
     // Toggle navigation
     navToggle.addEventListener('click', () => {
@@ -189,6 +230,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const newState = currentState === 'closed' ? 'open' : 'closed';
         header.dataset.navState = newState;
         navToggle.setAttribute('aria-expanded', newState === 'open');
+        
+        // Set contrast to dark when nav is open
+        header.dataset.contrast = newState === 'open' ? 'dark' : updateNavigationContrast();
         
         // Prevent body scroll when nav is open
         document.body.style.overflow = newState === 'open' ? 'hidden' : '';
