@@ -194,65 +194,55 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateNavigationContrast() {
         if (!headerControls) return;
 
-        const elementAtPoint = document.elementFromPoint(
-            headerControls.offsetLeft + (headerControls.offsetWidth / 2),
-            headerControls.offsetTop + (headerControls.offsetHeight / 2)
-        );
-
-        if (elementAtPoint) {
-            const bgColor = window.getComputedStyle(elementAtPoint).backgroundColor;
-            const rgb = bgColor.match(/\d+/g);
-            
-            if (rgb && rgb.length >= 3) {
-                const contrast = getContrastYIQ(
-                    parseInt(rgb[0]), 
-                    parseInt(rgb[1]), 
-                    parseInt(rgb[2])
-                );
+        const rect = headerControls.getBoundingClientRect();
+        const x = rect.left + (rect.width / 2);
+        const y = rect.top + (rect.height / 2);
+        
+        const elements = document.elementsFromPoint(x, y);
+        let bgColor = 'rgba(0, 0, 0, 0)';
+        
+        // Find the first non-transparent background, excluding header elements
+        for (const element of elements) {
+            if (!header.contains(element)) {
+                const computedStyle = window.getComputedStyle(element);
+                bgColor = computedStyle.backgroundColor;
                 
-                header.dataset.contrast = contrast;
+                if (bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+                    break;
+                }
             }
+        }
+
+        const rgb = bgColor.match(/\d+/g);
+        if (rgb && rgb.length >= 3) {
+            const contrast = getContrastYIQ(
+                parseInt(rgb[0]), 
+                parseInt(rgb[1]), 
+                parseInt(rgb[2])
+            );
+            header.dataset.contrast = contrast;
+        } else {
+            header.dataset.contrast = 'light';
         }
     }
 
-    // Update contrast on scroll and load
-    window.addEventListener('scroll', () => {
-        if (header.dataset.navState !== 'open') {
-            updateNavigationContrast();
-        }
-    });
-    
-    window.addEventListener('load', updateNavigationContrast);
-
     // Toggle navigation
     navToggle.addEventListener('click', () => {
-        const currentState = header.dataset.navState;
+        const currentState = header.dataset.navState || 'closed';
         const newState = currentState === 'closed' ? 'open' : 'closed';
         header.dataset.navState = newState;
         navToggle.setAttribute('aria-expanded', newState === 'open');
         
-        // Set contrast to dark when nav is open
-        header.dataset.contrast = newState === 'open' ? 'dark' : updateNavigationContrast();
-        
-        // Prevent body scroll when nav is open
-        document.body.style.overflow = newState === 'open' ? 'hidden' : '';
-    });
-
-    // Close navigation when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!header.contains(e.target) && header.dataset.navState === 'open') {
-            header.dataset.navState = 'closed';
-            navToggle.setAttribute('aria-expanded', 'false');
-            document.body.style.overflow = '';
+        if (newState === 'open') {
+            header.dataset.contrast = 'dark';
+        } else {
+            // Force immediate contrast check when closing
+            requestAnimationFrame(() => {
+                updateNavigationContrast();
+            });
         }
     });
 
-    // Handle escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && header.dataset.navState === 'open') {
-            header.dataset.navState = 'closed';
-            navToggle.setAttribute('aria-expanded', 'false');
-            document.body.style.overflow = '';
-        }
-    });
+    // Initial contrast check
+    updateNavigationContrast();
 });

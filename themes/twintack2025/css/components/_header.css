@@ -5,7 +5,6 @@
     left: 0;
     width: 100%;
     z-index: 1000;
-    transition: transform 0.3s ease;
 }
 
 /* Marquee styles */
@@ -134,18 +133,17 @@ a.marquee-link {
     z-index: 1000;
     background-color: transparent;
     padding: 1.4em;
-    transition: transform 0.3s ease;
 }
 
 /* Main Navigation */
 .header-main {
     background: var(--light);
     border-bottom: 1px solid var(--gray);
-    transition: transform 0.3s ease;
 }
 
 .custom-logo-link svg {
     width: 240px;
+    transition: fill 0.3s ease;
 }
 
 /* Example of changing color on hover */
@@ -224,7 +222,6 @@ a.marquee-link {
     width: 100%;
     z-index: 1000;
     background-color: transparent;
-    transition: background-color 0.3s ease;
 }
 
 /* Header Controls */
@@ -235,7 +232,7 @@ a.marquee-link {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 320px;
+    width: 340px;
     padding: 1.5rem;
     z-index: 1001;
 }
@@ -245,16 +242,32 @@ a.marquee-link {
     display: block;
 }
 
-/* Contrast Variations for Logo */
-.site-header[data-contrast="light"] .custom-logo-link svg {
-    fill: black;
+.custom-logo-link svg {
+    transition: fill 0.3s ease;
 }
 
-.site-header[data-contrast="dark"] .custom-logo-link svg,
-.site-header .custom-logo-link svg {
-    fill: white;
-    height: 30px;
-    width: auto;
+/* Toggle Lines */
+.toggle-line {
+    transition: background-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+    width: 100%;
+    height: 6px;
+}
+
+/* Contrast Variations */
+.site-header[data-contrast="light"] .custom-logo-link svg {
+    fill: black !important;
+}
+
+.site-header[data-contrast="dark"] .custom-logo-link svg {
+    fill: white !important;
+}
+
+.site-header[data-contrast="light"] .toggle-line {
+    background-color: black !important;
+}
+
+.site-header[data-contrast="dark"] .toggle-line {
+    background-color: white !important;
 }
 
 /* Navigation Toggle */
@@ -270,27 +283,14 @@ a.marquee-link {
     cursor: pointer;
 }
 
-/* Contrast Variations for Toggle Lines */
-.site-header[data-contrast="light"] .toggle-line {
-    background-color: black;
-}
-
-.site-header[data-contrast="dark"] .toggle-line,
-.site-header .toggle-line {
-    background-color: white;
-    width: 100%;
-    height: 6px;
-    transition: transform 0.3s ease;
-}
-
 /* Navigation Panel */
 .nav-panels {
     position: fixed;
     top: 0;
     left: 0;
-    width: 320px;
+    width: 340px;
     height: 100vh;
-    padding: calc(30px + 5rem) 1.5rem 1.5rem;
+    padding: calc(30px + 5.5rem) 1.5rem 1.5rem 2.5rem;
     background-color: black;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
@@ -359,7 +359,7 @@ a.marquee-link {
 /* Desktop Styles */
 @media (min-width: 768px) {
     .nav-panels {
-        width: 320px;
+        width: 340px;
     }
 }
 
@@ -612,7 +612,7 @@ div.product-menu a.product-link:hover {
 /* Desktop Styles */
 @media (min-width: 768px) {
     .nav-panels {
-        width: 320px;
+        width: 340px;
         height: calc(100vh);
         transform: translateX(-100%);
         transition: transform 0.3s ease;
@@ -635,11 +635,25 @@ div.product-menu a.product-link:hover {
     }
 }
 
-/* Always use dark contrast when nav is open */
-.site-header[data-nav-state="open"] .custom-logo-link svg {
-    fill: white;
+/* Update contrast variations */
+.site-header[data-contrast="light"] .custom-logo-link svg {
+    fill: black !important;
 }
 
-.site-header[data-nav-state="open"] .toggle-line {
-    background-color: white;
+.site-header[data-contrast="dark"] .custom-logo-link svg {
+    fill: white !important;
+}
+
+.site-header[data-contrast="light"] .toggle-line {
+    background-color: black !important;
+}
+
+.site-header[data-contrast="dark"] .toggle-line {
+    background-color: white !important;
+}
+
+/* Add transitions */
+.custom-logo-link svg,
+.toggle-line {
+    transition: fill 0.3s ease, background-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
 }
