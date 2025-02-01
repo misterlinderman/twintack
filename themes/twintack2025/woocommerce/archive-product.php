@@ -1,20 +1,14 @@
-<?php
-/**
- * The Template for displaying products in a product category.
- */
-
-if (!defined('ABSPATH')) {
-    exit;
-}
-
-get_header();
+<?php get_header(); ?>
 
 <div class="page-wrapper">
     <main class="main">
         <?php if ( apply_filters( 'woocommerce_show_page_title', true ) ) : ?>
-            <div class="category-hero <?php echo esc_attr($current_category); ?>">
+            <div class="category-hero <?php echo esc_attr( wc_get_loop_class() ); ?>">
                 <div class="container">
-                    <h1 class="woocommerce-products-header__title page-title"><?php woocommerce_page_title(); ?></h1>
+                    <h1 class="woocommerce-products-header__title page-title">
+                        <?php woocommerce_page_title(); ?>
+                    </h1>
+                    <?php do_action( 'woocommerce_archive_description' ); ?>
                 </div>
             </div>
         <?php endif; ?>
@@ -23,18 +17,19 @@ get_header();
             <?php
             if ( woocommerce_product_loop() ) {
                 do_action( 'woocommerce_before_shop_loop' );
-                woocommerce_product_loop_start();
-                
-                if ( wc_get_loop_prop( 'total' ) ) {
+                ?>
+                <div class="products-grid">
+                    <?php
                     while ( have_posts() ) {
                         the_post();
-                        do_action( 'woocommerce_shop_loop' );
                         wc_get_template_part( 'content', 'product' );
                     }
-                }
-                
-                woocommerce_product_loop_end();
+                    ?>
+                </div>
+                <?php
                 do_action( 'woocommerce_after_shop_loop' );
+            } else {
+                do_action( 'woocommerce_no_products_found' );
             }
             ?>
         </div>
