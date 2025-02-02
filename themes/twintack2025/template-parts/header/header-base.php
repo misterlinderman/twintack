@@ -75,9 +75,11 @@
                         <a href="/contact">CONTACT</a>
                         <a href="/my-account">MY ACCOUNT</a>
                         <a href="/cart">CART</a>
+                        <a href="/temp-all-links/">TEMP ALL LINKS</a>
                     </nav>
                 </div>
             </div>
+
         </div>
     </header>
 
