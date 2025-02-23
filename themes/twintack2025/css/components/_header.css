@@ -342,9 +342,14 @@ a.marquee-link {
 }
 
 .sport-icon svg {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 0.5rem;
+    width: 100%;
+    height: 100%;
+    margin-bottom: -0.4em;
+}
+
+g#fishing, g#baseball {
+    fill: white;
+    width: 100%;
 }
 
 /* Navigation Links */
@@ -353,7 +358,7 @@ a.marquee-link {
     color: var(--color-white);
     text-decoration: none;
     font-size: 1.25rem;
-    padding: 0.5rem 0;
+    padding: 0 0 2.5rem 0;
 }
 
 /* Desktop Styles */

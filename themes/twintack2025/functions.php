@@ -530,7 +530,7 @@ function custom_logo_svg() {
         $logo_url = wp_get_attachment_url($custom_logo_id);
         
         // Path to your SVG file in the theme directory
-        $svg_path = get_template_directory() . '/twintack-logo-2.svg';
+        $svg_path = get_template_directory() . '/twintack-logo-1.svg';
         
         if (file_exists($svg_path)) {
             $svg_content = file_get_contents($svg_path);
