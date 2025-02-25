@@ -134,6 +134,45 @@
     color: grey;
 }
 
+/* Sport Icons */
+.sport-icons span {
+    margin: 1rem 0 0.5rem;
+    display: inline-block;
+}
+
+a.sport-icon {
+    text-align: center;
+}
+
+/* Navigation Sections */
+.nav-section a {
+    display: block;
+    color: var(--color-white);
+    text-decoration: none;
+    font-size: 1.25rem;
+    padding: 0 0 0.5rem 0;
+}
+
+/* Navigation Panels */
+.nav-panels h2 {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 900;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    font-style: italic;
+}
+
+/* Product Navigation */
+.product-nav {
+    padding: 0rem 2rem 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.main-nav {
+    padding: 1rem 2rem;
+}
+
 /* Responsive Navigation */
 @media (max-width: 991px) {
     .main-navigation {

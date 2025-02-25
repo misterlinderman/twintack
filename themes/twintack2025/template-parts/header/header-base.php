@@ -21,7 +21,7 @@
     <a class="skip-link screen-reader-text" href="#primary">
         <?php esc_html_e('Skip to content', 'twintack2025'); ?>
     </a>
-
+    <?php do_action('twintack_before_page_content'); ?>
     <header id="masthead" class="site-header" data-nav-state="closed">
         <div class="header-container">
             <!-- Logo and Toggle Container -->
