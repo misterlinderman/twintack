@@ -121,6 +121,20 @@ Before submitting changes:
 3. Update version numbers according to [Semantic Versioning](https://semver.org/)
 4. Update the FEATURES.md document with any feature changes
 
+### Common Git Commands
+
+Here are some useful Git commands for managing your work:
+
+#### Reset Working Directory
+To completely reset your working directory to the last commit and remove all changes:
+```bash
+# Reset tracked files to last commit
+git reset --hard HEAD
+
+# Remove all untracked files and directories
+git clean -fd
+```
+
 ## Documentation
 
 1. Update documentation when adding or modifying features
