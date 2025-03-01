@@ -13,6 +13,9 @@ Detailed documentation of the theme's directory structure and the purpose of eac
 ### [Features](FEATURES.md)
 A catalog of the theme's features, including implementation details and status tracking.
 
+### [Unified Login System](UNIFIED_LOGIN_SYSTEM.md)
+Detailed documentation of the unified login system, including implementation, usage, and customization.
+
 ### [Development Guide](DEVELOPMENT_GUIDE.md)
 Guidelines and best practices for developing and modifying the TwinTack theme.
 
