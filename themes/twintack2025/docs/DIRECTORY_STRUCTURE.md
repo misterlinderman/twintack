@@ -2,6 +2,15 @@
 
 This document provides a detailed overview of the TwinTack theme's directory structure and the purpose of each component.
 
+## Project Root
+
+The root of the project contains the following key directories:
+
+- `themes/` - WordPress themes
+  - `twintack2025/` - Main TwinTack theme (active)
+- `plugins/` - WordPress plugins
+- `claude notes/` - Reference files from Claude conversations for guiding feature expansions and layout modifications
+
 ## Root Directory
 
 The root of the `twintack2025` theme contains the following key files:

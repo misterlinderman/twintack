@@ -128,6 +128,32 @@ Before submitting changes:
 3. Keep the README.md file up to date
 4. Document any non-obvious code with inline comments
 
+## Using Claude Notes for Development
+
+The project includes a `claude notes` directory at the root level that contains valuable reference materials from AI conversations. These notes should be used as follows:
+
+1. **Before starting development**:
+   - Check the Claude notes directory for relevant discussions about the feature you're working on
+   - Review design decisions and implementation guidance documented in these notes
+
+2. **During development**:
+   - Reference the notes for specific implementation details
+   - Follow the patterns and approaches discussed in the notes for consistency
+
+3. **After completing development**:
+   - Consider adding new notes if you've had significant conversations about the feature
+   - Update existing notes if your implementation differs from what was originally discussed
+
+4. **For troubleshooting**:
+   - Check if similar issues were addressed in previous conversations
+   - Use the solutions documented in the notes as a starting point
+
+5. **For feature extensions**:
+   - Review notes about the original feature implementation
+   - Ensure extensions align with the original design intent
+
+For more detailed information about the Claude notes, refer to the [Claude Notes Reference](CLAUDE_NOTES.md) document.
+
 ---
 
 *This document provides guidelines for developing and modifying the TwinTack theme. Following these guidelines will help maintain code quality and consistency throughout the project.* 

@@ -10,6 +10,9 @@ Comprehensive documentation for this theme is available in the [docs](./docs) di
 - [Directory Structure](./docs/DIRECTORY_STRUCTURE.md) - Theme structure and organization
 - [Features](./docs/FEATURES.md) - Catalog of theme features
 - [Development Guide](./docs/DEVELOPMENT_GUIDE.md) - Guidelines for development
+- [Claude Notes Reference](./docs/CLAUDE_NOTES.md) - Information about using AI conversation exports as development references
+
+Additionally, the project includes a `claude notes` directory at the root level containing reference files from Claude conversations that provide valuable context for feature development and layout decisions.
 
 ## Original Theme Information
 

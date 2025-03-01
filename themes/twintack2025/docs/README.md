@@ -16,6 +16,9 @@ A catalog of the theme's features, including implementation details and status t
 ### [Development Guide](DEVELOPMENT_GUIDE.md)
 Guidelines and best practices for developing and modifying the TwinTack theme.
 
+### [Claude Notes Reference](CLAUDE_NOTES.md)
+Information about the Claude notes directory and how to use these AI conversation exports as reference for development.
+
 ## Using This Documentation
 
 This documentation is designed to be a living resource that grows and evolves with the project. When making changes to the theme:
@@ -23,6 +26,7 @@ This documentation is designed to be a living resource that grows and evolves wi
 1. **Consult the documentation first** to understand the existing structure and patterns
 2. **Update the documentation** when adding or modifying features
 3. **Reference the documentation** in commit messages and pull requests
+4. **Check Claude notes** for additional context on implementation decisions
 
 ## Documentation Maintenance
 
@@ -31,6 +35,7 @@ To keep this documentation valuable and up-to-date:
 - Update the [Features](FEATURES.md) document when adding, modifying, or removing features
 - Update the [Directory Structure](DIRECTORY_STRUCTURE.md) document when adding new directories or significant files
 - Update the [Development Guide](DEVELOPMENT_GUIDE.md) when establishing new development patterns or requirements
+- Add relevant conversation exports to the Claude notes directory and reference them in documentation
 
 ## Contributing to Documentation
 
@@ -41,6 +46,7 @@ When contributing to this documentation:
 3. Include examples where helpful
 4. Keep formatting consistent
 5. Link between documents where appropriate
+6. Cross-reference with Claude notes when relevant
 
 ---
 
