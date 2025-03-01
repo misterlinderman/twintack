@@ -4,6 +4,28 @@ This document catalogs the features of the TwinTack theme, serving as both docum
 
 ## Core Features
 
+### Unified Login System
+
+**Description**: A centralized login experience for all user types (regular customers, wholesale buyers, and affiliate partners) with role-based redirects and user type selection.
+
+**Implementation**:
+- Custom login page template (`templates/template-login.php`)
+- Login form template part (`template-parts/account/login-form.php`)
+- Registration form template part (`template-parts/account/register-form.php`)
+- User type selector component (`template-parts/account/user-type-selector.php`)
+- Login URL filters and redirects in functions.php
+- Role-based authentication and redirection
+
+**Status**: Implemented
+
+**Usage**:
+- Create a WordPress page with the slug "login"
+- The system automatically redirects all login attempts to this unified page
+- Users are redirected to appropriate dashboards based on their roles after login
+- New users can select their account type during registration
+
+---
+
 ### Dual-Category Product Display
 
 **Description**: Products are displayed with category-specific information for both baseball and fishing contexts.
@@ -115,6 +137,13 @@ This document catalogs the features of the TwinTack theme, serving as both docum
 ---
 
 ## Feature Changelog
+
+### [Date: 03/01/2024] - Unified Login System Added
+
+- Implemented unified login system for all user types
+- Added user type selection for login and registration
+- Implemented role-based redirects after login
+- Added custom login page template and form components
 
 ### [Date: MM/DD/YYYY] - Initial Release
 

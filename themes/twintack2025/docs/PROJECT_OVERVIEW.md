@@ -11,6 +11,7 @@ TwinTack is a specialized WordPress theme designed to showcase and sell dual-pur
 3. **Modern Design**: Deliver a clean, responsive, and user-friendly interface.
 4. **Performance Optimization**: Ensure fast loading times and smooth user experience.
 5. **Custom Product Presentation**: Display products with category-specific information and imagery.
+6. **Unified User Experience**: Provide a seamless login and account management system for all user types.
 
 ## Key Components
 
@@ -22,6 +23,7 @@ The TwinTack theme is built on a modern WordPress architecture with the followin
 - **WooCommerce Integration**: Enhanced product displays with custom fields and category-specific views
 - **Component-Based Structure**: Modular design with reusable components in template-parts
 - **Class-Based Functionality**: Object-oriented approach to theme functionality
+- **Unified Login System**: Centralized login experience for customers, wholesale buyers, and affiliate partners
 
 ### Technology Stack
 
@@ -31,6 +33,7 @@ The TwinTack theme is built on a modern WordPress architecture with the followin
 - **JavaScript/jQuery**: Client-side interactivity
 - **CSS/SASS**: Styling with preprocessor support
 - **SVG Graphics**: Vector graphics for logos and icons
+- **Bootstrap**: Frontend framework for responsive design
 
 ## Brand Identity
 
@@ -47,6 +50,16 @@ TwinTack's brand identity revolves around the innovative dual-purpose nature of 
 - Value-conscious consumers looking for multi-purpose equipment
 - Coaches and teams seeking quality equipment
 - Fishing enthusiasts looking for specialized tackle
+- Wholesale buyers and affiliate partners
+
+## User Roles and Access
+
+The TwinTack theme supports multiple user types with different access levels:
+
+- **Regular Customers**: Standard WooCommerce shopping experience
+- **Wholesale Buyers**: Access to wholesale pricing and bulk ordering
+- **Affiliate Partners**: Access to affiliate marketing tools and resources
+- **Administrators**: Full site management capabilities
 
 ## Future Development
 
@@ -57,6 +70,7 @@ The TwinTack theme is designed to be extensible, allowing for:
 - Improved user personalization
 - Performance optimizations
 - Additional e-commerce features
+- Enhanced user role management
 
 ---
 
