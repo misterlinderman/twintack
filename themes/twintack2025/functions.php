@@ -544,3 +544,219 @@ function custom_logo_svg() {
     }
     return '';
 }
+
+/**
+ * TwinTack Unified Login System
+ * 
+ * Handles the unified login experience for WooCommerce, Wholesale, and Affiliate users.
+ */
+
+// Redirect all login URLs to the unified login page
+function twintack_login_url_filter( $login_url, $redirect = '' ) {
+    // Don't modify the URL if we're already on the login page
+    // This prevents redirect loops
+    if ( is_page( 'login' ) ) {
+        return $login_url;
+    }
+    
+    // Add the redirect parameter if provided
+    $url = site_url( '/login/' );
+    if ( ! empty( $redirect ) ) {
+        $url = add_query_arg( 'redirect_to', urlencode( $redirect ), $url );
+    }
+    return $url;
+}
+
+// Apply the filter to various login URL hooks
+add_filter( 'woocommerce_get_myaccount_page_permalink', 'twintack_login_url_filter', 10, 1 );
+add_filter( 'login_url', 'twintack_login_url_filter', 10, 2 );
+add_filter( 'woocommerce_login_url', 'twintack_login_url_filter', 10, 2 );
+
+// If you're using a wholesale plugin, add its filter (adjust as needed)
+add_filter( 'wholesale_login_url', 'twintack_login_url_filter', 10, 2 );
+
+// If you're using an affiliate plugin, add its filter (adjust as needed)
+add_filter( 'affiliate_login_url', 'twintack_login_url_filter', 10, 2 );
+
+// Customize the WordPress login page
+function twintack_custom_login() {
+    // Only redirect non-admin login attempts to our custom login page
+    // Check if we're on the login page but not performing a specific action
+    if ( ! isset( $_GET['action'] ) || 
+         ( $_GET['action'] !== 'login' && 
+           $_GET['action'] !== 'logout' && 
+           $_GET['action'] !== 'lostpassword' && 
+           $_GET['action'] !== 'rp' && 
+           $_GET['action'] !== 'resetpass' ) 
+    ) {
+        // Make sure we're on the login page and not already on our custom login page
+        if ( strpos( $_SERVER['REQUEST_URI'], '/wp-login.php' ) !== false && 
+             ! isset( $_REQUEST['interim-login'] ) && 
+             ! is_user_logged_in() && 
+             ! strpos( $_SERVER['PHP_SELF'], 'wp-admin' ) &&
+             ! isset( $_GET['redirect_to'] ) // Don't redirect if there's already a redirect parameter
+        ) {
+            wp_safe_redirect( site_url( '/login/' ) );
+            exit;
+        }
+    }
+    
+    // Customize the login page appearance
+    echo '<style type="text/css">
+        body.login {
+            background-color: #f1f1f1;
+        }
+        .login h1 a {
+            background-image: url(' . get_stylesheet_directory_uri() . '/assets/images/logo.png);
+            width: 320px;
+            background-size: contain;
+        }
+    </style>';
+}
+add_action( 'login_enqueue_scripts', 'twintack_custom_login' );
+add_action( 'login_head', 'twintack_custom_login' );
+
+// Change login logo URL
+function twintack_login_logo_url() {
+    return home_url();
+}
+add_filter( 'login_headerurl', 'twintack_login_logo_url' );
+
+// Handle role-based login redirects
+function twintack_login_redirect( $redirect, $user ) {
+    // If there's a specific redirect_to parameter and it's a valid URL, use it
+    if ( isset( $_REQUEST['redirect_to'] ) && ! empty( $_REQUEST['redirect_to'] ) ) {
+        $redirect_to = $_REQUEST['redirect_to'];
+        // Make sure it's a safe URL (on the same domain)
+        if ( wp_validate_redirect( $redirect_to ) ) {
+            return $redirect_to;
+        }
+    }
+    
+    // Get the user's role
+    $user_roles = $user->roles;
+    
+    // Redirect based on user role
+    if ( in_array( 'wholesale_customer', $user_roles ) ) {
+        return apply_filters( 'twintack_wholesale_dashboard_url', site_url( '/wholesale-dashboard/' ) );
+    } elseif ( in_array( 'affiliate', $user_roles ) ) {
+        return apply_filters( 'twintack_affiliate_dashboard_url', site_url( '/affiliate-dashboard/' ) );
+    } elseif ( in_array( 'administrator', $user_roles ) ) {
+        return admin_url();
+    } else {
+        // Regular customers go to the WooCommerce my account page
+        return wc_get_page_permalink( 'myaccount' );
+    }
+}
+add_filter( 'login_redirect', 'twintack_login_redirect', 10, 2 );
+add_filter( 'woocommerce_login_redirect', 'twintack_login_redirect', 10, 2 );
+
+// Process the user type selection during registration
+function twintack_process_registration( $customer_id, $new_customer_data, $password_generated ) {
+    // Check if account_type was submitted
+    if ( isset( $_POST['account_type'] ) ) {
+        $account_type = sanitize_text_field( $_POST['account_type'] );
+        
+        // Assign the appropriate role based on account type
+        $user = new WP_User( $customer_id );
+        
+        switch ( $account_type ) {
+            case 'wholesale':
+                // Remove the default role
+                $user->remove_role( 'customer' );
+                // Add the wholesale role
+                $user->add_role( 'wholesale_customer' );
+                break;
+                
+            case 'affiliate':
+                // Remove the default role
+                $user->remove_role( 'customer' );
+                // Add the affiliate role
+                $user->add_role( 'affiliate' );
+                break;
+                
+            default:
+                // Keep the default customer role
+                break;
+        }
+    }
+}
+add_action( 'woocommerce_created_customer', 'twintack_process_registration', 10, 3 );
+
+// Add custom styles for the login page
+function twintack_login_styles() {
+    if ( is_page( 'login' ) ) {
+        ?>
+        <style type="text/css">
+            .twintack-login-page {
+                padding: 40px 0;
+            }
+            .twintack-login-container {
+                background: #fff;
+                padding: 30px;
+                border-radius: 5px;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            }
+            .twintack-user-type-selection {
+                margin: 20px 0;
+                padding: 15px;
+                background: #f9f9f9;
+                border-radius: 4px;
+            }
+            .user-type-options {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            .user-type-options label {
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+            }
+            .user-type-options input {
+                margin-right: 5px;
+            }
+            .nav-tabs {
+                margin-bottom: 20px;
+            }
+        </style>
+        <?php
+    }
+}
+add_action( 'wp_head', 'twintack_login_styles' );
+
+// Handle user type selection during login
+function twintack_authenticate_user_type( $user, $username, $password ) {
+    // If authentication has already failed, don't do anything
+    if ( is_wp_error( $user ) ) {
+        return $user;
+    }
+    
+    // Check if user_type was submitted
+    if ( isset( $_POST['user_type'] ) ) {
+        $user_type = sanitize_text_field( $_POST['user_type'] );
+        $user_roles = $user->roles;
+        
+        // Check if the user has the appropriate role for the selected user type
+        switch ( $user_type ) {
+            case 'wholesale':
+                if ( ! in_array( 'wholesale_customer', $user_roles ) && ! in_array( 'administrator', $user_roles ) ) {
+                    return new WP_Error( 'invalid_user_type', __( 'You do not have access to the wholesale area.', 'twintack2025' ) );
+                }
+                break;
+                
+            case 'affiliate':
+                if ( ! in_array( 'affiliate', $user_roles ) && ! in_array( 'administrator', $user_roles ) ) {
+                    return new WP_Error( 'invalid_user_type', __( 'You do not have access to the affiliate area.', 'twintack2025' ) );
+                }
+                break;
+                
+            default:
+                // For regular customers, no additional checks needed
+                break;
+        }
+    }
+    
+    return $user;
+}
+add_filter( 'authenticate', 'twintack_authenticate_user_type', 30, 3 );
