@@ -347,16 +347,11 @@ function twintack_load_variation_display() {
 }
 add_action('after_setup_theme', 'twintack_load_variation_display');
 
-// Add after your existing twintack2025_setup function
-function twintack_variation_setup() {
-    // Load variation display class
-    require_once get_template_directory() . '/inc/class-variation-display.php';
-    TwinTack_Variation_Display::get_instance();
-    
+// Add the image size to the existing function
+add_action('after_setup_theme', function() {
     // Add variation image size
     add_image_size('variation-thumbnail', 300, 300, true);
-}
-add_action('after_setup_theme', 'twintack_variation_setup');
+});
 
 function twintack_locate_variation_template($template, $template_name, $template_path) {
     if ($template_name === 'content-product-variation.php') {
@@ -365,13 +360,6 @@ function twintack_locate_variation_template($template, $template_name, $template
     return $template;
 }
 add_filter('wc_get_template', 'twintack_locate_variation_template', 10, 3);
-
-function twintack_setup_variation_display() {
-    if (class_exists('TwinTack_Variation_Display')) {
-        TwinTack_Variation_Display::get_instance();
-    }
-}
-add_action('init', 'twintack_setup_variation_display');
 
 class TwinTack_Category_Display {
     private static $instance = null;
@@ -760,3 +748,56 @@ function twintack_authenticate_user_type( $user, $username, $password ) {
     return $user;
 }
 add_filter( 'authenticate', 'twintack_authenticate_user_type', 30, 3 );
+
+/**
+ * TwinTack Product Display Scripts
+ * Enqueues scripts and styles for the product display on shop and product category pages
+ */
+function twintack_product_display_scripts() {
+    if (is_shop() || is_product_category()) {
+        // Enqueue CSS
+        wp_enqueue_style(
+            'twintack-product-display',
+            get_stylesheet_directory_uri() . '/css/components/woocommerce-product-display.css',
+            array(),
+            filemtime(get_stylesheet_directory() . '/css/components/woocommerce-product-display.css')
+        );
+        
+        // Enqueue JS
+        wp_enqueue_script(
+            'twintack-product-display',
+            get_stylesheet_directory_uri() . '/js/product-display.js',
+            array('jquery'),
+            filemtime(get_stylesheet_directory() . '/js/product-display.js'),
+            true
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'twintack_product_display_scripts');
+
+/**
+ * Modify WooCommerce query to show all products without pagination
+ */
+function twintack_show_all_products($query) {
+    if (!is_admin() && $query->is_main_query()) {
+        if (is_shop() || is_product_category()) {
+            // Set to show all products
+            $query->set('posts_per_page', -1);
+            // Set ordering to ensure all variations are displayed
+            $query->set('orderby', 'menu_order title');
+            $query->set('order', 'ASC');
+        }
+    }
+    return $query;
+}
+add_filter('pre_get_posts', 'twintack_show_all_products');
+
+/**
+ * Remove pagination from WooCommerce shop and category pages
+ */
+function twintack_remove_pagination() {
+    if (is_shop() || is_product_category()) {
+        remove_action('woocommerce_after_shop_loop', 'woocommerce_pagination', 10);
+    }
+}
+add_action('woocommerce_before_shop_loop', 'twintack_remove_pagination', 5);
