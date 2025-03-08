@@ -1,6 +1,12 @@
 <?php
 /**
  * The Template for displaying products in a product category.
+ *
+ * This template can be overridden by copying it to yourtheme/woocommerce/taxonomy-product_cat.php.
+ *
+ * @see     https://woocommerce.com/document/template-structure/
+ * @package WooCommerce\Templates
+ * @version 4.7.0
  */
 
 if (!defined('ABSPATH')) {
@@ -12,6 +18,17 @@ get_header();
 
 <div class="page-wrapper">
     <main class="main">
+        <?php
+        /**
+         * Hook: woocommerce_before_main_content.
+         *
+         * @hooked woocommerce_output_content_wrapper - 10 (outputs opening divs for the content)
+         * @hooked woocommerce_breadcrumb - 20
+         * @hooked WC_Structured_Data::generate_website_data() - 30
+         */
+        do_action('woocommerce_before_main_content');
+        ?>
+
         <?php if ( apply_filters( 'woocommerce_show_page_title', true ) ) : ?>
             <div class="category-hero <?php echo esc_attr( wc_get_loop_class() ); ?>">
                 <div class="container">
@@ -121,6 +138,15 @@ get_header();
         <div class="container">
             <?php
             if ( woocommerce_product_loop() ) {
+                /**
+                 * Hook: woocommerce_before_shop_loop.
+                 *
+                 * @hooked woocommerce_output_all_notices - 10
+                 * @hooked woocommerce_result_count - 20
+                 * @hooked woocommerce_catalog_ordering - 30
+                 */
+                do_action( 'woocommerce_before_shop_loop' );
+
                 // Remove the default pagination
                 remove_action('woocommerce_after_shop_loop', 'woocommerce_pagination', 10);
                 
@@ -141,8 +167,6 @@ get_header();
                 
                 // Run the new query
                 query_posts($args);
-                
-                do_action( 'woocommerce_before_shop_loop' );
                 
                 // Initialize arrays to store products
                 $grip_products = array();
@@ -231,14 +255,31 @@ get_header();
                 <?php
                 endif;
                 
+                /**
+                 * Hook: woocommerce_after_shop_loop.
+                 *
+                 * @hooked woocommerce_pagination - 10
+                 */
                 do_action('woocommerce_after_shop_loop');
                 
                 // Restore original query
                 $wp_query = $original_query;
                 wp_reset_query();
             } else {
+                /**
+                 * Hook: woocommerce_no_products_found.
+                 *
+                 * @hooked wc_no_products_found - 10
+                 */
                 do_action('woocommerce_no_products_found');
             }
+
+            /**
+             * Hook: woocommerce_after_main_content.
+             *
+             * @hooked woocommerce_output_content_wrapper_end - 10 (outputs closing divs for the content)
+             */
+            do_action('woocommerce_after_main_content');
             ?>
         </div>
     </main>

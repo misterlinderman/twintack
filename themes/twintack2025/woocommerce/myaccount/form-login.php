@@ -2,11 +2,11 @@
 /**
  * Login Form
  *
- * This template overrides /woocommerce/templates/myaccount/form-login.php
+ * This template can be overridden by copying it to yourtheme/woocommerce/myaccount/form-login.php.
  *
- * @see     https://docs.woocommerce.com/document/template-structure/
+ * @see     https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates
- * @version 7.0.1
+ * @version 9.7.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

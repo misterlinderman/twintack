@@ -1,7 +1,39 @@
-<?php get_header(); ?>
+<?php
+/**
+ * The Template for displaying product archives, including the main shop page which is a post type archive
+ *
+ * This template can be overridden by copying it to yourtheme/woocommerce/archive-product.php.
+ *
+ * @see https://woocommerce.com/document/template-structure/
+ * @package WooCommerce\Templates
+ * @version 8.6.0
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+get_header(); ?>
 
 <div class="page-wrapper">
     <main class="main">
+        <?php
+        /**
+         * Hook: woocommerce_before_main_content.
+         *
+         * @hooked woocommerce_output_content_wrapper - 10 (outputs opening divs for the content)
+         * @hooked woocommerce_breadcrumb - 20
+         * @hooked WC_Structured_Data::generate_website_data() - 30
+         */
+        do_action( 'woocommerce_before_main_content' );
+
+        /**
+         * Hook: woocommerce_shop_loop_header.
+         *
+         * @since 8.6.0
+         * @hooked woocommerce_product_taxonomy_archive_header - 10
+         */
+        do_action( 'woocommerce_shop_loop_header' );
+        ?>
+
         <?php if ( apply_filters( 'woocommerce_show_page_title', true ) ) : ?>
             <div class="category-hero <?php echo esc_attr( wc_get_loop_class() ); ?>">
                 <div class="container">
@@ -109,11 +141,19 @@
         </div>
 
         <div class="container">
-            <div class="product-sorting">
-                <?php do_action( 'woocommerce_before_shop_loop' ); ?>
-            </div>
             <?php
             if ( woocommerce_product_loop() ) {
+                /**
+                 * Hook: woocommerce_before_shop_loop.
+                 *
+                 * @hooked woocommerce_output_all_notices - 10
+                 * @hooked woocommerce_result_count - 20
+                 * @hooked woocommerce_catalog_ordering - 30
+                 */
+                echo '<div class="product-sorting">';
+                do_action( 'woocommerce_before_shop_loop' );
+                echo '</div>';
+
                 // Remove the default pagination
                 remove_action('woocommerce_after_shop_loop', 'woocommerce_pagination', 10);
                 
@@ -134,8 +174,6 @@
                 
                 // Run the new query
                 query_posts($args);
-                
-                
                 
                 // Create a new query for grip products (using custom field)
                 $grip_args = array(
@@ -244,14 +282,30 @@
                 <?php
                 endif;
                 
+                /**
+                 * Hook: woocommerce_after_shop_loop.
+                 *
+                 * @hooked woocommerce_pagination - 10
+                 */
                 do_action('woocommerce_after_shop_loop');
                 
                 // Restore original query
                 $wp_query = $original_query;
-                wp_reset_query();
             } else {
-                do_action('woocommerce_no_products_found');
+                /**
+                 * Hook: woocommerce_no_products_found.
+                 *
+                 * @hooked wc_no_products_found - 10
+                 */
+                do_action( 'woocommerce_no_products_found' );
             }
+
+            /**
+             * Hook: woocommerce_after_main_content.
+             *
+             * @hooked woocommerce_output_content_wrapper_end - 10 (outputs closing divs for the content)
+             */
+            do_action( 'woocommerce_after_main_content' );
             ?>
         </div>
     </main>
