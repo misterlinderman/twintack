@@ -2,60 +2,49 @@
 /**
  * The template for displaying standard product content within loops
  *
- * This template is used for non-grip products to display them in a traditional grid layout.
+ * This template can be overridden by copying it to yourtheme/woocommerce/content-product-standard.php.
  *
- * @see     https://woocommerce.com/document/template-structure/
- * @package WooCommerce\Templates
- * @version 3.6.0
+ * @package TwinTack2025
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 global $product;
 
-// Ensure visibility.
-if ( empty( $product ) || ! $product->is_visible() ) {
+// Ensure visibility
+if (empty($product) || !$product->is_visible()) {
 	return;
 }
+
+// Get product data
+$product_name = $product->get_name();
 ?>
-<li <?php wc_product_class( '', $product ); ?>>
-	<?php
-	/**
-	 * Hook: woocommerce_before_shop_loop_item.
-	 *
-	 * @hooked woocommerce_template_loop_product_link_open - 10
-	 */
-	do_action( 'woocommerce_before_shop_loop_item' );
 
-	/**
-	 * Hook: woocommerce_before_shop_loop_item_title.
-	 *
-	 * @hooked woocommerce_show_product_loop_sale_flash - 10
-	 * @hooked woocommerce_template_loop_product_thumbnail - 10
-	 */
-	do_action( 'woocommerce_before_shop_loop_item_title' );
-
-	/**
-	 * Hook: woocommerce_shop_loop_item_title.
-	 *
-	 * @hooked woocommerce_template_loop_product_title - 10
-	 */
-	do_action( 'woocommerce_shop_loop_item_title' );
-
-	/**
-	 * Hook: woocommerce_after_shop_loop_item_title.
-	 *
-	 * @hooked woocommerce_template_loop_rating - 5
-	 * @hooked woocommerce_template_loop_price - 10
-	 */
-	do_action( 'woocommerce_after_shop_loop_item_title' );
-
-	/**
-	 * Hook: woocommerce_after_shop_loop_item.
-	 *
-	 * @hooked woocommerce_template_loop_product_link_close - 5
-	 * @hooked woocommerce_template_loop_add_to_cart - 10
-	 */
-	do_action( 'woocommerce_after_shop_loop_item' );
-	?>
+<li <?php wc_product_class('', $product); ?>>
+	<div class="product-image-container">
+		<a href="<?php echo esc_url(get_permalink()); ?>" class="product-link">
+			<?php 
+			// Use the product-grid image size for standard products
+			echo $product->get_image('product-grid', array('class' => 'product-image')); 
+			?>
+		</a>
+	</div>
+	<div class="product-info">
+		<h2 class="woocommerce-loop-product__title"><?php echo esc_html($product_name); ?></h2>
+		<div class="product-price"><?php echo $product->get_price_html(); ?></div>
+		<?php
+		echo apply_filters(
+			'woocommerce_loop_add_to_cart_link',
+			sprintf(
+				'<a href="%s" data-quantity="%s" class="%s" %s>%s</a>',
+				esc_url($product->add_to_cart_url()),
+				esc_attr(isset($args['quantity']) ? $args['quantity'] : 1),
+				esc_attr(isset($args['class']) ? $args['class'] : 'button'),
+				isset($args['attributes']) ? wc_implode_html_attributes($args['attributes']) : '',
+				esc_html($product->add_to_cart_text())
+			),
+			$product
+		);
+		?>
+	</div>
 </li> 

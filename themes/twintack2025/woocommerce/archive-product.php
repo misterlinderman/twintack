@@ -43,30 +43,33 @@
                             <?php 
                             // Display all attribute filters
                             $attributes = wc_get_attribute_taxonomies();
-                            foreach ( $attributes as $attribute ) :
+                            foreach ($attributes as $attribute) :
                                 $attribute_name = 'pa_' . $attribute->attribute_name;
-                                $terms = get_terms( array(
+                                $terms = get_terms(array(
                                     'taxonomy' => $attribute_name,
                                     'hide_empty' => true,
-                                ) );
+                                ));
                                 
-                                if ( empty( $terms ) ) {
+                                if (empty($terms)) {
                                     continue;
                                 }
+
+                                // Get current filter values
+                                $current_filters = isset($_GET['filter_' . $attribute_name]) ? (array)$_GET['filter_' . $attribute_name] : array();
                             ?>
                             <div class="mb-8">
-                                <h3 class="font-bold mb-4"><?php echo esc_html( $attribute->attribute_label ); ?></h3>
+                                <h3 class="font-bold mb-4"><?php echo esc_html($attribute->attribute_label); ?></h3>
                                 <div class="grid grid-cols-2 gap-2">
-                                    <?php foreach ( $terms as $term ) : ?>
+                                    <?php foreach ($terms as $term) : ?>
                                         <label class="flex items-center">
                                             <input 
                                                 type="checkbox" 
-                                                name="filter_<?php echo esc_attr( $attribute_name ); ?>[]" 
-                                                value="<?php echo esc_attr( $term->slug ); ?>" 
-                                                <?php checked( isset( $_GET['filter_' . $attribute_name] ) && in_array( $term->slug, (array) $_GET['filter_' . $attribute_name] ) ); ?>
+                                                name="filter_<?php echo esc_attr($attribute_name); ?>[]" 
+                                                value="<?php echo esc_attr($term->slug); ?>" 
+                                                <?php checked(in_array($term->slug, $current_filters)); ?>
                                                 class="mr-2 filter-checkbox"
                                             >
-                                            <span class="text-sm"><?php echo esc_html( $term->name ); ?> (<?php echo esc_html( $term->count ); ?>)</span>
+                                            <span class="text-sm"><?php echo esc_html($term->name); ?> (<?php echo esc_html($term->count); ?>)</span>
                                         </label>
                                     <?php endforeach; ?>
                                 </div>
@@ -76,7 +79,9 @@
                         
                         <!-- Modal footer -->
                         <div class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-between">
-                            <a href="<?php echo esc_url( remove_query_arg( array_map( function($attr) { return 'filter_pa_' . $attr->attribute_name; }, $attributes ) ) ); ?>" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium">
+                            <a href="<?php echo esc_url(remove_query_arg(array_map(function($attr) { 
+                                return 'filter_pa_' . $attr->attribute_name; 
+                            }, $attributes))); ?>" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium">
                                 Clear All
                             </a>
                             <button
@@ -92,6 +97,11 @@
                         if (isset($_GET['orderby'])) {
                             echo '<input type="hidden" name="orderby" value="' . esc_attr($_GET['orderby']) . '">';
                         }
+                        
+                        // Preserve category parameter if present
+                        if (isset($_GET['product_cat'])) {
+                            echo '<input type="hidden" name="product_cat" value="' . esc_attr($_GET['product_cat']) . '">';
+                        }
                         ?>
                     </form>
                 </div>
@@ -99,6 +109,9 @@
         </div>
 
         <div class="container">
+            <div class="product-sorting">
+                <?php do_action( 'woocommerce_before_shop_loop' ); ?>
+            </div>
             <?php
             if ( woocommerce_product_loop() ) {
                 // Remove the default pagination
@@ -122,122 +135,109 @@
                 // Run the new query
                 query_posts($args);
                 
-                do_action( 'woocommerce_before_shop_loop' );
                 
-                // Get all products
-                $all_products = array();
-                $grip_products = array();
-                $other_products = array();
                 
-                // Separate grip products from other products
-                // You can adjust this logic based on your product categorization
-                if (have_posts()) {
-                    while (have_posts()) {
-                        the_post();
-                        global $product;
-                        
-                        // Check if product is a grip product
-                        // Method 1: Check if product title contains "Grip"
-                        // Method 2: Check if product is in a specific category
-                        // Method 3: Check for a specific product tag
-                        // Choose the method that works best for your setup
-                        
-                        $is_grip = false;
-                        
-                        // Method 1: Check product title
-                        if (strpos(strtolower($product->get_name()), 'grip') !== false) {
-                            $is_grip = true;
-                        }
-                        
-                        // Method 2: Check product category
-                        // Uncomment this if you have a specific category for grips
-                        /*
-                        $product_cats = wc_get_product_term_ids($product->get_id(), 'product_cat');
-                        $grip_cat_id = get_term_by('slug', 'grips', 'product_cat'); // Replace 'grips' with your category slug
-                        if ($grip_cat_id && in_array($grip_cat_id->term_id, $product_cats)) {
-                            $is_grip = true;
-                        }
-                        */
-                        
-                        // Method 3: Check product tag
-                        // Uncomment this if you have a specific tag for grips
-                        /*
-                        $product_tags = wc_get_product_term_ids($product->get_id(), 'product_tag');
-                        $grip_tag_id = get_term_by('slug', 'grip', 'product_tag'); // Replace 'grip' with your tag slug
-                        if ($grip_tag_id && in_array($grip_tag_id->term_id, $product_tags)) {
-                            $is_grip = true;
-                        }
-                        */
-                        
-                        if ($is_grip) {
-                            $grip_products[] = $product->get_id();
-                        } else {
-                            $other_products[] = $product->get_id();
-                        }
-                    }
-                    
-                    // Reset the post data
-                    rewind_posts();
-                }
+                // Create a new query for grip products (using custom field)
+                $grip_args = array(
+                    'post_type' => 'product',
+                    'posts_per_page' => -1,
+                    'meta_query' => array(
+                        array(
+                            'key' => 'display_type',
+                            'value' => 'grip_carousel',
+                            'compare' => '='
+                        )
+                    )
+                );
+                $grip_query = new WP_Query($grip_args);
+                
+                // Create a new query for non-grip products (using custom field)
+                $other_args = array(
+                    'post_type' => 'product',
+                    'posts_per_page' => -1,
+                    'meta_query' => array(
+                        array(
+                            'key' => 'display_type',
+                            'value' => 'grip_carousel',
+                            'compare' => '!=',
+                            'type' => 'CHAR'
+                        )
+                    )
+                );
+                // For products without the custom field set
+                $other_args_no_meta = array(
+                    'post_type' => 'product',
+                    'posts_per_page' => -1,
+                    'meta_query' => array(
+                        array(
+                            'key' => 'display_type',
+                            'compare' => 'NOT EXISTS'
+                        )
+                    )
+                );
+                $other_query1 = new WP_Query($other_args);
+                $other_query2 = new WP_Query($other_args_no_meta);
                 
                 // Display grip products in horizontal scroll layout if there are any
-                if (!empty($grip_products)) :
+                if ($grip_query->have_posts()) :
                 ?>
-                <h2 class="section-title"><?php echo esc_html__('Grips', 'twintack2025'); ?></h2>
-                <div class="products-container relative">
-                    <!-- Scroll Left Button -->
-                    <button class="scroll-button scroll-button-left">
-                        <div class="scroll-button-inner">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </div>
-                    </button>
-                    
-                    <!-- Products Row -->
-                    <ul class="products products-row">
-                        <?php
-                        while (have_posts()) {
-                            the_post();
-                            global $product;
-                            
-                            if (in_array($product->get_id(), $grip_products)) {
-                                wc_get_template_part('content', 'product');
+                <div class="grip-products-section">
+                    <h2 class="section-title">Grip Products</h2>
+                    <div class="products-container">
+                        <!-- Scroll buttons -->
+                        <button class="scroll-button scroll-button-left">
+                            <div class="scroll-button-inner">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </div>
+                        </button>
+                        <div class="products-row">
+                            <?php
+                            while ($grip_query->have_posts()) {
+                                $grip_query->the_post();
+                                // Use custom template for grip products
+                                wc_get_template_part('content', 'product-grip');
                             }
-                        }
-                        ?>
-                    </ul>
-                    
-                    <!-- Scroll Right Button -->
-                    <button class="scroll-button scroll-button-right">
-                        <div class="scroll-button-inner">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
+                            wp_reset_postdata();
+                            ?>
                         </div>
-                    </button>
+                        <button class="scroll-button scroll-button-right">
+                            <div class="scroll-button-inner">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
                 </div>
                 <?php
                 endif;
                 
                 // Display other products in traditional grid layout if there are any
-                if (!empty($other_products)) :
+                if ($other_query1->have_posts() || $other_query2->have_posts()) :
                     // Reset the post data
                     rewind_posts();
                 ?>
                 <div class="other-products-section">
-                    <h2 class="section-title"><?php echo esc_html__('Other Products', 'twintack2025'); ?></h2>
-                    <ul class="products columns-4">
+                    <h2 class="section-title">Other Products</h2>
+                    <ul class="products">
                         <?php
-                        while (have_posts()) {
-                            the_post();
-                            global $product;
-                            
-                            if (in_array($product->get_id(), $other_products)) {
-                                // Use the standard WooCommerce product template for other products
-                                wc_get_template_part('content', 'product-standard');
-                            }
+                        // Display products with display_type != 'grip_carousel'
+                        while ($other_query1->have_posts()) {
+                            $other_query1->the_post();
+                            // Use standard product template
+                            wc_get_template_part('content', 'product-standard');
                         }
+                        wp_reset_postdata();
+                        
+                        // Display products without the custom field
+                        while ($other_query2->have_posts()) {
+                            $other_query2->the_post();
+                            // Use standard product template
+                            wc_get_template_part('content', 'product-standard');
+                        }
+                        wp_reset_postdata();
                         ?>
                     </ul>
                 </div>

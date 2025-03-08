@@ -776,6 +776,34 @@ function twintack_product_display_scripts() {
 add_action('wp_enqueue_scripts', 'twintack_product_display_scripts');
 
 /**
+ * Add Display Type custom field to WooCommerce products
+ */
+function twintack_add_display_type_field() {
+    woocommerce_wp_select(
+        array(
+            'id'          => 'display_type',
+            'label'       => __('Display Type', 'twintack2025'),
+            'description' => __('Choose how this product should be displayed in the shop', 'twintack2025'),
+            'desc_tip'    => true,
+            'options'     => array(
+                ''              => __('Standard Grid (Default)', 'twintack2025'),
+                'grip_carousel' => __('Grip Carousel', 'twintack2025')
+            )
+        )
+    );
+}
+add_action('woocommerce_product_options_general_product_data', 'twintack_add_display_type_field');
+
+/**
+ * Save Display Type custom field
+ */
+function twintack_save_display_type_field($post_id) {
+    $display_type = isset($_POST['display_type']) ? $_POST['display_type'] : '';
+    update_post_meta($post_id, 'display_type', $display_type);
+}
+add_action('woocommerce_process_product_meta', 'twintack_save_display_type_field');
+
+/**
  * Modify WooCommerce query to show all products without pagination
  */
 function twintack_show_all_products($query) {
@@ -801,3 +829,192 @@ function twintack_remove_pagination() {
     }
 }
 add_action('woocommerce_before_shop_loop', 'twintack_remove_pagination', 5);
+
+/**
+ * Add custom image sizes for different product displays
+ */
+function twintack_add_custom_image_sizes() {
+    // Add image size specifically for grip products in the carousel
+    // Taller, narrower image optimized for the vertical bat-rack style display
+    add_image_size('grip-carousel', 200, 600, false); // Width: 200px, Height: 600px, Soft crop
+    
+    // Standard product grid image (square format)
+    add_image_size('product-grid', 400, 400, true); // Width: 400px, Height: 400px, Hard crop
+}
+add_action('after_setup_theme', 'twintack_add_custom_image_sizes');
+
+/**
+ * Add the custom image sizes to the media library dropdown
+ */
+function twintack_custom_image_sizes_names($sizes) {
+    return array_merge($sizes, array(
+        'grip-carousel' => __('Grip Carousel Image', 'twintack2025'),
+        'product-grid' => __('Product Grid Image', 'twintack2025')
+    ));
+}
+add_filter('image_size_names_choose', 'twintack_custom_image_sizes_names');
+
+/**
+ * Add admin notice to regenerate thumbnails after adding new image sizes
+ */
+function twintack_thumbnail_notice() {
+    // Only show to administrators
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    
+    // Check if we've already dismissed this notice
+    if (get_option('twintack_thumbnail_notice_dismissed')) {
+        return;
+    }
+    
+    ?>
+    <div class="notice notice-warning is-dismissible" id="twintack-thumbnail-notice">
+        <p>
+            <strong>TwinTack:</strong> New product image sizes have been added. 
+            <a href="<?php echo esc_url(admin_url('admin.php?page=wc-status&tab=tools')); ?>">
+                Please regenerate your thumbnails
+            </a> 
+            to ensure all products display correctly.
+        </p>
+    </div>
+    <script>
+        jQuery(document).ready(function($) {
+            $(document).on('click', '#twintack-thumbnail-notice .notice-dismiss', function() {
+                $.ajax({
+                    url: ajaxurl,
+                    data: {
+                        action: 'dismiss_thumbnail_notice'
+                    }
+                });
+            });
+        });
+    </script>
+    <?php
+}
+add_action('admin_notices', 'twintack_thumbnail_notice');
+
+/**
+ * AJAX handler to dismiss the thumbnail notice
+ */
+function twintack_dismiss_thumbnail_notice() {
+    update_option('twintack_thumbnail_notice_dismissed', true);
+    wp_die();
+}
+add_action('wp_ajax_dismiss_thumbnail_notice', 'twintack_dismiss_thumbnail_notice');
+
+/**
+ * Handle product filtering based on attributes
+ */
+function twintack_product_filter($query) {
+    if (!is_admin() && $query->is_main_query() && (is_shop() || is_product_category())) {
+        try {
+            $tax_query = array();
+            
+            // Get all attribute taxonomies
+            $attributes = wc_get_attribute_taxonomies();
+            
+            foreach ($attributes as $attribute) {
+                $taxonomy = 'pa_' . $attribute->attribute_name;
+                $filter_key = 'filter_' . $taxonomy;
+                
+                // Check if filter exists in GET parameters
+                if (isset($_GET[$filter_key])) {
+                    // Handle both array and string values
+                    $filter_values = is_array($_GET[$filter_key]) ? $_GET[$filter_key] : array($_GET[$filter_key]);
+                    
+                    // Clean and validate the filter values
+                    $valid_terms = array();
+                    foreach ($filter_values as $value) {
+                        $clean_value = sanitize_text_field($value);
+                        // Verify the term exists
+                        if (term_exists($clean_value, $taxonomy)) {
+                            $valid_terms[] = $clean_value;
+                        }
+                    }
+                    
+                    // Only add to tax query if we have valid terms
+                    if (!empty($valid_terms)) {
+                        $tax_query[] = array(
+                            'taxonomy' => $taxonomy,
+                            'field'    => 'slug',
+                            'terms'    => $valid_terms,
+                            'operator' => 'IN',
+                        );
+                    }
+                }
+            }
+            
+            if (!empty($tax_query)) {
+                // Get existing tax query
+                $existing_tax_query = $query->get('tax_query');
+                
+                // Merge with existing tax query if it exists
+                if (!empty($existing_tax_query)) {
+                    $tax_query = array_merge(
+                        array('relation' => 'AND'),
+                        $existing_tax_query,
+                        $tax_query
+                    );
+                } else {
+                    $tax_query = array_merge(
+                        array('relation' => 'AND'),
+                        $tax_query
+                    );
+                }
+                
+                $query->set('tax_query', $tax_query);
+            }
+            
+        } catch (Exception $e) {
+            error_log('TwinTack Product Filter Error: ' . $e->getMessage());
+            return $query;
+        }
+    }
+    return $query;
+}
+add_filter('pre_get_posts', 'twintack_product_filter', 99);
+
+// Add support for array parameters in URLs
+function twintack_query_vars($vars) {
+    // Get all attribute taxonomies
+    $attributes = wc_get_attribute_taxonomies();
+    
+    foreach ($attributes as $attribute) {
+        $filter_key = 'filter_pa_' . $attribute->attribute_name;
+        $vars[] = $filter_key;
+        
+        // Also register array version of the parameter
+        $vars[] = $filter_key . '[]';
+    }
+    
+    return $vars;
+}
+add_filter('query_vars', 'twintack_query_vars');
+
+// Register custom rewrite rules for filter parameters
+function twintack_add_rewrite_rules() {
+    global $wp_rewrite;
+    
+    // Get all attribute taxonomies
+    $attributes = wc_get_attribute_taxonomies();
+    
+    foreach ($attributes as $attribute) {
+        $filter_key = 'filter_pa_' . $attribute->attribute_name;
+        add_rewrite_tag("%{$filter_key}%", '([^&]+)');
+        add_rewrite_tag("%{$filter_key}[]%", '([^&]+)');
+    }
+}
+add_action('init', 'twintack_add_rewrite_rules', 10, 0);
+
+// Flush rewrite rules when needed
+function twintack_flush_rules() {
+    $version = '1.0.1'; // Increment this when making changes to rewrite rules
+    $current_version = get_option('twintack_rewrite_version');
+    
+    if ($current_version !== $version) {
+        flush_rewrite_rules(false);
+        update_option('twintack_rewrite_version', $version);
+    }
+}
+add_action('init', 'twintack_flush_rules', 20);

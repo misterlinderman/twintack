@@ -72,7 +72,7 @@
 	/**
 	 * Sets or removes .focus class on an element.
 	 */
-	function toggleFocus() {
+	function toggleFocus(event) {
 		if ( event.type === 'focus' || event.type === 'blur' ) {
 			let self = this;
 			// Move up through the ancestors of the current link until we hit .nav-menu.
@@ -118,6 +118,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const mainNav = document.querySelector('.main-navigation');
     const header = document.querySelector('.site-header');
 
+    // Return early if required elements don't exist
+    if (!menuToggle || !mainNav || !header) return;
+
     // Set header height variable
     const setHeaderHeight = () => {
         document.documentElement.style.setProperty('--header-height', `${header.offsetHeight}px`);
@@ -143,10 +146,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const header = document.querySelector('.site-header');
+    if (!header) return;
+
     const navToggle = header.querySelector('.nav-toggle');
     const headerControls = header.querySelector('.header-controls');
     
-    if (!header || !navToggle) return;
+    if (!navToggle) return;
 
     // Color contrast detection function
     function getContrastYIQ(r, g, b) {
