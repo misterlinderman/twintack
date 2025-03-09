@@ -59,7 +59,23 @@ if ( woocommerce_product_loop() ) {
 			 */
 			do_action( 'woocommerce_shop_loop' );
 
-			wc_get_template_part( 'content', 'product' );
+			// Get the product
+			global $product;
+			
+			// Check if it's a variable product
+			if ($product && $product->is_type('variable')) {
+				// Get available variations
+				$variations = $product->get_available_variations();
+				
+				// Display each variation as a separate "product"
+				foreach ($variations as $variation) {
+					// Display the variation
+					twintack_display_single_variation($variation, $product);
+				}
+			} else {
+				// Display regular product
+				wc_get_template_part( 'content', 'product' );
+			}
 		}
 	}
 

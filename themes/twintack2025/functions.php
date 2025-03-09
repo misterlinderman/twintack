@@ -1018,3 +1018,39 @@ function twintack_flush_rules() {
     }
 }
 add_action('init', 'twintack_flush_rules', 20);
+
+/**
+ * Display a single product variation in the product loop
+ * 
+ * @param array $variation The variation data
+ * @param WC_Product $product The parent product
+ */
+function twintack_display_single_variation($variation, $product) {
+    $variation_obj = wc_get_product($variation['variation_id']);
+    if (!$variation_obj) return;
+    
+    echo '<li class="product product-variation type-product">';
+    echo '<a class="product-variation-link woocommerce-LoopProduct-link" href="' . esc_url(add_query_arg('variation_id', $variation['variation_id'], get_permalink($product->get_id()))) . '">';
+    
+    // Display sale flash if on sale
+    if ($variation_obj->is_on_sale()) {
+        echo '<span class="onsale">' . esc_html__('Sale!', 'woocommerce') . '</span>';
+    }
+    
+    // Display variation image
+    echo wp_get_attachment_image($variation['image_id'], 'woocommerce_thumbnail', false, array('class' => 'attachment-woocommerce_thumbnail size-woocommerce_thumbnail'));
+    
+    // Display product title with variation attributes
+    echo '<h2 class="woocommerce-loop-product__title">';
+    echo esc_html($product->get_title());
+    if (!empty($variation['attributes'])) {
+        echo ' - ' . implode(', ', array_values($variation['attributes']));
+    }
+    echo '</h2>';
+    
+    // Display price
+    echo '<span class="price">' . $variation_obj->get_price_html() . '</span>';
+    
+    echo '</a>';
+    echo '</li>';
+}

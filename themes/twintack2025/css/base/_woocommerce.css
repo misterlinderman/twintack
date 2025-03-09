@@ -15,6 +15,36 @@
     align-items: center;
 }
 
+/* Styling for product variations in the loop */
+.product-variation {
+    margin-bottom: 2em;
+    position: relative;
+}
+
+.product-variation-link {
+    display: block;
+    text-decoration: none;
+}
+
+.product-variation img {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 0 1em;
+}
+
+.product-variation .woocommerce-loop-product__title {
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 0.5em;
+}
+
+.product-variation .price {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 0.5em;
+}
+
 /* Hide scrollbar but allow scrolling */
 .products-row {
     -ms-overflow-style: none;
