@@ -1,12 +1,11 @@
 /* Product Page Layout */
-div.product.type-product.product_cat-baseball,
-div.product.type-product.product_cat-fishing {
-    display: flex;
+div.product.type-product.product_cat-baseball, div.product.type-product.product_cat-fishing {
+    display: flex
+;
     flex-direction: row;
     flex-wrap: wrap;
-    align-content: flex-start;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
 }
 
 /* Product Gallery */
