@@ -186,156 +186,6 @@ if ( defined( 'JETPACK__VERSION' ) ) {
 	require_once get_template_directory() . '/inc/jetpack.php';
 }
 
-/**
- * Add category template support
- */
-function twintack_category_template_loader($template) {
-    if (is_product_category()) {
-        $category = get_queried_object();
-        $template_name = '';
-        
-        // Check category and all parent categories for baseball/fishing
-        $term_list = get_term_parents_list($category->term_id, 'product_cat', array('format' => 'slug'));
-        
-        if (strpos($term_list, 'baseball') !== false) {
-            $template_name = 'category-baseball.php';
-        } elseif (strpos($term_list, 'fishing') !== false) {
-            $template_name = 'category-fishing.php';
-        }
-        
-        if ($template_name) {
-            $new_template = locate_template(array(
-                'templates/' . $template_name,
-                $template_name
-            ));
-            
-            if (!empty($new_template)) {
-                return $new_template;
-            }
-        }
-    }
-    return $template;
-}
-
-// Remove any existing template filters
-remove_filter('template_include', 'twintack_template_hierarchy');
-remove_filter('template_include', 'twintack_category_template');
-
-// Add our new template loader
-add_filter('template_include', 'twintack_category_template_loader', 99);
-
-/**
- * Load header classes
- */
-function twintack_load_header_classes() {
-    require_once get_template_directory() . '/inc/header/class-header-configuration.php';
-    require_once get_template_directory() . '/inc/header/class-header-render.php';
-    
-    // Initialize header configuration
-    Header_Configuration::get_instance();
-}
-add_action('after_setup_theme', 'twintack_load_header_classes');
-
-function twintack_category_body_class($classes) {
-    if (is_product_category() || is_product()) {
-        $term = null;
-        
-        if (is_product_category()) {
-            $term = get_queried_object();
-        } elseif (is_product()) {
-            $terms = get_the_terms(get_the_ID(), 'product_cat');
-            if ($terms) {
-                $term = reset($terms); // Get first category
-            }
-        }
-        
-        if ($term) {
-            if (strpos(strtolower($term->name), 'baseball') !== false) {
-                $classes[] = 'baseball';
-            } elseif (strpos(strtolower($term->name), 'fishing') !== false) {
-                $classes[] = 'fishing';
-            }
-        }
-    }
-    return $classes;
-}
-add_filter('body_class', 'twintack_category_body_class');
-
-/**
- * Load menu configuration
- */
-function twintack_load_menu_classes() {
-    require_once get_template_directory() . '/inc/class-menu-configuration.php';
-    
-    class TwinTack_Menu_Configuration {
-        private static $instance = null;
-        
-        public static function get_instance() {
-            if (null === self::$instance) {
-                self::$instance = new self();
-            }
-            return self::$instance;
-        }
-        
-        private function __construct() {
-            add_filter('nav_menu_css_class', array($this, 'add_menu_item_classes'), 10, 4);
-            add_filter('nav_menu_link_attributes', array($this, 'add_menu_link_attributes'), 10, 4);
-        }
-        
-        public function add_menu_item_classes($classes, $item, $args, $depth) {
-            if ('sport' === $args->theme_location) {
-                $classes[] = 'sport-menu-item';
-            }
-            return $classes;
-        }
-        
-        public function add_menu_link_attributes($atts, $item, $args, $depth) {
-            if ('sport' === $args->theme_location) {
-                $atts['class'] = isset($atts['class']) ? $atts['class'] . ' sport-menu-link' : 'sport-menu-link';
-            }
-            return $atts;
-        }
-    }
-    
-    TwinTack_Menu_Configuration::get_instance();
-}
-add_action('after_setup_theme', 'twintack_load_menu_classes');
-
-function twintack_get_category_menu($category_type) {
-    if (is_product_category() || is_shop()) {
-        $current_term = get_queried_object();
-        $category_base = '';
-        
-        // Check if current category or its ancestors are baseball/fishing
-        if ($current_term && isset($current_term->term_id)) {
-            $ancestors = get_ancestors($current_term->term_id, 'product_cat');
-            $all_terms = array_merge([$current_term->term_id], $ancestors);
-            
-            foreach ($all_terms as $term_id) {
-                $term = get_term($term_id, 'product_cat');
-                if (strpos(strtolower($term->name), $category_type) !== false) {
-                    $category_base = $category_type;
-                    break;
-                }
-            }
-        }
-        
-        if ($category_base) {
-            get_template_part('template-parts/navigation/category', $category_base);
-        }
-    }
-}
-
-function twintack_body_classes($classes) {
-    // Add admin-bar class if admin bar is showing
-    if (is_admin_bar_showing()) {
-        $classes[] = 'has-admin-bar';
-    }
-    
-    return $classes;
-}
-add_filter('body_class', 'twintack_body_classes');
-
 function twintack2025_enqueue_fonts() {
     wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap', array(), null);
 }
@@ -1054,3 +904,41 @@ function twintack_display_single_variation($variation, $product) {
     echo '</a>';
     echo '</li>';
 }
+
+/**
+ * Redirect product category pages to shop page with category filter
+ * This ensures category pages use the same layout as the shop page
+ */
+function twintack_redirect_product_categories_to_shop() {
+    // Only run on product category pages and not on the shop page
+    if (is_product_category() && !is_shop()) {
+        // Check if we're already on a redirected URL to prevent loops
+        if (isset($_GET['redirected_from_category'])) {
+            return;
+        }
+        
+        // Get current category
+        $category = get_queried_object();
+        
+        // Build the redirect URL
+        $redirect_url = add_query_arg(
+            array(
+                'product_cat' => $category->slug,
+                'redirected_from_category' => '1' // Add a flag to prevent redirect loops
+            ),
+            get_permalink(wc_get_page_id('shop'))
+        );
+        
+        // Preserve any existing query parameters
+        foreach ($_GET as $key => $value) {
+            if ($key !== 'product_cat' && $key !== 'redirected_from_category') {
+                $redirect_url = add_query_arg($key, $value, $redirect_url);
+            }
+        }
+        
+        // Redirect
+        wp_safe_redirect($redirect_url);
+        exit;
+    }
+}
+add_action('template_redirect', 'twintack_redirect_product_categories_to_shop', 5); // Lower priority to run early

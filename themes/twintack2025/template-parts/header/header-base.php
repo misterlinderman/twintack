@@ -71,8 +71,8 @@
                     <h2>PRODUCT</h2>
                     <nav class="product-nav">
                         <a href="/shop">SHOP ALL</a>
-                        <a href="/baseball-grips">BASEBALL GRIPS</a>
-                        <a href="/fishing-grips">FISHING GRIPS</a>
+                        <a href="/shop/?product_cat=baseball">BASEBALL GRIPS</a>
+                        <a href="/shop/?product_cat=fishing">FISHING GRIPS</a>
                     </nav>
                 </div>
 
