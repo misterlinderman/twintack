@@ -9,15 +9,6 @@ div.product.type-product.product_cat-fishing {
     align-items: center;
 }
 
-/* Category-specific backgrounds */
-div.product.type-product.product_cat-baseball {
-    background-color: rgb(194, 199, 230);
-}
-
-div.product.type-product.product_cat-fishing {
-    background-color: rgb(199, 185, 185);
-}
-
 /* Product Gallery */
 .woocommerce-product-gallery {
     position: relative;
@@ -70,37 +61,19 @@ div.product.type-product.product_cat-fishing {
     color: #666;
 }
 
-/* Product Summary */
-.summary.entry-summary {
-    background-color: antiquewhite;
-}
-
-.woocommerce-product-gallery.woocommerce-product-gallery--with-images.images {
-    background-color: lightcyan;
-}
-
-.woocommerce-tabs.wc-tabs-wrapper {
-    background-color: lightgoldenrodyellow;
-}
-
-section.related.products {
-    background-color: aquamarine;
-}
-
 /* Layout Dimensions */
 .woocommerce-page div.product div.images {
     float: none;
-    width: 48%;
+    width: 45%;
 }
 
 .woocommerce-page div.product div.summary {
     float: none;
-    width: 48%;
+    width: 45%;
 }
 
 .woocommerce-page div.product .woocommerce-tabs {
-    background-color: lightgoldenrodyellow;
-    width: 48%;
+    width: 45%;
 }
 
 /* Product Title and Price */
@@ -109,7 +82,6 @@ section.related.products {
 }
 
 .woocommerce:where(body:not(.woocommerce-uses-block-theme)) div.product p.price {
-    color: lightcoral;
     letter-spacing: -1px;
     font-size: 2em;
     line-height: 1;

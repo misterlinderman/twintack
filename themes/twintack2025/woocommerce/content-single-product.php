@@ -35,32 +35,40 @@ if ( post_password_required() ) {
 if ($product && $product->is_type('variable') && isset($_GET['variation_id'])) {
     $variation_id = absint($_GET['variation_id']);
     
-    // Add inline script to pre-select the variation
+    // Add inline script to pre-select the variation but allow changing
     ?>
     <script type="text/javascript">
     jQuery(document).ready(function($) {
         // Wait for variations to be initialized
         $(document).on('woocommerce_variation_has_changed wc_variation_form', function() {
-            // Get the variation attributes
-            var $form = $('form.variations_form');
-            var variationData = $form.data('product_variations');
-            var variationId = <?php echo $variation_id; ?>;
-            
-            // Find the matching variation
-            for (var i = 0; i < variationData.length; i++) {
-                if (variationData[i].variation_id === variationId) {
-                    // Set each attribute to match this variation
-                    $.each(variationData[i].attributes, function(attr_name, attr_value) {
-                        // Skip if "any" is allowed
-                        if (attr_value === '') return;
+            // Only run this once when the page loads
+            if (typeof window.variationPreselected === 'undefined') {
+                window.variationPreselected = true;
+                
+                // Get the variation attributes
+                var $form = $('form.variations_form');
+                var variationData = $form.data('product_variations');
+                var variationId = <?php echo $variation_id; ?>;
+                
+                // Find the matching variation
+                for (var i = 0; i < variationData.length; i++) {
+                    if (variationData[i].variation_id === variationId) {
+                        // Set each attribute to match this variation
+                        $.each(variationData[i].attributes, function(attr_name, attr_value) {
+                            // Skip if "any" is allowed
+                            if (attr_value === '') return;
+                            
+                            // Select the matching option
+                            var $select = $form.find('select[name="' + attr_name + '"]');
+                            $select.val(attr_value).trigger('change');
+                        });
                         
-                        // Select the matching option
-                        var $select = $form.find('select[name="' + attr_name + '"]');
-                        $select.val(attr_value).trigger('change');
-                    });
-                    
-                    break;
+                        break;
+                    }
                 }
+                
+                // Enable all selects to allow changing variations
+                $form.find('select').prop('disabled', false);
             }
         });
     });
