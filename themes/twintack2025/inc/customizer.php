@@ -32,21 +32,24 @@ function twintack2025_customize_register( $wp_customize ) {
 		);
 	}
 
-	$wp_customize->add_section('header_marquee', array(
-		'title' => __('Marquee Configuration', 'twintack2025'),
-		'priority' => 30,
-	));
+	// Check if the TwinTack_Marquee_Control class exists before using it
+	if (class_exists('TwinTack_Marquee_Control')) {
+		$wp_customize->add_section('header_marquee', array(
+			'title' => __('Marquee Configuration', 'twintack2025'),
+			'priority' => 30,
+		));
 
-	$wp_customize->add_setting('header_marquee_slides', array(
-		'default' => array(),
-		'sanitize_callback' => 'twintack2025_sanitize_marquee_slides'
-	));
+		$wp_customize->add_setting('header_marquee_slides', array(
+			'default' => array(),
+			'sanitize_callback' => 'twintack2025_sanitize_marquee_slides'
+		));
 
-	$wp_customize->add_control(new TwinTack_Marquee_Control($wp_customize, 'header_marquee_slides', array(
-		'section' => 'header_marquee',
-		'label' => __('Marquee Slides', 'twintack2025'),
-		'description' => __('Add slides for the header marquee rotation', 'twintack2025')
-	)));
+		$wp_customize->add_control(new TwinTack_Marquee_Control($wp_customize, 'header_marquee_slides', array(
+			'section' => 'header_marquee',
+			'label' => __('Marquee Slides', 'twintack2025'),
+			'description' => __('Add slides for the header marquee rotation', 'twintack2025')
+		)));
+	}
 }
 add_action( 'customize_register', 'twintack2025_customize_register' );
 
@@ -76,8 +79,12 @@ function twintack2025_customize_preview_js() {
 }
 add_action( 'customize_preview_init', 'twintack2025_customize_preview_js' );
 
-// Reference implementation from:
-// claude notes/new theme custom 241215/theme-customization.php
-class TwinTack_Theme_Customizer {
-	// Implementation as shown in theme-customization.php
+/**
+ * Sanitize the marquee slides
+ */
+if (!function_exists('twintack2025_sanitize_marquee_slides')) {
+    function twintack2025_sanitize_marquee_slides($input) {
+        // Add sanitization logic here if needed
+        return $input;
+    }
 }
