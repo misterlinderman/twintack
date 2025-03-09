@@ -1,29 +1,19 @@
-.header-main {
-    background: var(--light);
-    border-bottom: 1px solid var(--gray);
-    padding: 1rem 0;
+/* Primary Navigation Menu */
+.primary-menu-container {
+    display: flex;
+    align-items: center;
 }
 
-.header-category-nav {
-    background: var(--gray);
-    padding: 0.75rem 0;
-}
-
-.primary-menu-container li {
-    padding: 0 0 0 1em;
-}
-
-.primary-menu-container ul,
-.category-menu-container ul {
+.primary-menu-container ul {
     display: flex;
     list-style: none;
     margin: 0;
     padding: 0;
 }
 
-.primary-menu-container li,
-.category-menu-container li {
+.primary-menu-container li {
     position: relative;
+    padding: 0 0 0 1em;
 }
 
 .primary-menu-container a {
@@ -34,43 +24,9 @@
 
 .primary-menu-container a:hover {
     color: var(--text);
-    font-weight: 500;
-    text-decoration: none;
 }
 
-.category-menu-container a {
-    color: white; /*var(--text) keep this for reference*/
-    font-size: 0.9rem;
-    text-decoration: none;
-}
-
-/* Category-specific styling */
-.baseball .header-category-nav {
-    background: var(--baseball-primary);
-}
-
-.baseball .category-menu-container a {
-    color: var(--baseball-primary);
-}
-
-.baseball .category-menu-container a,
-.fishing .category-menu-container a {
-    color: white;
-}
-
-.baseball .category-menu-container a:hover,
-.fishing .category-menu-container a:hover {
-    color: var(--color);
-}
-
-.fishing .header-category-nav {
-    background: var(--fishing-primary);
-}
-
-.fishing .category-menu-container a {
-    color: var(--fishing-primary);
-}
-
+/* Submenu Styles */
 .primary-menu-container .menu-item-has-children {
     position: relative;
 }
@@ -94,108 +50,131 @@
     padding: 0.5rem 1rem;
 }
 
-/* Category-specific styling */
+/* Category Navigation */
+.category-menu-container ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.category-menu-container li {
+    position: relative;
+    padding: 0 0 0 1em;
+}
+
+.category-menu-container a {
+    color: white;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.category-menu-container a:hover {
+    color: var(--text);
+}
+
+/* Category-specific Navigation Styles */
+.baseball .category-menu-container a,
+.fishing .category-menu-container a {
+    color: white;
+}
+
+.baseball .category-menu-container a:hover,
+.fishing .category-menu-container a:hover {
+    color: var(--color);
+}
+
 .baseball-menu > a {
     color: var(--baseball-primary);
 }
 
 .fishing-menu > a {
     color: var(--fishing-primary);
-} 
-
-
-/* New Additions for Menu and Header */
-header#masthead .container {
-    display: flex;
-    justify-content: space-between;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
 }
 
-header#masthead .container {
-    display: inherit;
+/* Product Selector Navigation */
+.product-selector {
+    position: relative;
+    z-index: 1;
 }
 
-nav#site-navigation ul li a {
-    color: var(--bs-gray-600);
-    text-decoration: none;
-    font-size: .9em;
-    padding: 5px;
-}
-
-nav#site-navigation ul {
-    list-style: none;
-    margin: 0;
-    padding: 0; 
-}
-
-.site-header {
-    position: sticky;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
-    background: rgba(255, 255, 255, 0);
-    height: var(--nav-height);
-}
-
-.header-main .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-}
-
-.site-branding {
-    max-width: 200px;
-}
-
-.custom-logo-link img {
-    width: 100%;
-    height: auto;
-}
-
-.menu-toggle {
-    display: none;
+.select-products {
     background: none;
-    border: none;
-    padding: 10px;
+    border: 1px solid white;
+    color: white;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     cursor: pointer;
 }
 
-.menu-toggle span {
+.product-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #333;
+    min-width: 200px;
+    display: none;
+    flex-direction: column;
+}
+
+.product-selector:hover .product-menu {
+    display: flex;
+}
+
+.product-menu .product-link {
+    padding: 8px 5px 5px 10px;
+    display: inline-block;
+    text-decoration: none;
+    color: white;
+}
+
+.product-menu .product-link:hover {
+    color: grey;
+}
+
+/* Sport Icons */
+.sport-icons span {
+    margin: 1rem 0 0.5rem;
+    display: inline-block;
+}
+
+a.sport-icon {
+    text-align: center;
+}
+
+/* Navigation Sections */
+.nav-section a {
     display: block;
-    width: 25px;
-    height: 2px;
-    background: var(--text);
-    margin: 5px 0;
-    transition: all 0.3s ease;
+    color: var(--color-white);
+    text-decoration: none;
+    font-size: 1.25rem;
+    padding: 0 0 0.5rem 0;
 }
 
-.category-menu-container li.menu-item {
-    padding: 0 0 0 1em;
+/* Navigation Panels */
+.nav-panels h2 {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 900;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    font-style: italic;
 }
 
-.category-menu-container li.menu-item a {
-    font-size: 1em;
+/* Product Navigation */
+.product-nav {
+    padding: 0rem 2rem 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.category-menu-container li.menu-item a:hover {
-    color: var(--text);
+.main-nav {
+    padding: 1rem 2rem;
 }
 
-/* Responsive breakpoints */
-@media (max-width: 1200px) {
-    .container {
-        max-width: 960px;
-    }
-}
-
+/* Responsive Navigation */
 @media (max-width: 991px) {
-    .menu-toggle {
-        display: block;
-    }
-
     .main-navigation {
         position: fixed;
         top: var(--header-height);
@@ -220,8 +199,8 @@ nav#site-navigation ul {
     }
 }
 
-@media (max-width: 576px) {
-    .site-branding {
-        max-width: 150px;
+@media (max-width: 768px) {
+    .category-menu-items {
+        flex-direction: column;
     }
 }

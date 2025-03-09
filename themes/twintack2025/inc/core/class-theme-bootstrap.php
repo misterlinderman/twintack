@@ -28,7 +28,9 @@ class Theme_Bootstrap {
             'Theme_Hooks',
             'Header_Configuration',
             'Header_Blocks',
-            'Header_Render'
+            'Header_Render',
+            'TwinTack_Header_SVG_Manager',
+            'TwinTack_SVG_Support'
         ];
 
         foreach ($core_modules as $module) {
