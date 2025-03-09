@@ -39,7 +39,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<div class="pswp__preloader__icn">
 						<div class="pswp__preloader__cut">
 							<div class="pswp__preloader__donut"></div>
-						</div>
 					</div>
 				</div>
 			</div>
