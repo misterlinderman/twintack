@@ -141,6 +141,11 @@ a.marquee-link {
     border-bottom: 1px solid var(--gray);
 }
 
+.custom-logo-link {
+    display: block;
+    transition: transform 0.3s ease;
+}
+
 .custom-logo-link svg {
     width: 240px;
     transition: fill 0.3s ease;
@@ -237,9 +242,25 @@ a.marquee-link {
     z-index: 1001;
 }
 
+/* Add gradient as a pseudo-element that doesn't affect layout */
+[data-nav-state="open"] .header-controls::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 80px; /* Extend below the header controls */
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%);
+    z-index: -1; /* Behind the content */
+    pointer-events: none; /* Allow clicks to pass through */
+}
+
 /* Logo */
 .custom-logo-link {
     display: block;
+    /* Ensure no additional spacing is added */
+    margin: 0;
+    padding: 0;
 }
 
 .custom-logo-link svg {
@@ -288,13 +309,15 @@ a.marquee-link {
     position: fixed;
     top: 0;
     left: 0;
-    width: 340px;
+    width: 100%;
     height: 100vh;
-    padding: calc(30px + 5.5rem) 1.5rem 1.5rem 2.5rem;
     background-color: black;
+    padding: 6rem 2rem 2rem;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
+    z-index: 1000;
     overflow-y: auto;
+    max-height: 100vh;
 }
 
 /* Open State */
@@ -318,8 +341,9 @@ a.marquee-link {
 /* Mobile Styles */
 @media (max-width: 767px) {
     .nav-panels {
-        width: 320px;
-        height: 100vh;
+        padding: 5rem 1rem 1rem;
+        overflow-y: auto;
+        max-height: 100vh;
     }
     
     .header-controls {
@@ -660,4 +684,20 @@ div.product-menu a.product-link:hover {
 .custom-logo-link svg,
 .toggle-line {
     transition: fill 0.3s ease, background-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-section:last-child {
+    padding-bottom: 2rem; /* Add some bottom padding to ensure last items are visible */
+}
+
+/* Add scrolling to navigation panels */
+.nav-panels {
+    overflow-y: auto;
+}
+
+/* Add gradient background to header controls when navigation is open */
+[data-nav-state="open"] .header-controls {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%);
+    /* height: 120px; - commented out as requested */
+    /* border-radius: 0 0 10px 0; - commented out as requested */
 }
