@@ -2,6 +2,7 @@
 @import 'base/_variables.css';
 @import 'base/_layout.css';
 @import 'base/_base.css';
+@import 'base/_woocommerce.css';
 
 /* Components */
 @import 'components/_header.css';
