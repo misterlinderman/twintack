@@ -23,7 +23,7 @@ The TwinTack theme is built on a modern WordPress architecture with the followin
 - **WooCommerce Integration**: Enhanced product displays with custom fields and category-specific views
 - **Component-Based Structure**: Modular design with reusable components in template-parts
 - **Class-Based Functionality**: Object-oriented approach to theme functionality
-- **Unified Login System**: Centralized login experience for customers, wholesale buyers, and affiliate partners
+- **Unified Login System**: Centralized login experience for customers, wholesale buyers, and affiliate partners with custom user type selection
 
 ### Technology Stack
 

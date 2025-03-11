@@ -28,6 +28,7 @@ The root of the `twintack2025` theme contains the following key files:
 - `search.php` - Search results template
 - `sidebar.php` - Sidebar template
 - `comments.php` - Comments template
+- `page-login.php` - Login page template
 
 ## Key Directories
 
@@ -52,6 +53,9 @@ Key files:
 - `class-variation-display.php` - Product variation display
 - `class-category-customizer.php` - Category customization
 - `class-twintack-product-forms.php` - Custom product forms
+- `class-twintack-role-pricing.php` - Role-based pricing
+- `class-twintack-ajax-handlers.php` - AJAX request handlers
+- `svg-support.php` - SVG file support
 - `template-functions.php` - Template helper functions
 - `template-tags.php` - Template tag functions
 
@@ -62,6 +66,7 @@ The `template-parts` directory contains modular template components:
 - `/template-parts/header/` - Header components
 - `/template-parts/woocommerce/` - WooCommerce template components
 - `/template-parts/marquee/` - Marquee components
+- `/template-parts/account/` - Account and login components
 
 Key files:
 - `content-flexible.php` - Flexible content template
@@ -69,6 +74,9 @@ Key files:
 - `content-technology.php` - Technology section display
 - `content-partners.php` - Partners section display
 - `content-twintack.php` - TwinTack-specific content
+- `login-form.php` - Login form component
+- `register-form.php` - Registration form component
+- `user-type-selector.php` - User type selection component
 
 ### `/templates` - Page Templates
 
@@ -81,6 +89,7 @@ The `templates` directory contains custom page templates:
 - `template-partners.php` - Partners page template
 - `template-technology.php` - Technology page template
 - `template-gripform.php` - Grip form page template
+- `template-login.php` - Unified login page template
 - `category-baseball.php` - Baseball category template
 - `category-fishing.php` - Fishing category template
 

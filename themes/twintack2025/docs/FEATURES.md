@@ -9,18 +9,16 @@ This document catalogs the features of the TwinTack theme, serving as both docum
 **Description**: A centralized login experience for all user types (regular customers, wholesale buyers, and affiliate partners) with role-based redirects and user type selection.
 
 **Implementation**:
-- Custom login page template (`templates/template-login.php`)
+- Custom login page template (`page-login.php`)
+- Login page template (`templates/template-login.php`)
 - Login form template part (`template-parts/account/login-form.php`)
 - Registration form template part (`template-parts/account/register-form.php`)
 - User type selector component (`template-parts/account/user-type-selector.php`)
-- Login URL filters and redirects in functions.php
-- Role-based authentication and redirection
 
 **Status**: Implemented
 
 **Usage**:
-- Create a WordPress page with the slug "login"
-- The system automatically redirects all login attempts to this unified page
+- The system automatically redirects all login attempts to the unified login page
 - Users are redirected to appropriate dashboards based on their roles after login
 - New users can select their account type during registration
 
@@ -31,9 +29,9 @@ This document catalogs the features of the TwinTack theme, serving as both docum
 **Description**: Products are displayed with category-specific information for both baseball and fishing contexts.
 
 **Implementation**:
-- Category-specific templates (`category-baseball.php`, `category-fishing.php`)
-- Custom variation display class (`class-variation-display.php`)
-- Category customizer for admin settings (`class-category-customizer.php`)
+- Category-specific templates (`templates/category-baseball.php`, `templates/category-fishing.php`)
+- Custom variation display class (`inc/class-variation-display.php`)
+- Category customizer for admin settings (`inc/class-category-customizer.php`)
 
 **Status**: Implemented
 
@@ -44,8 +42,8 @@ This document catalogs the features of the TwinTack theme, serving as both docum
 **Description**: Specialized forms for product customization and configuration.
 
 **Implementation**:
-- Custom product forms class (`class-twintack-product-forms.php`)
-- Grip form template (`template-gripform.php`)
+- Custom product forms class (`inc/class-twintack-product-forms.php`)
+- Grip form template (`templates/template-gripform.php`)
 
 **Status**: Implemented
 
@@ -56,7 +54,7 @@ This document catalogs the features of the TwinTack theme, serving as both docum
 **Description**: Different pricing structures based on user roles.
 
 **Implementation**:
-- Role pricing class (`class-twintack-role-pricing.php`)
+- Role pricing class (`inc/class-twintack-role-pricing.php`)
 
 **Status**: Implemented
 
