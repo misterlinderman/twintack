@@ -16,6 +16,7 @@
 @import 'components/_content.css';
 @import 'components/_variations.css';
 @import 'components/_product-page.css';
+@import 'components/_how-to-videos.css';
 
 /* Utilities */
 @import 'utilities/_responsive.css';

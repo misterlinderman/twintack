@@ -35,6 +35,11 @@ get_header( 'shop' ); ?>
 			<?php the_post(); ?>
 
 			<?php wc_get_template_part( 'content', 'single-product' ); ?>
+            
+            <?php
+            // Add our how-to videos section after the product content
+            get_template_part('template-parts/product/how-to-videos');
+            ?>
 
 		<?php endwhile; // end of the loop. ?>
 
