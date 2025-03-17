@@ -956,3 +956,8 @@ function twintack_enqueue_video_modal_styles() {
     }
 }
 add_action('wp_enqueue_scripts', 'twintack_enqueue_video_modal_styles');
+
+// Add this to your theme's functions.php or a debugging plugin
+add_action('gform_after_submission', function($entry, $form) {
+    error_log('Form submitted: ' . print_r($entry, true));
+}, 10, 2);
