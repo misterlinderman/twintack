@@ -40,18 +40,29 @@ class TwinTack_Grip_Account {
         $designs = new WP_Query($args);
         
         if ($designs->have_posts()) {
+            echo '<div class="grip-designs-list">';
             while ($designs->have_posts()) {
                 $designs->the_post();
                 $status = get_post_status();
                 ?>
                 <div class="grip-design-item">
-                    <h3><?php the_title(); ?></h3>
-                    <p>Status: <?php echo get_post_status_object($status)->label; ?></p>
+                    <h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+                    <div class="grip-design-preview">
+                        <?php 
+                        $artwork_url = get_post_meta(get_the_ID(), '_grip_artwork_url', true);
+                        if ($artwork_url) {
+                            echo '<img src="' . esc_url($artwork_url) . '" alt="Design Preview" class="grip-artwork-thumbnail">';
+                        }
+                        ?>
+                    </div>
+                    <p class="grip-design-status">Status: <?php echo get_post_status_object($status)->label; ?></p>
                     <p>Design Type: <?php echo get_post_meta(get_the_ID(), '_grip_design_type', true); ?></p>
                     <p>Quantity: <?php echo get_post_meta(get_the_ID(), '_grip_quantity', true); ?></p>
+                    <a href="<?php the_permalink(); ?>" class="button view-grip-design">View Details</a>
                 </div>
                 <?php
             }
+            echo '</div>';
         } else {
             echo '<p>No grip designs found.</p>';
         }

@@ -60,6 +60,9 @@ class TwinTack_Grip_Manager {
         if (!is_admin()) {
             TwinTack_Grip_Account::get_instance();
         }
+
+        // Add CSS for grip designs
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_styles'));
     }
     
     public function woocommerce_missing_notice() {
@@ -87,6 +90,15 @@ class TwinTack_Grip_Manager {
         
         // Flush rewrite rules
         flush_rewrite_rules();
+    }
+
+    public function enqueue_styles() {
+        wp_enqueue_style(
+            'grip-designs',
+            plugins_url('assets/css/grip-designs.css', dirname(__FILE__)),
+            array(),
+            '1.0.0'
+        );
     }
 }
 

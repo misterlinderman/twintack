@@ -12,6 +12,7 @@ class TwinTack_Grip_Post_Type {
     private function __construct() {
         add_action('init', array($this, 'register_post_type'));
         add_action('init', array($this, 'register_statuses'));
+        add_filter('single_template', array($this, 'load_grip_design_template'));
     }
     
     public function register_post_type() {
@@ -52,12 +53,30 @@ class TwinTack_Grip_Post_Type {
 
     public function register_statuses() {
         register_post_status('artwork_pending', array(
-            'label' => _x('Artwork Pending', 'post status', 'twintack-grip-manager'),
+            'label' => _x('Artwork Pending', 'grip-design'),
             'public' => true,
-            'show_in_admin_all_list' => true,
-            'show_in_admin_status_list' => true,
             'label_count' => _n_noop('Artwork Pending <span class="count">(%s)</span>',
                                     'Artwork Pending <span class="count">(%s)</span>')
         ));
+        
+        register_post_status('artwork_approved', array(
+            'label' => _x('Artwork Approved', 'grip-design'),
+            'public' => true,
+            'label_count' => _n_noop('Artwork Approved <span class="count">(%s)</span>',
+                                    'Artwork Approved <span class="count">(%s)</span>')
+        ));
+    }
+
+    public function load_grip_design_template($template) {
+        global $post;
+
+        if ($post->post_type === 'grip_design') {
+            $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/single-grip-design.php';
+            if (file_exists($custom_template)) {
+                return $custom_template;
+            }
+        }
+
+        return $template;
     }
 }

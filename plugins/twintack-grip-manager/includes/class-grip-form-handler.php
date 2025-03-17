@@ -21,19 +21,43 @@ class TwinTack_Grip_Form_Handler {
     
     public function process_grip_form($entry, $form) {
         try {
+            // Get the file upload field (field ID 9)
+            $file_upload = rgar($entry, '9');
+            $file_name = basename($file_upload);
+            
+            // Get the feedback field (field ID 14)
+            $feedback = rgar($entry, '14');
+            
+            // Get customer name from name field parts (1.3 for first name, 1.6 for last name)
+            $first_name = rgar($entry, '1.3');
+            $last_name = rgar($entry, '1.6');
+            $customer_name = trim($first_name . ' ' . $last_name);
+            
+            // Get team name (field ID 8)
+            $team_name = rgar($entry, '8');
+            
+            // Generate date suffix (YYMMDD)
+            $date_suffix = current_time('ymd');
+            
+            // Create post title
+            $post_title = sprintf('Custom Grip - %s %s', $team_name, $date_suffix);
+            
             // Create grip design post
             $grip_id = wp_insert_post(array(
                 'post_type' => 'grip_design',
-                'post_title' => sprintf('Custom Grip - %s %s', $entry['1.3'], $entry['1.6']),
+                'post_title' => $post_title,
+                'post_content' => $feedback,
                 'post_status' => 'artwork_pending',
                 'meta_input' => array(
-                    '_grip_customer_name' => $entry['1.3'] . ' ' . $entry['1.6'],
-                    '_grip_customer_email' => $entry['3'],
-                    '_grip_team_name' => $entry['8'],
-                    '_grip_design_type' => $entry['12'],
-                    '_grip_notes' => $entry['14'],
-                    '_grip_quantity' => $entry['21'],
-                    '_grip_form_entry_id' => $entry['id']
+                    '_grip_customer_name' => $customer_name,
+                    '_grip_customer_email' => rgar($entry, '3'),
+                    '_grip_team_name' => $team_name,
+                    '_grip_design_type' => rgar($entry, '12'),
+                    '_grip_quantity' => rgar($entry, '21'),
+                    '_grip_form_entry_id' => $entry['id'],
+                    '_grip_artwork_url' => $file_upload,
+                    '_grip_artwork_filename' => $file_name,
+                    '_grip_feedback' => $feedback
                 )
             ));
 
@@ -41,39 +65,25 @@ class TwinTack_Grip_Form_Handler {
                 throw new Exception($grip_id->get_error_message());
             }
 
-            // Get or create deposit product
-            $deposit_product_id = $this->get_deposit_product_id();
-            if (!$deposit_product_id) {
-                throw new Exception('Failed to get or create deposit product');
-            }
-
-            // Add to cart with metadata
-            $cart_item_data = array(
+            // Add to cart with enhanced metadata
+            $product_id = $this->get_deposit_product_id();
+            WC()->cart->add_to_cart($product_id, 1, 0, array(), array(
                 'grip_design_data' => array(
                     'grip_id' => $grip_id,
-                    'customer_name' => $entry['1.3'] . ' ' . $entry['1.6'],
-                    'customer_email' => $entry['3'],
-                    'team_name' => $entry['8'],
-                    'design_type' => $entry['12'],
-                    'notes' => $entry['14'],
-                    'quantity' => $entry['21']
+                    'customer_name' => $customer_name,
+                    'team_name' => $team_name,
+                    'design_type' => rgar($entry, '12'),
+                    'quantity' => rgar($entry, '21'),
+                    'artwork_url' => $file_upload,
+                    'artwork_filename' => $file_name,
+                    'feedback' => $feedback
                 )
-            );
+            ));
 
-            // Force unique cart item
-            $cart_item_data['unique_key'] = md5(microtime() . rand());
-
-            // Add to cart
-            WC()->cart->add_to_cart($deposit_product_id, 1, 0, array(), $cart_item_data);
-
-            // Redirect to cart
             wp_redirect(wc_get_cart_url());
             exit;
-
         } catch (Exception $e) {
-            error_log('Grip Form Error: ' . $e->getMessage());
-            // Add error message to form
-            GFAPI::add_note($entry['id'], 0, 'error', 'Error processing grip design: ' . $e->getMessage());
+            error_log('Grip Form Processing Error: ' . $e->getMessage());
         }
     }
 
@@ -87,41 +97,64 @@ class TwinTack_Grip_Form_Handler {
 
     public function display_cart_item_custom_data($item_data, $cart_item) {
         if (isset($cart_item['grip_design_data'])) {
+            $data = $cart_item['grip_design_data'];
+            
             $item_data[] = array(
                 'key' => 'Customer',
-                'value' => $cart_item['grip_design_data']['customer_name']
+                'value' => $data['customer_name']
             );
+            
             $item_data[] = array(
                 'key' => 'Team/School',
-                'value' => $cart_item['grip_design_data']['team_name']
+                'value' => $data['team_name']
             );
+            
             $item_data[] = array(
                 'key' => 'Design Type',
-                'value' => $cart_item['grip_design_data']['design_type']
+                'value' => $data['design_type']
             );
+            
             $item_data[] = array(
                 'key' => 'Quantity',
-                'value' => $cart_item['grip_design_data']['quantity']
+                'value' => $data['quantity']
             );
+
+            if (!empty($data['artwork_filename'])) {
+                $item_data[] = array(
+                    'key' => 'Artwork File',
+                    'value' => $data['artwork_filename']
+                );
+            }
+
+            if (!empty($data['feedback'])) {
+                $item_data[] = array(
+                    'key' => 'Design Instructions',
+                    'value' => $data['feedback']
+                );
+            }
         }
         return $item_data;
     }
 
     public function save_grip_data_to_order($item, $cart_item_key, $values, $order) {
         if (isset($values['grip_design_data'])) {
+            $data = $values['grip_design_data'];
+            
             // Save all grip design data as hidden meta
-            foreach ($values['grip_design_data'] as $key => $value) {
+            foreach ($data as $key => $value) {
                 $item->add_meta_data("_grip_{$key}", $value, true);
             }
             
             // Add visible meta data
-            $item->add_meta_data('Customer', $values['grip_design_data']['customer_name'], true);
-            $item->add_meta_data('Team/School', $values['grip_design_data']['team_name'], true);
-            $item->add_meta_data('Design Type', $values['grip_design_data']['design_type'], true);
-            $item->add_meta_data('Quantity', $values['grip_design_data']['quantity'], true);
+            $item->add_meta_data('Customer', $data['customer_name'], true);
+            $item->add_meta_data('Team/School', $data['team_name'], true);
+            $item->add_meta_data('Design Type', $data['design_type'], true);
+            $item->add_meta_data('Quantity', $data['quantity'], true);
+            $item->add_meta_data('Artwork File', $data['artwork_filename'], true);
+            $item->add_meta_data('Design Instructions', $data['feedback'], true);
             
             // Link to grip design post
-            $item->add_meta_data('_grip_design_id', $values['grip_design_data']['grip_id'], true);
+            $item->add_meta_data('_grip_design_id', $data['grip_id'], true);
         }
     }
     
