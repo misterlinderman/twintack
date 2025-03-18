@@ -29,6 +29,19 @@ require_once get_template_directory() . '/inc/marquee/class-marquee-configuratio
 require_once get_template_directory() . '/inc/team/class-team-member.php';
 
 /**
+ * Custom debug logging function
+ */
+function twintack_log($message) {
+    if (WP_DEBUG === true) {
+        if (is_array($message) || is_object($message)) {
+            error_log(print_r($message, true));
+        } else {
+            error_log($message);
+        }
+    }
+}
+
+/**
  * Sets up theme defaults and registers support for various WordPress features.
  */
 function twintack2025_setup() {
@@ -462,11 +475,21 @@ add_filter( 'login_headerurl', 'twintack_login_logo_url' );
 
 // Handle role-based login redirects
 function twintack_login_redirect( $redirect, $user ) {
+    // Debug information
+    if (WP_DEBUG === true) {
+        error_log('Login redirect triggered for user: ' . $user->user_login);
+        error_log('Default redirect: ' . $redirect);
+        error_log('REQUEST redirect_to: ' . (isset($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : 'Not set'));
+    }
+    
     // If there's a specific redirect_to parameter and it's a valid URL, use it
     if ( isset( $_REQUEST['redirect_to'] ) && ! empty( $_REQUEST['redirect_to'] ) ) {
         $redirect_to = $_REQUEST['redirect_to'];
         // Make sure it's a safe URL (on the same domain)
         if ( wp_validate_redirect( $redirect_to ) ) {
+            if (WP_DEBUG === true) {
+                error_log('Using redirect_to parameter: ' . $redirect_to);
+            }
             return $redirect_to;
         }
     }
@@ -476,14 +499,30 @@ function twintack_login_redirect( $redirect, $user ) {
     
     // Redirect based on user role
     if ( in_array( 'wholesale_customer', $user_roles ) ) {
-        return apply_filters( 'twintack_wholesale_dashboard_url', site_url( '/wholesale-dashboard/' ) );
+        $wholesale_url = apply_filters( 'twintack_wholesale_dashboard_url', site_url( '/wholesale-dashboard/' ) );
+        if (WP_DEBUG === true) {
+            error_log('Redirecting wholesale user to: ' . $wholesale_url);
+        }
+        return $wholesale_url;
     } elseif ( in_array( 'affiliate', $user_roles ) ) {
-        return apply_filters( 'twintack_affiliate_dashboard_url', site_url( '/affiliate-dashboard/' ) );
+        $affiliate_url = apply_filters( 'twintack_affiliate_dashboard_url', site_url( '/affiliate-dashboard/' ) );
+        if (WP_DEBUG === true) {
+            error_log('Redirecting affiliate user to: ' . $affiliate_url);
+        }
+        return $affiliate_url;
     } elseif ( in_array( 'administrator', $user_roles ) ) {
-        return admin_url();
+        $admin_url = admin_url();
+        if (WP_DEBUG === true) {
+            error_log('Redirecting admin user to: ' . $admin_url);
+        }
+        return $admin_url;
     } else {
         // Regular customers go to the WooCommerce my account page
-        return wc_get_page_permalink( 'myaccount' );
+        $account_url = wc_get_page_permalink( 'myaccount' );
+        if (WP_DEBUG === true) {
+            error_log('Redirecting customer user to: ' . $account_url);
+        }
+        return $account_url;
     }
 }
 add_filter( 'login_redirect', 'twintack_login_redirect', 10, 2 );
@@ -517,11 +556,23 @@ function twintack_process_registration( $customer_id, $new_customer_data, $passw
                 // Keep the default customer role
                 break;
         }
+        
+        // Force password generation if it wasn't generated
+        if ( !$password_generated ) {
+            // Generate a password
+            $password = wp_generate_password();
+            
+            // Set the user's password
+            wp_set_password( $password, $customer_id );
+            
+            // Trigger the new user notification manually
+            wp_new_user_notification( $customer_id, null, 'user' );
+        }
     }
 }
 add_action( 'woocommerce_created_customer', 'twintack_process_registration', 10, 3 );
 
-// Add custom styles for the login page
+// Update login styles to include the password reset forms
 function twintack_login_styles() {
     if ( is_page( 'login' ) ) {
         ?>
@@ -556,6 +607,56 @@ function twintack_login_styles() {
             }
             .nav-tabs {
                 margin-bottom: 20px;
+            }
+            .woocommerce-message, 
+            .woocommerce-error, 
+            .woocommerce-info {
+                padding: 1em 1.5em;
+                margin: 0 0 2em;
+                position: relative;
+                background-color: #f7f6f7;
+                color: #515151;
+                border-top: 3px solid #a46497;
+                list-style: none outside;
+                width: auto;
+                word-wrap: break-word;
+                border-radius: 4px;
+            }
+            .woocommerce-message {
+                border-top-color: #8fae1b;
+            }
+            .woocommerce-error {
+                border-top-color: #b81c23;
+            }
+            .return-to-login {
+                text-align: center;
+                margin-top: 20px;
+            }
+            .password-info-message {
+                background-color: #f8f8f8;
+                padding: 10px 15px;
+                border-left: 3px solid #2271b1;
+                margin: 15px 0;
+                border-radius: 3px;
+            }
+            /* Password reset form specific styles */
+            .password-strength,
+            .password-match {
+                margin-top: 5px;
+                font-size: 0.9em;
+            }
+            .twintack-reset-password-form input[type="password"] {
+                border: 1px solid #ddd;
+                padding: 10px;
+                border-radius: 4px;
+                width: 100%;
+            }
+            .twintack-reset-password-form .woocommerce-Button {
+                margin-top: 15px;
+            }
+            /* Fix for console errors with missing resources */
+            .woocommerce-error {
+                list-style-type: none !important;
             }
         </style>
         <?php
@@ -961,3 +1062,203 @@ add_action('wp_enqueue_scripts', 'twintack_enqueue_video_modal_styles');
 add_action('gform_after_submission', function($entry, $form) {
     error_log('Form submitted: ' . print_r($entry, true));
 }, 10, 2);
+
+// Fix password reset URL to use our custom login page
+function twintack_custom_reset_password_url( $default_url, $user_id = null ) {
+    // Get our custom login page URL
+    $login_url = site_url( '/login/' );
+    
+    // Ensure we're only modifying the reset password URL
+    if ( strpos( $default_url, 'action=rp' ) !== false ) {
+        // Extract the key and login from the default URL
+        $parts = parse_url( $default_url );
+        parse_str( $parts['query'], $query );
+        
+        if ( isset( $query['key'] ) && isset( $query['login'] ) ) {
+            // Reconstruct the URL with our login page
+            $login_url = add_query_arg( array(
+                'action' => 'rp',
+                'key'    => $query['key'],
+                'login'  => $query['login'],
+            ), $login_url );
+            
+            return $login_url;
+        }
+    }
+    
+    return $default_url;
+}
+add_filter( 'lostpassword_url', 'twintack_custom_reset_password_url', 20, 1 );
+add_filter( 'woocommerce_get_endpoint_url', 'twintack_fix_password_reset_endpoint', 10, 4 );
+
+function twintack_fix_password_reset_endpoint( $url, $endpoint, $value, $permalink ) {
+    if ( $endpoint === 'lost-password' ) {
+        return site_url( '/login/?action=lostpassword' );
+    }
+    
+    return $url;
+}
+
+// Redirect WooCommerce account page to custom login for non-logged in users
+function twintack_redirect_account_page() {
+    // Only apply on the my-account page
+    if ( ! is_user_logged_in() && is_account_page() && ! is_wc_endpoint_url() ) {
+        // Redirect to our custom login page
+        wp_redirect( site_url( '/login/' ) );
+        exit;
+    }
+}
+add_action( 'template_redirect', 'twintack_redirect_account_page' );
+
+// Add registration success redirection
+function twintack_registration_redirect( $redirect_to ) {
+    // Modify only if this is a registration
+    if ( isset( $_POST['register'] ) ) {
+        return add_query_arg( 'registered', 'success', site_url( '/login/' ) );
+    }
+    
+    return $redirect_to;
+}
+add_filter( 'woocommerce_registration_redirect', 'twintack_registration_redirect', 10, 1 );
+
+/**
+ * Fix the user notification email to use our custom password reset URL format
+ */
+function twintack_custom_password_reset_email( $message, $key, $user_login, $user_data ) {
+    // Build the reset URL to point to our custom login page
+    $reset_url = add_query_arg(
+        array(
+            'action' => 'resetpass',
+            'key'    => $key,
+            'login'  => rawurlencode( $user_login ),
+        ),
+        site_url( '/login/' )
+    );
+    
+    // Replace the default URL in the email with our custom URL
+    $message = str_replace(
+        network_site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user_login ), 'login' ),
+        esc_url_raw( $reset_url ),
+        $message
+    );
+    
+    // Additional replacement to catch other URL formats
+    $message = str_replace(
+        site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user_login ) ),
+        esc_url_raw( $reset_url ),
+        $message
+    );
+    
+    // Log for debugging
+    if (WP_DEBUG === true) {
+        error_log('Password reset email URL: ' . $reset_url);
+    }
+    
+    return $message;
+}
+add_filter( 'retrieve_password_message', 'twintack_custom_password_reset_email', 10, 4 );
+
+// Also fix the wp_new_user_notification_email filter
+function twintack_custom_new_user_notification_email( $wp_new_user_notification_email, $user, $blogname ) {
+    // Get the key
+    $key = get_password_reset_key( $user );
+    
+    if ( is_wp_error( $key ) ) {
+        return $wp_new_user_notification_email;
+    }
+    
+    // Build the reset URL to point to our custom login page with a clearer action
+    $reset_url = add_query_arg(
+        array(
+            'action' => 'setup_password', // Using a more distinctive action name
+            'key'    => $key,
+            'login'  => rawurlencode( $user->user_login ),
+        ),
+        site_url( '/login/' )
+    );
+    
+    // Replace the default URL in the email with our custom URL
+    $wp_new_user_notification_email['message'] = str_replace(
+        network_site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user->user_login ), 'login' ), 
+        esc_url_raw( $reset_url ),
+        $wp_new_user_notification_email['message']
+    );
+    
+    // Additional replacement to catch other URL formats
+    $wp_new_user_notification_email['message'] = str_replace(
+        site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user->user_login ) ),
+        esc_url_raw( $reset_url ),
+        $wp_new_user_notification_email['message']
+    );
+    
+    // Log the email message for debugging
+    if (WP_DEBUG === true) {
+        error_log('New user reset URL in email: ' . $reset_url);
+        error_log('Email message contains reset URL: ' . (strpos($wp_new_user_notification_email['message'], $reset_url) !== false ? 'Yes' : 'No'));
+    }
+    
+    return $wp_new_user_notification_email;
+}
+add_filter( 'wp_new_user_notification_email', 'twintack_custom_new_user_notification_email', 10, 3 );
+
+// Hook into password reset to debug the process
+function twintack_debug_password_reset($user_login) {
+    twintack_log('Password reset requested for: ' . $user_login);
+    
+    $user = get_user_by('login', $user_login);
+    if ($user) {
+        // Get the key that was generated
+        $key = get_transient('retrieve_key_for_' . $user->ID);
+        if ($key) {
+            twintack_log('Generated reset key: ' . $key);
+        }
+    }
+}
+add_action('retrieve_password', 'twintack_debug_password_reset');
+
+// Include the password reset helper functions
+require_once get_template_directory() . '/inc/password-reset-helper.php';
+
+/**
+ * Enqueue password reset script
+ */
+function twintack_enqueue_password_reset_script() {
+    if (is_page('login') && isset($_GET['action']) && ($_GET['action'] === 'rp' || $_GET['action'] === 'resetpass')) {
+        wp_enqueue_script(
+            'twintack-password-reset',
+            get_template_directory_uri() . '/js/password-reset.js',
+            array('jquery'),
+            filemtime(get_template_directory() . '/js/password-reset.js'),
+            true
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'twintack_enqueue_password_reset_script');
+
+/**
+ * Force redirect after WooCommerce login
+ * This ensures our custom login form always redirects correctly
+ */
+function twintack_force_login_redirect($user_login, $user) {
+    // Don't redirect during AJAX requests
+    if (defined('DOING_AJAX') && DOING_AJAX) {
+        return;
+    }
+    
+    if (WP_DEBUG === true) {
+        error_log('User logged in: ' . $user_login);
+    }
+    
+    // Get the appropriate redirect URL based on user role
+    $redirect_url = twintack_login_redirect('', $user);
+    
+    // Only redirect if we have a valid URL
+    if (!empty($redirect_url)) {
+        if (WP_DEBUG === true) {
+            error_log('Forcing redirect to: ' . $redirect_url);
+        }
+        wp_safe_redirect($redirect_url);
+        exit;
+    }
+}
+add_action('wp_login', 'twintack_force_login_redirect', 10, 2);

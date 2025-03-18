@@ -9,9 +9,20 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+// Check if we have a password reset success message
+$password_reset = isset( $_GET['password-reset'] ) && $_GET['password-reset'] === 'true';
 ?>
 
 <div class="twintack-login-form">
+    <?php if ( $password_reset ) : ?>
+        <div class="woocommerce-message" role="alert">
+            <?php esc_html_e( 'Your password has been reset successfully. You can now log in with your new password.', 'twintack2025' ); ?>
+        </div>
+    <?php endif; ?>
+    
+    <?php wc_print_notices(); ?>
+
     <h2><?php esc_html_e( 'Login', 'twintack2025' ); ?></h2>
     
     <form class="woocommerce-form woocommerce-form-login login" method="post">
@@ -21,6 +32,9 @@ if ( ! defined( 'ABSPATH' ) ) {
         // Add redirect_to field if it exists in the URL
         if ( isset( $_GET['redirect_to'] ) ) {
             echo '<input type="hidden" name="redirect_to" value="' . esc_attr( $_GET['redirect_to'] ) . '">';
+        } else {
+            // Add default redirect to my account page if no redirect is specified
+            echo '<input type="hidden" name="redirect_to" value="' . esc_attr( wc_get_page_permalink( 'myaccount' ) ) . '">';
         }
         ?>
 
@@ -65,7 +79,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         </p>
         
         <p class="woocommerce-LostPassword lost_password">
-            <a href="<?php echo esc_url( wp_lostpassword_url() ); ?>"><?php esc_html_e( 'Lost your password?', 'woocommerce' ); ?></a>
+            <a href="<?php echo esc_url( add_query_arg( 'action', 'lostpassword', site_url( '/login/' ) ) ); ?>"><?php esc_html_e( 'Lost your password?', 'woocommerce' ); ?></a>
         </p>
 
         <?php do_action( 'woocommerce_login_form_end' ); ?>
