@@ -185,6 +185,17 @@ function twintack2025_scripts() {
 		filemtime(get_template_directory() . '/js/header.js'),
 		true
 	);
+	
+	// Cart update script
+	if (class_exists('WooCommerce')) {
+		wp_enqueue_script(
+			'twintack2025-cart-update',
+			get_template_directory_uri() . '/js/cart-update.js',
+			array('jquery'),
+			filemtime(get_template_directory() . '/js/cart-update.js'),
+			true
+		);
+	}
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
