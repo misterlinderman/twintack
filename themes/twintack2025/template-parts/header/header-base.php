@@ -53,6 +53,10 @@
 
             <!-- Navigation Panels -->
             <div class="nav-panels">
+                <!-- Custom Grips Navigation -->
+                <div class="nav-section">
+                    <h2><a class="custom-grips-link" href="/twintack-custom-grips">CUSTOM GRIPS</a></h2>
+                </div>
                 <!-- Sport Navigation -->
                 <div class="nav-section">
                     <h2>SPORT</h2>
@@ -99,8 +103,6 @@
                         <a href="/technology">TECHNOLOGY</a>
                         <a href="/partners">PARTNERS</a>
                         <a href="/contact">CONTACT</a>
-                        <!--a href="/my-account">MY ACCOUNT</a>
-                        <a href="/cart">CART</a-->
                         <a href="/temp-all-links/">TEMP ALL LINKS</a>
                     </nav>
                 </div>

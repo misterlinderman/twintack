@@ -173,6 +173,13 @@ a.sport-icon {
     padding: 1rem 2rem;
 }
 
+/* Custom Grips Link */
+a.custom-grips-link {
+    font-size: inherit;
+    padding: 1rem 0 0.5rem;
+    margin: inherit;
+}
+
 /* Responsive Navigation */
 @media (max-width: 991px) {
     .main-navigation {
