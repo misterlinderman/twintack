@@ -18,6 +18,7 @@
 @import 'components/_variations.css';
 @import 'components/_product-page.css';
 @import 'components/_how-to-videos.css';
+@import 'components/_footer.css';
 
 /* Utilities */
 @import 'utilities/_responsive.css';

@@ -7,11 +7,61 @@
 ?>
 
 	<footer id="colophon" class="site-footer">
-		<div class="site-info">
-			<div class="container">
-				<p>&copy; <?php echo date('Y'); ?> TwinTack. All rights reserved.</p>
+		<div class="footer-container">
+			<!-- Logo and About Column -->
+			<div class="footer-column">
+				<?php if (function_exists('custom_logo_svg')) : ?>
+					<div class="footer-logo"><?php echo custom_logo_svg(); ?></div>
+				<?php endif; ?>
+				<div class="footer-about">
+					<p>TwinTack is revolutionizing grip technology for baseball and fishing, providing innovative solutions for athletes and outdoor enthusiasts.</p>
+				</div>
+				<div class="social-links">
+					<a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M18.77,7.46H14.5v-1.9c0-.9.6-1.1,1-1.1h3V.5L14.17.5C10.09.5,9.14,3.25,9.14,6.06V7.46H6v4H9.14V21.5h5.36V11.46h3.55l.52-4Z"/></svg></a>
+					<a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12,2.16c3.2,0,3.58,0,4.85.07,3.25.15,4.77,1.7,4.92,4.92.06,1.27.07,1.65.07,4.85s0,3.58-.07,4.85c-.15,3.23-1.66,4.77-4.92,4.92-1.27.06-1.65.07-4.85.07s-3.58,0-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.65-.07-4.85s0-3.58.07-4.85C2.38,3.92,3.9,2.38,7.15,2.23,8.42,2.18,8.8,2.16,12,2.16ZM12,0C8.74,0,8.33,0,7.05.07c-4.35.2-6.78,2.62-6.98,6.98C0,8.33,0,8.74,0,12S0,15.67.07,17c.2,4.36,2.63,6.78,6.98,6.98C8.33,24,8.74,24,12,24s3.67,0,4.95-.07c4.35-.2,6.78-2.62,7-6.98C24,15.67,24,15.26,24,12s0-3.67-.07-4.95c-.2-4.35-2.65-6.78-7-6.98C15.67,0,15.26,0,12,0Zm0,5.84A6.16,6.16,0,1,0,18.16,12,6.16,6.16,0,0,0,12,5.84ZM12,16a4,4,0,1,1,4-4A4,4,0,0,1,12,16ZM18.41,4.15a1.44,1.44,0,1,0,1.43,1.44A1.44,1.44,0,0,0,18.41,4.15Z"/></svg></a>
+					<a href="#" aria-label="Twitter"><svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M22,5.8a8.6,8.6,0,0,1-2.36.65,4.07,4.07,0,0,0,1.8-2.27,8.1,8.1,0,0,1-2.6,1A4.1,4.1,0,0,0,11.75,8a4.73,4.73,0,0,0,.1.93A11.6,11.6,0,0,1,3.39,4.62,4.2,4.2,0,0,0,2.83,6.7a4.09,4.09,0,0,0,1.82,3.4A4,4,0,0,1,2.8,9.6v.05a4.11,4.11,0,0,0,3.29,4A4.68,4.68,0,0,1,5,13.81a4.09,4.09,0,0,0,3.83,2.84A8.22,8.22,0,0,1,3,18.34a11.57,11.57,0,0,0,6.29,1.85A11.59,11.59,0,0,0,21,8.45c0-.17,0-.35,0-.53A8.43,8.43,0,0,0,22,5.8Z"/></svg></a>
+					<a href="#" aria-label="YouTube"><svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M23.8,7.2a2.93,2.93,0,0,0-2.07-2.07C19.94,4.56,12,4.56,12,4.56s-7.94,0-9.73.57A2.93,2.93,0,0,0,.2,7.2,33.92,33.92,0,0,0,0,12a33.92,33.92,0,0,0,.2,4.8,2.93,2.93,0,0,0,2.07,2.07c1.79.57,9.73.57,9.73.57s7.94,0,9.73-.57a2.93,2.93,0,0,0,2.07-2.07A33.92,33.92,0,0,0,24,12,33.92,33.92,0,0,0,23.8,7.2ZM9.6,15.6V8.4L15.84,12Z"/></svg></a>
+				</div>
 			</div>
-		</div><!-- .site-info -->
+
+			<!-- Products Column -->
+			<div class="footer-column">
+				<h3>Products</h3>
+				<nav class="footer-nav">
+					<a href="/shop">Shop All</a>
+					<a href="/shop/?product_cat=baseball">Baseball Grips</a>
+					<a href="/shop/?product_cat=fishing">Fishing Grips</a>
+					<a href="/twintack-custom-grips">Custom Grips</a>
+				</nav>
+			</div>
+
+			<!-- Company Column -->
+			<div class="footer-column">
+				<h3>Company</h3>
+				<nav class="footer-nav">
+					<a href="/technology">Technology</a>
+					<a href="/partners">Partners</a>
+					<a href="/about">About Us</a>
+					<a href="/contact">Contact</a>
+				</nav>
+			</div>
+
+			<!-- Newsletter Column -->
+			<div class="footer-column">
+				<h3>Newsletter</h3>
+				<div class="newsletter-form">
+					<p>Stay updated with our latest products, news and special offers.</p>
+					<form class="form-group">
+						<input type="email" placeholder="Your email address" required aria-label="Email">
+						<button type="submit">Subscribe</button>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="site-info footer-bottom">
+			<p class="copyright">&copy; <?php echo date('Y'); ?> TwinTack. All rights reserved.</p>
+		</div>
 	</footer><!-- #colophon -->
 </div><!-- #page -->
 

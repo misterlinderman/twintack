@@ -267,13 +267,18 @@ a.marquee-link {
 /* Move gradient into position when nav opens */
 [data-nav-state="open"] .header-controls::before {
     left: 0;
-    transition-delay: 0.05s; /* Small delay to match the tray movement */
+    transition-delay: 0.05s;
+    transition: left 0.3s ease, opacity 2s ease;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%);
+    opacity: 1;
 }
 
 /* Ensure gradient is off-screen when nav is closed */
 [data-nav-state="closed"] .header-controls::before {
     left: -100%;
     transition-delay: 0s;
+    transition: left 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
 }
 
 /* Logo */
@@ -709,11 +714,4 @@ div.product-menu a.product-link:hover {
 /* Add scrolling to navigation panels */
 .nav-panels {
     overflow-y: auto;
-}
-
-/* Add gradient background to header controls when navigation is open */
-[data-nav-state="open"] .header-controls {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%);
-    /* height: 120px; - commented out as requested */
-    /* border-radius: 0 0 10px 0; - commented out as requested */
 }
