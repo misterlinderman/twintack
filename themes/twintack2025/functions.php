@@ -1273,3 +1273,287 @@ function twintack_force_login_redirect($user_login, $user) {
     }
 }
 add_action('wp_login', 'twintack_force_login_redirect', 10, 2);
+
+/**
+ * Register WooCommerce account endpoints
+ */
+function twintack_register_woocommerce_endpoints() {
+    // Register standard WooCommerce endpoints
+    add_rewrite_endpoint('orders', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('view-order', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('downloads', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('edit-account', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('edit-address', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('payment-methods', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('customer-logout', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('add-payment-method', EP_ROOT | EP_PAGES);
+    
+    // This is important - you'll need to flush rewrite rules once
+    // But don't do this on every page load as it's expensive
+    // Uncomment this only when you're making changes to endpoints
+    // flush_rewrite_rules();
+}
+add_action('init', 'twintack_register_woocommerce_endpoints');
+
+/**
+ * Fix WooCommerce endpoint URLs
+ * This ensures account endpoint URLs are properly constructed
+ */
+function twintack_fix_account_endpoints($url, $endpoint, $value, $permalink) {
+    // Check if the URL incorrectly contains /login/ for account endpoints
+    if (strpos($url, '/login/') !== false && 
+        in_array($endpoint, ['orders', 'view-order', 'downloads', 'edit-account', 'edit-address', 
+                             'payment-methods', 'customer-logout', 'add-payment-method', 'grip-designs'])) {
+        
+        // Get the my account page URL
+        $my_account_url = wc_get_page_permalink('myaccount');
+        
+        // Reconstruct the URL properly
+        if ($value) {
+            $url = trailingslashit($my_account_url) . trailingslashit($endpoint) . $value;
+        } else {
+            $url = trailingslashit($my_account_url) . $endpoint;
+        }
+    }
+    
+    return $url;
+}
+add_filter('woocommerce_get_endpoint_url', 'twintack_fix_account_endpoints', 20, 4);
+
+/**
+ * Advanced override of WooCommerce endpoint URLs
+ * Use this if the regular approach doesn't work
+ */
+function twintack_force_correct_account_urls() {
+    // Only run this on front-end requests
+    if (is_admin()) {
+        return;
+    }
+    
+    // Get the Account page ID and URL
+    $account_page_id = wc_get_page_id('myaccount');
+    if ($account_page_id <= 0) {
+        return;
+    }
+    
+    // Get the account page URL
+    $account_page_url = get_permalink($account_page_id);
+    if (!$account_page_url) {
+        return;
+    }
+    
+    // Make sure it's using the correct URL structure
+    global $woocommerce;
+    
+    // Force the account page URL to be the correct one
+    add_filter('woocommerce_get_myaccount_page_permalink', function() use ($account_page_url) {
+        return $account_page_url;
+    }, 999);
+    
+    // Override all endpoint URLs with high priority
+    add_filter('woocommerce_get_endpoint_url', function($url, $endpoint, $value, $permalink) use ($account_page_url) {
+        // Don't modify lost-password endpoint as that's handled by custom login
+        if ($endpoint === 'lost-password') {
+            return $url;
+        }
+        
+        // Rebuild the endpoint URL using the correct account page
+        if ($value) {
+            return trailingslashit($account_page_url) . trailingslashit($endpoint) . $value;
+        } else {
+            return trailingslashit($account_page_url) . $endpoint;
+        }
+    }, 999, 4);
+}
+add_action('init', 'twintack_force_correct_account_urls', 5);
+
+/**
+ * Debug WooCommerce account URLs
+ * Add ?debug_account=1 to any page to see the current endpoints and URLs
+ */
+function twintack_debug_account_urls() {
+    if (!isset($_GET['debug_account']) || $_GET['debug_account'] != 1) {
+        return;
+    }
+    
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    
+    // Get account page info
+    $account_page_id = wc_get_page_id('myaccount');
+    $account_page_url = get_permalink($account_page_id);
+    
+    echo '<div style="background:#fff; padding:20px; margin:20px; border:1px solid #ccc;">';
+    echo '<h2>WooCommerce Account Debug</h2>';
+    echo '<p>Account Page ID: ' . $account_page_id . '</p>';
+    echo '<p>Account Page URL: ' . $account_page_url . '</p>';
+    
+    // Check if this page exists
+    $account_page = get_post($account_page_id);
+    echo '<p>Account Page Status: ' . ($account_page ? $account_page->post_status : 'Not found') . '</p>';
+    
+    // Get all endpoints
+    $endpoints = array(
+        'orders',
+        'view-order',
+        'downloads',
+        'edit-account',
+        'edit-address',
+        'payment-methods',
+        'customer-logout',
+        'add-payment-method',
+        'grip-designs'
+    );
+    
+    echo '<h3>Endpoint URLs:</h3>';
+    echo '<ul>';
+    foreach ($endpoints as $endpoint) {
+        $url = wc_get_account_endpoint_url($endpoint);
+        echo '<li><strong>' . $endpoint . ':</strong> ' . $url . '</li>';
+    }
+    echo '</ul>';
+    
+    echo '<h3>Is WC Endpoint:</h3>';
+    foreach ($endpoints as $endpoint) {
+        echo '<li><strong>' . $endpoint . ':</strong> ' . (WC()->query->get_current_endpoint() === $endpoint ? 'Yes' : 'No') . '</li>';
+    }
+    
+    echo '<h3>Permalink Structure:</h3>';
+    echo '<p>' . get_option('permalink_structure') . '</p>';
+    
+    echo '</div>';
+    exit;
+}
+add_action('wp_loaded', 'twintack_debug_account_urls', 999);
+
+/**
+ * Check if WooCommerce pages exist and create them if not
+ */
+function twintack_check_woocommerce_pages() {
+    // Add ?create_wc_pages=1 to any admin URL to force checking and creating pages
+    if (is_admin() && isset($_GET['create_wc_pages']) && $_GET['create_wc_pages'] == 1 && current_user_can('manage_options')) {
+        // This will install all WooCommerce pages, including My Account
+        WC_Install::create_pages();
+        
+        // Redirect to admin with success message
+        wp_redirect(admin_url('admin.php?page=wc-settings&tab=advanced&section=page_setup&wc_pages_created=1'));
+        exit;
+    }
+    
+    // Add admin notice if My Account page doesn't exist or is in trash
+    if (is_admin() && current_user_can('manage_options')) {
+        $account_page_id = wc_get_page_id('myaccount');
+        $account_page = get_post($account_page_id);
+        
+        if (!$account_page || $account_page->post_status !== 'publish') {
+            add_action('admin_notices', function() {
+                ?>
+                <div class="notice notice-error">
+                    <p>The WooCommerce My Account page doesn't exist or is not published. <a href="<?php echo admin_url('?create_wc_pages=1'); ?>">Click here to create WooCommerce pages</a></p>
+                </div>
+                <?php
+            });
+        }
+    }
+}
+add_action('init', 'twintack_check_woocommerce_pages');
+
+/**
+ * Add JavaScript to fix account links on the frontend
+ * This is a client-side solution that will correct all links regardless of how they're generated
+ */
+function twintack_fix_account_links_js() {
+    // Only add on the frontend
+    if (is_admin()) {
+        return;
+    }
+    
+    // Only add on account pages or pages that might contain account links
+    if (!is_account_page() && !is_front_page() && !is_page()) {
+        return;
+    }
+    
+    // Get the correct account page URL
+    $account_url = wc_get_page_permalink('myaccount');
+    if (!$account_url) {
+        return;
+    }
+    
+    // Make sure it ends with a slash
+    $account_url = trailingslashit($account_url);
+    
+    // Add JavaScript to fix all account links
+    ?>
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all links in the navigation
+        var accountLinks = document.querySelectorAll('.woocommerce-MyAccount-navigation a');
+        var correctAccountBaseUrl = '<?php echo esc_js($account_url); ?>';
+        
+        // Process each link
+        accountLinks.forEach(function(link) {
+            var href = link.getAttribute('href');
+            
+            // If the link contains /login/ and is an account endpoint, fix it
+            if (href && href.indexOf('/login/') !== -1) {
+                // Extract the endpoint from the URL
+                var urlParts = href.split('/');
+                var endpoint = '';
+                
+                // Find the endpoint part (usually after "login")
+                for (var i = 0; i < urlParts.length; i++) {
+                    if (urlParts[i] === 'login' && i + 1 < urlParts.length) {
+                        endpoint = urlParts[i + 1];
+                        break;
+                    }
+                }
+                
+                // If we found an endpoint, rebuild the URL
+                if (endpoint) {
+                    if (endpoint === 'customer-logout') {
+                        // Special case for logout - keep WC nonce
+                        var logoutUrl = href;
+                        if (logoutUrl.indexOf('?') !== -1) {
+                            // Keep the query string (contains the nonce)
+                            var queryString = logoutUrl.split('?')[1];
+                            link.setAttribute('href', correctAccountBaseUrl + 'customer-logout/?' + queryString);
+                        } else {
+                            link.setAttribute('href', correctAccountBaseUrl + 'customer-logout/');
+                        }
+                    } else {
+                        // Regular endpoints
+                        link.setAttribute('href', correctAccountBaseUrl + endpoint + '/');
+                    }
+                } else if (href.indexOf('login/?action=lostpassword') !== -1) {
+                    // Lost password link - keep it as is
+                } else {
+                    // Fix dashboard link
+                    link.setAttribute('href', correctAccountBaseUrl);
+                }
+            }
+        });
+    });
+    </script>
+    <?php
+}
+add_action('wp_footer', 'twintack_fix_account_links_js');
+
+/**
+ * Function to flush rewrite rules when needed
+ * This should only be run once after changing endpoints
+ */
+function twintack_flush_rewrite_rules() {
+    // Call the function that registers endpoints
+    twintack_register_woocommerce_endpoints();
+    
+    // Flush the rules
+    flush_rewrite_rules();
+}
+// Run this once, then comment it out again to avoid performance issues
+add_action('init', 'twintack_flush_rewrite_rules', 20);
+
+/**
+ * Enqueue password reset script
+ */
+// ... existing code ...
