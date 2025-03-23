@@ -118,7 +118,7 @@ if (have_rows('content_configurations')) :
                 </div>
             </section>
 
-        <?php 
+        <?php
         // Team Member Display Layout
         elseif (get_row_layout() == 'team_member_display') :
             $args = array(

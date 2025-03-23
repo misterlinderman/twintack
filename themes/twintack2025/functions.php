@@ -149,6 +149,16 @@ function twintack2025_scripts() {
 		null
 	);
 
+	// Enqueue company page styles if using the company page template
+	if (is_page_template('page-company.php')) {
+		wp_enqueue_style(
+			'company-page-styles',
+			get_template_directory_uri() . '/css/company-page.css',
+			array(),
+			_S_VERSION
+		);
+	}
+
 	// Bootstrap
 	wp_enqueue_style(
 		'bootstrap',
