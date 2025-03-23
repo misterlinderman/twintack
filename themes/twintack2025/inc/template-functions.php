@@ -45,3 +45,87 @@ function get_product_line_header() {
         get_template_part('template-parts/header/header', 'base');
     }
 }
+
+// Function to check if we're using the sport template
+function is_sport_template() {
+    $template_slug = get_page_template_slug();
+    return strpos($template_slug, 'template-sport.php') !== false;
+}
+
+/**
+ * Enqueue sport page styles
+ */
+function twintack_enqueue_sport_styles() {
+    // Only load on sport template
+    if (is_sport_template()) {
+        wp_enqueue_style(
+            'twintack-sport-style',
+            get_template_directory_uri() . '/css/sport-page.css',
+            array(),
+            '1.0.0'
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'twintack_enqueue_sport_styles');
+
+/**
+ * Enqueue additional scripts needed for sport pages
+ */
+function twintack_enqueue_sport_scripts() {
+    // Only load on sport template
+    if (is_sport_template()) {
+        // For video modal functionality
+        wp_enqueue_script(
+            'twintack-video-modal',
+            get_template_directory_uri() . '/js/video-modal.js',
+            array('jquery'),
+            '1.0.0',
+            true
+        );
+        
+        // Add inline script to initialize modals
+        wp_add_inline_script('twintack-video-modal', '
+            jQuery(document).ready(function($) {
+                // Ensure video modal is properly initialized
+                $("#video-modal").css({
+                    "display": "flex",
+                    "opacity": "0",
+                    "visibility": "hidden"
+                });
+                
+                console.log("Modal initialization complete");
+            });
+        ');
+    }
+}
+add_action('wp_enqueue_scripts', 'twintack_enqueue_sport_scripts');
+
+/**
+ * Add additional Vimeo embed support in footer
+ */
+function twintack_vimeo_support() {
+    if (is_sport_template()) {
+        ?>
+        <script>
+        // Ensure proper Vimeo embedding for IE/Edge
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fix for data attributes on play buttons
+            document.querySelectorAll('.play-button').forEach(function(button) {
+                // Ensure data attributes are accessible
+                if (button.hasAttribute('data-video-url')) {
+                    const videoUrl = button.getAttribute('data-video-url');
+                    const videoTitle = button.getAttribute('data-video-title');
+                    
+                    // Store as properties as well (for older browsers)
+                    button.videoUrl = videoUrl;
+                    button.videoTitle = videoTitle;
+                    
+                    console.log('Play button loaded with URL:', videoUrl);
+                }
+            });
+        });
+        </script>
+        <?php
+    }
+}
+add_action('wp_footer', 'twintack_vimeo_support', 100);
