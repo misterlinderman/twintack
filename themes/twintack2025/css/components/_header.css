@@ -74,17 +74,44 @@
 }
 
 .marquee-nav-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
+    width: 25px;
+    height: 22px;
+    background: none;
     border: none;
     padding: 0;
     cursor: pointer;
+    position: relative;
 }
 
-.marquee-nav-dot.active {
-    background: #fff;
+.marquee-nav-dot::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../../carousel-indicator-1.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.5;
+    transition: opacity 0.3s ease, filter 0.3s ease;
+    filter: invert(1);  /* Default to white */
+}
+
+.marquee-nav-dot.active::before {
+    opacity: 1;
+}
+
+/* Light/dark contrast variations for the carousel indicator */
+[data-contrast="light"] .marquee-nav-dot::before,
+.marquee-navigation[data-contrast="light"] .marquee-nav-dot::before {
+    filter: invert(0);  /* Black on light backgrounds */
+}
+
+[data-contrast="dark"] .marquee-nav-dot::before,
+.marquee-navigation[data-contrast="dark"] .marquee-nav-dot::before {
+    filter: invert(1);  /* White on dark backgrounds */
 }
 
 /*.marquee-slide {

@@ -61,6 +61,11 @@
 
 		<div class="site-info footer-bottom">
 			<p class="copyright">&copy; <?php echo date('Y'); ?> TwinTack. All rights reserved.</p>
+			<nav class="footer-policies">
+				<a href="/terms-of-service">Terms of Service</a>
+				<a href="/privacy-policy">Privacy Policy</a>
+				<a href="/refund_returns">Refund & Returns</a>
+			</nav>
 		</div>
 	</footer><!-- #colophon -->
 </div><!-- #page -->
