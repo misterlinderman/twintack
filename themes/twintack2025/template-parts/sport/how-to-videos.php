@@ -122,6 +122,7 @@
     gap: 20px;
     transition: transform 0.5s ease;
     padding: 10px 0;
+    align-items: flex-start;
 }
 
 .video-slide {
