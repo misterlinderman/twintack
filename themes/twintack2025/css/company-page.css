@@ -395,13 +395,7 @@ html {
         align-items: flex-start;
     }
     
-    .layout-left .callout-wrapper {
-        flex-direction: row;
-    }
-    
-    .layout-right .callout-wrapper {
-        flex-direction: row-reverse;
-    }
+
 }
 
 .callout-media, .callout-content {

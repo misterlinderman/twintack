@@ -19,6 +19,7 @@
 @import 'components/_product-page.css';
 @import 'components/_how-to-videos.css';
 @import 'components/_footer.css';
+@import 'components/_global-roundup.css';
 
 /* Utilities */
 @import 'utilities/_responsive.css';
