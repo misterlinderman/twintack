@@ -105,6 +105,7 @@
     margin-bottom: 30px;
     text-align: left;
     font-style: italic;
+    letter-spacing: -0.05em;
 }
 
 .video-carousel-container {
@@ -278,5 +279,91 @@
     }
 }
 </style>
+
+<!-- Add JavaScript for video carousel -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Video Carousel
+    const track = document.querySelector('.sport-how-to-videos .video-carousel-slides');
+    const slides = document.querySelectorAll('.sport-how-to-videos .video-slide');
+    const prevButton = document.querySelector('.sport-how-to-videos .carousel-prev');
+    const nextButton = document.querySelector('.sport-how-to-videos .carousel-next');
+    
+    if (track && slides.length > 0) {
+        let currentIndex = 0;
+        const slideWidth = slides[0].offsetWidth + 20; // slide width + gap
+        
+        function updateSlidePosition() {
+            track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
+            
+            // Update arrows state
+            prevButton.disabled = currentIndex === 0;
+            prevButton.style.opacity = currentIndex === 0 ? '0.5' : '1';
+            
+            const visibleWidth = track.parentElement.offsetWidth;
+            const totalSlidesWidth = slides.length * slideWidth;
+            const maxVisibleSlides = Math.floor(visibleWidth / slideWidth);
+            const maxSlides = Math.max(0, slides.length - maxVisibleSlides);
+            
+            console.log('Video carousel: visibleWidth=', visibleWidth, 'totalSlidesWidth=', totalSlidesWidth, 'maxVisibleSlides=', maxVisibleSlides, 'maxSlides=', maxSlides);
+            
+            nextButton.disabled = currentIndex >= maxSlides;
+            nextButton.style.opacity = currentIndex >= maxSlides ? '0.5' : '1';
+        }
+        
+        // Clone slides if needed for smooth scrolling
+        function duplicateSlides() {
+            const parentWidth = track.parentElement.offsetWidth;
+            const slidesToShow = Math.ceil(parentWidth / slideWidth);
+            
+            // Only if we have fewer slides than can be shown, we duplicate
+            if (slides.length < slidesToShow + 3) { // add a few extra for buffer
+                const originalSlides = Array.from(slides);
+                originalSlides.forEach(slide => {
+                    const clone = slide.cloneNode(true);
+                    track.appendChild(clone);
+                });
+                
+                // Update slides NodeList
+                const newSlides = document.querySelectorAll('.sport-how-to-videos .video-slide');
+                return newSlides;
+            }
+            
+            return slides;
+        }
+        
+        // Initialize with duplicate slides if needed
+        const allSlides = duplicateSlides();
+        
+        prevButton.addEventListener('click', function() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateSlidePosition();
+            }
+        });
+        
+        nextButton.addEventListener('click', function() {
+            const visibleWidth = track.parentElement.offsetWidth;
+            const maxVisibleSlides = Math.floor(visibleWidth / slideWidth);
+            const maxSlides = Math.max(0, allSlides.length - maxVisibleSlides);
+            
+            if (currentIndex < maxSlides) {
+                currentIndex++;
+                updateSlidePosition();
+            }
+        });
+        
+        // Initialize
+        updateSlidePosition();
+        
+        // Recalculate on window resize
+        window.addEventListener('resize', function() {
+            // Reset position first
+            currentIndex = 0;
+            updateSlidePosition();
+        });
+    }
+});
+</script>
 
 <!-- The video modal is now created dynamically via JavaScript --> 
