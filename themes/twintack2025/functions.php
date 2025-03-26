@@ -1564,6 +1564,8 @@ function twintack_flush_rewrite_rules() {
 add_action('init', 'twintack_flush_rewrite_rules', 20);
 
 /**
- * Enqueue password reset script
+ * Include Carousel functionality files
  */
-// ... existing code ...
+require get_template_directory() . '/inc/carousel-post-type.php';
+require get_template_directory() . '/inc/carousel-admin.php';
+require get_template_directory() . '/inc/carousel-integration.php';

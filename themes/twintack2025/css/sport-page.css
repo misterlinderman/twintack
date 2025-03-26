@@ -63,11 +63,11 @@
     position: relative;
     width: 100%;
     text-align: center;
+    height: 80vh;
 }
 
 .sport-page-content .product-card .product-image img {
     max-width: 100%;
-    height: auto;
     object-fit: contain;
     transition: transform 0.3s ease;
 }
