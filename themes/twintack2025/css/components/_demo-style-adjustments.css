@@ -1,0 +1,98 @@
+/* Header and Marquee */
+.marquee-callout h2 {
+    font-family: fantasy;
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: 8rem;
+    /* top: 20%; */
+    position: relative;
+    margin: 12% auto 15%;
+    color: black;
+}
+
+.marquee-callout {
+    text-shadow: none;
+}
+
+.marquee-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex
+;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}
+
+section#shop-custom {
+    background-color: white;
+}
+
+.marquee-callout .callout-content {
+    font-size: 2rem;
+    font-family: fantasy;
+    font-style: italic;
+    color: black;
+}
+
+/*Custom Form Styles*/
+.color-selector span.gfield-image-choice-wrapper-outer {
+    padding: 0 !important;
+    --gf-local-shadow: none !;
+}
+
+.color-selector .gfield-choice-image-wrapper {
+    width: 100px !important;
+    overflow: visible;
+}
+
+.color-selector span.gfield-image-choice-wrapper-outer {
+    --gf-local-shadow: none !important;
+    width: 100px !important;
+}
+
+.color-selector .gchoice {
+    border: none !important;
+    --gf-local-shadow: none !important;
+    background-color: none !important;
+}
+
+.gform-theme--framework .gfield--type-image_choice .color-selector .gchoice {
+    align-self: initial;
+    display: block;
+    inline-size: initial;
+    max-inline-size: initial;
+    min-inline-size: initial;
+    position: relative;
+}
+
+.color-selector .gfield-choice-image-wrapper {
+    width: 113px !important;
+    height: 90px !important;
+    display: block;
+}
+
+.color-selector .gchoice {
+    width: 110px !important;
+    display: block;
+}
+
+.color-selector img {
+    width: 70px !important;
+    height: 30px !important;
+    display: block;
+}
+
+
+/* Content Styles */
+section#shop-custom {
+    background-color: white;
+}
