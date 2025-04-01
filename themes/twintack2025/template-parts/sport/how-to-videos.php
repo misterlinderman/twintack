@@ -1,6 +1,6 @@
 <?php
 /**
- * Template part for displaying how-to videos on sport pages
+ * Template part for displaying how-to videos on sport pages and product pages
  *
  * @package TwinTack2025
  */
@@ -8,9 +8,15 @@
 
 <div class="sport-how-to-videos">
     <?php
-    // Get the current page title to determine the sport
-    $page_title = strtolower(get_the_title());
-    $sport = sanitize_title($page_title); // Default to page title as sport slug
+    // Determine the sport based on context
+    $sport = '';
+    if (is_product()) {
+        $product_id = get_the_ID();
+        $sport = twintack_get_product_sport($product_id);
+    } else {
+        $page_title = strtolower(get_the_title());
+        $sport = sanitize_title($page_title);
+    }
     
     // Get videos for this sport
     $videos = twintack_get_how_to_videos_by_sport($sport);
@@ -50,7 +56,6 @@
                                        class="play-button" 
                                        data-video-url="<?php echo esc_url($video['vimeo_url']); ?>"
                                        data-video-title="<?php echo esc_attr($video['title']); ?>"
-                                       onclick="console.log('Play button clicked: <?php echo esc_js($video['vimeo_url']); ?>', this.getAttribute('data-video-url'));"
                                        aria-label="Play video">
                                         <svg class="play-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.7"/>
@@ -84,6 +89,25 @@
                     </svg>
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Video Modal -->
+<div id="video-modal" class="video-modal fixed inset-0" style="z-index: 99999;">
+    <div class="video-modal-overlay absolute inset-0 bg-black bg-opacity-85 backdrop-blur"></div>
+    <div class="video-modal-container relative z-10 w-11/12 max-w-4xl mx-auto transform transition-all">
+        <div class="video-modal-content bg-black rounded-xl overflow-hidden shadow-2xl">
+            <button id="close-video-modal" class="video-modal-close absolute -top-10 right-0" aria-label="Close video">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="video-modal-header p-4 bg-gray-900">
+                <h3 id="video-modal-title" class="text-white text-lg font-medium"></h3>
+            </div>
+            <div id="video-container" class="video-modal-player relative pt-[56.25%]"></div>
         </div>
     </div>
 </div>
@@ -250,11 +274,6 @@
     border: none;
 }
 
-.carousel-prev:hover, .carousel-next:hover {
-    transform: translateY(-50%) scale(1.1);
-    background-color: #f0f0f0;
-}
-
 .carousel-prev {
     left: 0;
 }
@@ -263,10 +282,113 @@
     right: 0;
 }
 
+.carousel-prev:hover, .carousel-next:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Video Modal Styles */
+.video-modal {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99999;
+}
+
+.video-modal.active {
+    display: flex;
+}
+
+.video-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    transition: opacity 0.3s ease;
+}
+
+.video-modal-container {
+    position: relative;
+    z-index: 10;
+    width: 91.666667%;
+    max-width: 56rem;
+    margin: 0 auto;
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.video-modal.active .video-modal-container {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.video-modal-content {
+    background-color: #000;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.video-modal-close {
+    position: absolute;
+    top: -2.5rem;
+    right: 0;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, 0.5);
+    transition: background-color 0.2s;
+}
+
+.video-modal-close:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.video-modal-header {
+    padding: 1rem;
+    background-color: #111827;
+}
+
+.video-modal-title {
+    color: white;
+    font-size: 1.125rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.video-modal-player {
+    position: relative;
+    padding-top: 56.25%;
+    background: #000;
+}
+
+.video-modal-player iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
     .video-slide {
         flex: 0 0 calc(50% - 20px);
+    }
+    
+    .video-modal-container {
+        width: 95%;
     }
 }
 
@@ -278,93 +400,114 @@
     .video-carousel-container {
         padding: 0 30px;
     }
+    
+    .video-modal-container {
+        width: 100%;
+    }
 }
 </style>
 
-<!-- Add JavaScript for video carousel -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Video Carousel
-    const track = document.querySelector('.sport-how-to-videos .video-carousel-slides');
-    const slides = document.querySelectorAll('.sport-how-to-videos .video-slide');
-    const prevButton = document.querySelector('.sport-how-to-videos .carousel-prev');
-    const nextButton = document.querySelector('.sport-how-to-videos .carousel-next');
+    const carousel = document.querySelector('.video-carousel-slides');
+    const slides = document.querySelectorAll('.video-slide');
+    const prevBtn = document.querySelector('.carousel-prev');
+    const nextBtn = document.querySelector('.carousel-next');
+    const modal = document.getElementById('video-modal');
+    const closeBtn = document.getElementById('close-video-modal');
+    const videoContainer = document.getElementById('video-container');
+    const modalTitle = document.getElementById('video-modal-title');
     
-    if (track && slides.length > 0) {
-        let currentIndex = 0;
-        const slideWidth = slides[0].offsetWidth + 20; // slide width + gap
-        
-        function updateSlidePosition() {
-            track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-            
-            // Update arrows state
-            prevButton.disabled = currentIndex === 0;
-            prevButton.style.opacity = currentIndex === 0 ? '0.5' : '1';
-            
-            const visibleWidth = track.parentElement.offsetWidth;
-            const totalSlidesWidth = slides.length * slideWidth;
-            const maxVisibleSlides = Math.floor(visibleWidth / slideWidth);
-            const maxSlides = Math.max(0, slides.length - maxVisibleSlides);
-            
-            console.log('Video carousel: visibleWidth=', visibleWidth, 'totalSlidesWidth=', totalSlidesWidth, 'maxVisibleSlides=', maxVisibleSlides, 'maxSlides=', maxSlides);
-            
-            nextButton.disabled = currentIndex >= maxSlides;
-            nextButton.style.opacity = currentIndex >= maxSlides ? '0.5' : '1';
-        }
-        
-        // Clone slides if needed for smooth scrolling
-        function duplicateSlides() {
-            const parentWidth = track.parentElement.offsetWidth;
-            const slidesToShow = Math.ceil(parentWidth / slideWidth);
-            
-            // Only if we have fewer slides than can be shown, we duplicate
-            if (slides.length < slidesToShow + 3) { // add a few extra for buffer
-                const originalSlides = Array.from(slides);
-                originalSlides.forEach(slide => {
-                    const clone = slide.cloneNode(true);
-                    track.appendChild(clone);
-                });
-                
-                // Update slides NodeList
-                const newSlides = document.querySelectorAll('.sport-how-to-videos .video-slide');
-                return newSlides;
-            }
-            
-            return slides;
-        }
-        
-        // Initialize with duplicate slides if needed
-        const allSlides = duplicateSlides();
-        
-        prevButton.addEventListener('click', function() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                updateSlidePosition();
-            }
-        });
-        
-        nextButton.addEventListener('click', function() {
-            const visibleWidth = track.parentElement.offsetWidth;
-            const maxVisibleSlides = Math.floor(visibleWidth / slideWidth);
-            const maxSlides = Math.max(0, allSlides.length - maxVisibleSlides);
-            
-            if (currentIndex < maxSlides) {
-                currentIndex++;
-                updateSlidePosition();
-            }
-        });
-        
-        // Initialize
-        updateSlidePosition();
-        
-        // Recalculate on window resize
-        window.addEventListener('resize', function() {
-            // Reset position first
-            currentIndex = 0;
-            updateSlidePosition();
-        });
+    let currentSlide = 0;
+    const slideWidth = slides[0].offsetWidth + 20; // Include gap
+    const totalSlides = slides.length;
+    const slidesToShow = Math.min(3, totalSlides);
+    
+    // Hide navigation buttons if we have 3 or fewer slides
+    if (totalSlides <= 3) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
     }
+    
+    function updateCarousel() {
+        carousel.style.transform = `translateX(-${currentSlide * slideWidth}px)`;
+        carousel.setAttribute('data-active-slide', currentSlide);
+        
+        // Update button states
+        prevBtn.disabled = currentSlide === 0;
+        nextBtn.disabled = currentSlide >= totalSlides - slidesToShow;
+    }
+    
+    function showVideo(videoUrl, title) {
+        modalTitle.textContent = title;
+        
+        // Extract Vimeo video ID from URL
+        const videoId = videoUrl.match(/vimeo\.com\/(\d+)/)?.[1];
+        if (!videoId) return;
+        
+        // Create iframe with Vimeo embed
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
+        iframe.allow = 'autoplay; fullscreen';
+        
+        // Clear and add new iframe
+        videoContainer.innerHTML = '';
+        videoContainer.appendChild(iframe);
+        
+        // Show modal
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // Event Listeners
+    prevBtn.addEventListener('click', () => {
+        if (currentSlide > 0) {
+            currentSlide--;
+            updateCarousel();
+        }
+    });
+    
+    nextBtn.addEventListener('click', () => {
+        if (currentSlide < totalSlides - slidesToShow) {
+            currentSlide++;
+            updateCarousel();
+        }
+    });
+    
+    // Video play button click
+    document.querySelectorAll('.play-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const videoUrl = button.getAttribute('data-video-url');
+            const videoTitle = button.getAttribute('data-video-title');
+            showVideo(videoUrl, videoTitle);
+        });
+    });
+    
+    // Close modal
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        videoContainer.innerHTML = '';
+    });
+    
+    // Close on overlay click
+    modal.querySelector('.video-modal-overlay').addEventListener('click', () => {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        videoContainer.innerHTML = '';
+    });
+    
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            videoContainer.innerHTML = '';
+        }
+    });
+    
+    // Initialize carousel
+    updateCarousel();
 });
-</script>
-
-<!-- The video modal is now created dynamically via JavaScript --> 
+</script> 
