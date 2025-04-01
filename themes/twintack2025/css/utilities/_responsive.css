@@ -83,6 +83,28 @@
         position: relative;
         height: 300px;
     }
+
+    /* TwinTack Info Block */
+    .twintack-info-block {
+        padding: 3rem 0;
+    }
+
+    .info-block-content {
+        gap: 1.5rem;
+    }
+
+    /* TwinTack Callouts */
+    .twintack-callouts {
+        padding: 3rem 0;
+    }
+
+    .callouts-grid {
+        gap: 1.5rem;
+    }
+
+    .callout-card {
+        margin: 0 1rem;
+    }
 }
 
 @media (max-width: 600px) {
@@ -96,5 +118,27 @@
 
     .marquee-embed {
         height: 200px;
+    }
+
+    /* TwinTack Info Block */
+    .twintack-info-block {
+        padding: 2rem 0;
+    }
+
+    .info-block-hero {
+        min-height: 200px;
+    }
+
+    /* TwinTack Callouts */
+    .twintack-callouts {
+        padding: 2rem 0;
+    }
+
+    .callout-card {
+        margin: 0 0.5rem;
+    }
+
+    .callout-description {
+        font-size: 1rem;
     }
 }

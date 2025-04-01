@@ -164,6 +164,100 @@ if (have_rows('content_configurations')) :
                     </div>
                 </section>
             <?php endif;
+
+        // TwinTack Info Block Layout
+        elseif (get_row_layout() == 'twintack_info_block') :
+            $background_color = get_sub_field('background_color');
+            $title = get_sub_field('title');
+            $hero_background = get_sub_field('hero_background');
+            $hero_image = get_sub_field('hero_image');
+            $content = get_sub_field('content');
+            $link_text = get_sub_field('link_text');
+            $link_url = get_sub_field('link_url');
+            
+            // Debug the color value
+            // var_dump($background_color);
+            ?>
+            
+            <section class="twintack-info-block" <?php if ($background_color) : ?>style="background-color: <?php echo esc_attr($background_color); ?>"<?php endif; ?>>
+                <div class="container">
+                    <?php if ($title) : ?>
+                        <h2 class="info-block-title"><?php echo esc_html($title); ?></h2>
+                    <?php endif; ?>
+
+                    <div class="info-block-content">
+                        <div class="info-block-hero"<?php if ($hero_background) : ?> style="background-image: url('<?php echo esc_url($hero_background); ?>'); background-size: cover; background-position: center; background-repeat: no-repeat;"<?php endif; ?>>
+                            <?php if ($hero_image) : ?>
+                                <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($title); ?>" class="hero-overlay-image">
+                            <?php endif; ?>
+                        </div>
+
+                        <?php if ($content) : ?>
+                            <div class="info-block-text">
+                                <?php echo wp_kses_post($content); ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($link_text && $link_url) : ?>
+                            <div class="info-block-cta">
+                                <a href="<?php echo esc_url($link_url); ?>" class="button">
+                                    <?php echo esc_html($link_text); ?>
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </section>
+
+        <?php
+        // TwinTack Callouts Layout
+        elseif (get_row_layout() == 'twintack_callouts') :
+            $background_color = get_sub_field('background_color');
+            ?>
+            
+            <section class="twintack-callouts" <?php if ($background_color) : ?>style="background-color: <?php echo esc_attr($background_color); ?>"<?php endif; ?>>
+                <div class="container">
+                    <?php if (have_rows('twintack_callouts')) : ?>
+                        <div class="callouts-grid">
+                            <?php while (have_rows('twintack_callouts')) : the_row(); 
+                                $title = get_sub_field('title');
+                                $hero_image = get_sub_field('callout_hero_image');
+                                $description = get_sub_field('description');
+                                $link_text = get_sub_field('link_text');
+                                $link_url = get_sub_field('link_url');
+                                ?>
+                                <div class="callout-card">
+                                    <?php if ($title) : ?>
+                                        <h3 class="callout-title"><?php echo esc_html($title); ?></h3>
+                                    <?php endif; ?>
+
+                                    <?php if ($hero_image) : ?>
+                                        <div class="callout-image">
+                                            <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($title); ?>">
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ($description) : ?>
+                                        <div class="callout-description">
+                                            <?php echo wp_kses_post($description); ?>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ($link_text && $link_url) : ?>
+                                        <div class="callout-cta">
+                                            <a href="<?php echo esc_url($link_url); ?>" class="button">
+                                                <?php echo esc_html($link_text); ?>
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endwhile; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+        <?php
         endif;
 
     endwhile;
