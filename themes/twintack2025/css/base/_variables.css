@@ -23,7 +23,7 @@ ul#primary-menu {
 
 :root {
     /* Typography */
-    --font-primary: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-primary: 'Saira Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-size-base: 16px;
     --line-height-base: 1.6;
     

@@ -1,13 +1,15 @@
 /* Header and Marquee */
 .marquee-callout h2 {
-    font-family: fantasy;
     font-style: italic;
     text-transform: uppercase;
     font-size: 8rem;
     /* top: 20%; */
     position: relative;
     margin: 12% auto 15%;
-    color: black;
+    color: white;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    text-shadow: 4px 5px 5px black;
 }
 
 .marquee-callout {
@@ -25,8 +27,7 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    display: flex
-;
+    display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
     justify-content: flex-start;
@@ -37,10 +38,11 @@ section#shop-custom {
 }
 
 .marquee-callout .callout-content {
-    font-size: 2rem;
-    font-family: fantasy;
-    font-style: italic;
+    font-size: 3rem;
+    font-style: normal;
     color: black;
+    letter-spacing: -0.02em;
+    font-weight: 500;
 }
 
 /*Custom Form Styles*/
@@ -95,4 +97,17 @@ section#shop-custom {
 /* Content Styles */
 section#shop-custom {
     background-color: white;
+}
+
+section h2 {
+    font-size: 3rem;
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+}
+
+.layout-full p {
+    font-size: 1.4em;
+    line-height: 1.8em;
 }

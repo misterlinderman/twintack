@@ -9,7 +9,7 @@
 	<footer id="colophon" class="site-footer">
 		<div class="footer-container">
 			<!-- Logo and About Column -->
-			<div class="footer-column">
+			<div class="footer-column footer-brand">
 				<?php if (function_exists('custom_logo_svg')) : ?>
 					<div class="footer-logo"><?php echo custom_logo_svg(); ?></div>
 				<?php endif; ?>
@@ -43,6 +43,21 @@
 					<a href="/partners">Partners</a>
 					<a href="/about">About Us</a>
 					<a href="/contact">Contact</a>
+					<a href=/wholesale-registration-page">Wholesale</a>
+					<a href="/affiliates">Affiliate Program</a>
+				</nav>
+			</div>
+
+			<!-- My Account Column -->
+			<div class="footer-column">
+				<h3>My Account</h3>
+				<nav class="footer-nav">
+					<a href="/my-account">My Account</a>
+					<a href="/orders">Orders</a>
+					<a href="/wishlist">Wishlist</a>
+					<a href="/address-book">Address Book</a>
+					<a href="/edit-address">Edit Address</a>
+					<a href="/customer-logout">Logout</a>
 				</nav>
 			</div>
 

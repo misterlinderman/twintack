@@ -7,12 +7,13 @@
 }
 
 .footer-container {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 30px;
-    max-width: 1200px;
+    display: flex;
     margin: 0 auto;
     padding: 0 20px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-around;
 }
 
 .footer-column {
@@ -27,6 +28,10 @@
     margin-bottom: 20px;
     font-weight: 600;
     letter-spacing: 1px;
+}
+
+.footer-column.footer-brand {
+    width: 20%;
 }
 
 .footer-nav {

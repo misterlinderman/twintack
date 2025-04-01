@@ -221,7 +221,7 @@ if ( defined( 'JETPACK__VERSION' ) ) {
 }
 
 function twintack2025_enqueue_fonts() {
-    wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap', array(), null);
+    wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@100;200;300;400;500;600;700;800;900&display=swap', array(), null);
 }
 add_action('wp_enqueue_scripts', 'twintack2025_enqueue_fonts');
 
