@@ -74,10 +74,27 @@
     .site-marquee {
         min-height: 440px;
     }
+
+    .marquee-product-image {
+        max-width: 100%;
+    }
+
+    .marquee-embed {
+        position: relative;
+        height: 300px;
+    }
 }
 
 @media (max-width: 600px) {
     .admin-bar .site-header.scrolled {
         top: 0;
+    }
+
+    .marquee-product-image {
+        max-width: 150px;
+    }
+
+    .marquee-embed {
+        height: 200px;
     }
 }

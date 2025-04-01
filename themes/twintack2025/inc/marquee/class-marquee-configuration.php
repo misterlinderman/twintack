@@ -54,6 +54,7 @@ class TwinTack_Marquee_Configuration {
         return array(
             'background_image' => get_field('background_image', $marquee_config->ID),
             'embed_shortcode' => get_field('embed_responsively_shortcode', $marquee_config->ID),
+            'product_image' => get_field('product_image', $marquee_config->ID),
             'callout_title' => get_field('callout_content_title', $marquee_config->ID),
             'callout_content' => get_field('callout_content', $marquee_config->ID),
             'callout_links' => get_field('callout_links', $marquee_config->ID)

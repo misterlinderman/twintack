@@ -12,7 +12,9 @@ if ($header_configs) {
         <div class="marquee-slides">
             <?php foreach ($header_configs as $index => $config) : 
                 $background_image = get_field('background_image', $config->ID);
+                $embed_shortcode = get_field('embed_responsively_shortcode', $config->ID);
                 $callout_title = get_field('callout_content_title', $config->ID);
+                $product_image = get_field('product_image', $config->ID);
                 $callout_content = get_field('callout_content', $config->ID);
             ?>
                 <div class="marquee-slide <?php echo ($index === 0) ? 'active' : ''; ?>" 
@@ -20,11 +22,23 @@ if ($header_configs) {
                          style="background-image: url('<?php echo esc_url($background_image); ?>');"
                      <?php endif; ?>>
                     
+                    <?php if ($embed_shortcode) : ?>
+                        <div class="marquee-embed">
+                            <?php echo do_shortcode($embed_shortcode); ?>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="marquee-callout">
                         <?php if ($callout_title) : ?>
                             <h2><?php echo esc_html($callout_title); ?></h2>
                         <?php endif; ?>
-                        
+
+                        <?php if ($product_image) : ?>
+                            <div class="marquee-product-image">
+                                <img src="<?php echo esc_url($product_image); ?>" alt="Featured Product">
+                            </div>
+                        <?php endif; ?>
+
                         <?php if ($callout_content) : ?>
                             <div class="callout-content">
                                 <?php echo wp_kses_post($callout_content); ?>
