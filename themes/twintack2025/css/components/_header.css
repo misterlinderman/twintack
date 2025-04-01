@@ -733,19 +733,19 @@ div.product-menu a.product-link:hover {
 
 /* Update contrast variations */
 .site-header[data-contrast="light"] .custom-logo-link svg {
-    fill: black !important;
-}
-
-.site-header[data-contrast="dark"] .custom-logo-link svg {
     fill: white !important;
 }
 
+.site-header[data-contrast="dark"] .custom-logo-link svg {
+    fill: lightgrey !important;
+}
+
 .site-header[data-contrast="light"] .toggle-line {
-    background-color: black !important;
+    background-color: white !important;
 }
 
 .site-header[data-contrast="dark"] .toggle-line {
-    background-color: white !important;
+    background-color: lightgray !important;
 }
 
 /* Add transitions */
@@ -770,10 +770,11 @@ div.product-menu a.product-link:hover {
 }
 
 .info-block-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 2rem;
-    text-align: center;
+    font-size: 3rem;
+    font-weight: 900;
+    margin-bottom: 0.5em;
+    text-align: left;
+    color: white;
 }
 
 .info-block-content {
@@ -790,7 +791,6 @@ div.product-menu a.product-link:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--light-gray, #f5f5f5);  /* Fallback background when no image */
 }
 
 .hero-overlay-image {
@@ -804,10 +804,11 @@ div.product-menu a.product-link:hover {
 }
 
 .info-block-text {
-    font-size: 1.1rem;
-    line-height: 1.6;
-    max-width: 800px;
+    font-size: 1.4rem;
+    line-height: 1.8em;
+    max-width: 100%;
     margin: 0 auto;
+    color: white;
 }
 
 .info-block-cta {
@@ -888,7 +889,7 @@ div.product-menu a.product-link:hover {
 }
 
 .callout-title {
-    font-size: 1.75rem;
+    font-size: 3rem;
     font-weight: 900;
     text-align: center;
     padding: 1.5rem;

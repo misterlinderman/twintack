@@ -1,13 +1,13 @@
 /* Global Responsive Breakpoints */
 @media (max-width: 1640px) {
     .site-marquee {
-        min-height: 93vh;
+        min-height: 80vh;
     }
 }
 
 @media (max-width: 1450px) {
     .site-marquee {
-        min-height: 800px;
+        min-height: 80vh;
     }
 
     .corporate-nav, 
@@ -22,7 +22,7 @@
 
 @media (max-width: 1100px) {
     .site-marquee {
-        min-height: 620px;
+        min-height: 80vh;
     }
 }
 

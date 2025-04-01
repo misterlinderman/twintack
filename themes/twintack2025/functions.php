@@ -1569,3 +1569,168 @@ add_action('init', 'twintack_flush_rewrite_rules', 20);
 require get_template_directory() . '/inc/carousel-post-type.php';
 require get_template_directory() . '/inc/carousel-admin.php';
 require get_template_directory() . '/inc/carousel-integration.php';
+
+/**
+ * Customize My Account menu items
+ */
+function twintack_customize_account_menu_items($items) {
+    // Remove downloads
+    unset($items['downloads']);
+    
+    // Add wholesale-specific menu items for wholesale users
+    if (current_user_can('wholesale_customer')) {
+        $items['wholesale_orderforms'] = __('Order Forms', 'twintack2025');
+        // Insert it after dashboard
+        $new_items = array();
+        foreach ($items as $key => $value) {
+            $new_items[$key] = $value;
+            if ($key === 'dashboard') {
+                $new_items['wholesale_orderforms'] = __('Order Forms', 'twintack2025');
+            }
+        }
+        $items = $new_items;
+    }
+    
+    return $items;
+}
+add_filter('woocommerce_account_menu_items', 'twintack_customize_account_menu_items', 10);
+
+/**
+ * Add custom endpoint for wholesale order forms
+ */
+function twintack_add_wholesale_endpoint() {
+    add_rewrite_endpoint('wholesale-orderforms', EP_ROOT | EP_PAGES);
+}
+add_action('init', 'twintack_add_wholesale_endpoint');
+
+/**
+ * Add wholesale orderforms content
+ */
+function twintack_wholesale_orderforms_content() {
+    ?>
+    <div class="wholesale-orderforms-wrapper">
+        <h2><?php _e('Order Forms', 'twintack2025'); ?></h2>
+        <div class="orderforms-grid">
+            <?php
+            // Get your order form links/content here
+            $orderforms = array(
+                array(
+                    'title' => 'Baseball Order Form',
+                    'description' => 'Order baseball grips and accessories',
+                    'link' => home_url('/baseball-order-form'),
+                ),
+                array(
+                    'title' => 'Fishing Order Form',
+                    'description' => 'Order fishing grips and accessories',
+                    'link' => home_url('/fishing-order-form'),
+                ),
+                // Add more order forms as needed
+            );
+
+            foreach ($orderforms as $form) : ?>
+                <div class="orderform-card">
+                    <h3><?php echo esc_html($form['title']); ?></h3>
+                    <p><?php echo esc_html($form['description']); ?></p>
+                    <a href="<?php echo esc_url($form['link']); ?>" class="button"><?php _e('View Form', 'twintack2025'); ?></a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php
+}
+add_action('woocommerce_account_wholesale-orderforms_endpoint', 'twintack_wholesale_orderforms_content');
+
+/**
+ * Add grip designs endpoint
+ */
+function twintack_add_grip_designs_endpoint() {
+    add_rewrite_endpoint('grip-designs', EP_ROOT | EP_PAGES);
+}
+add_action('init', 'twintack_add_grip_designs_endpoint');
+
+/**
+ * Add grip designs to account menu items
+ */
+function twintack_add_grip_designs_menu_item($items) {
+    $new_items = array();
+    
+    foreach ($items as $key => $value) {
+        $new_items[$key] = $value;
+        if ($key === 'dashboard') {
+            $new_items['grip-designs'] = __('My Grip Designs', 'twintack2025');
+        }
+    }
+    
+    return $new_items;
+}
+add_filter('woocommerce_account_menu_items', 'twintack_add_grip_designs_menu_item', 20);
+
+/**
+ * Register grip design post type
+ */
+function twintack_register_grip_design_post_type() {
+    $labels = array(
+        'name'               => __('Grip Designs', 'twintack2025'),
+        'singular_name'      => __('Grip Design', 'twintack2025'),
+        'add_new'           => __('Add New', 'twintack2025'),
+        'add_new_item'      => __('Add New Grip Design', 'twintack2025'),
+        'edit_item'         => __('Edit Grip Design', 'twintack2025'),
+        'new_item'          => __('New Grip Design', 'twintack2025'),
+        'view_item'         => __('View Grip Design', 'twintack2025'),
+        'search_items'      => __('Search Grip Designs', 'twintack2025'),
+        'not_found'         => __('No grip designs found', 'twintack2025'),
+        'not_found_in_trash'=> __('No grip designs found in trash', 'twintack2025'),
+        'parent_item_colon' => '',
+        'menu_name'         => __('Grip Designs', 'twintack2025')
+    );
+
+    $args = array(
+        'labels'             => $labels,
+        'public'             => true,
+        'publicly_queryable' => true,
+        'show_ui'           => true,
+        'show_in_menu'      => true,
+        'query_var'         => true,
+        'rewrite'           => array('slug' => 'grip-design'),
+        'capability_type'   => 'post',
+        'has_archive'       => true,
+        'hierarchical'      => false,
+        'menu_position'     => null,
+        'supports'          => array('title', 'editor', 'thumbnail', 'custom-fields')
+    );
+
+    register_post_type('grip_design', $args);
+}
+add_action('init', 'twintack_register_grip_design_post_type');
+
+/**
+ * Add WooCommerce endpoints and menu items
+ */
+function twintack_add_endpoints() {
+    add_rewrite_endpoint('grip-designs', EP_ROOT | EP_PAGES);
+}
+add_action('init', 'twintack_add_endpoints');
+
+/**
+ * Add menu items to My Account menu
+ */
+function twintack_add_account_menu_items($items) {
+    // Add grip designs after dashboard
+    $new_items = array();
+    foreach ($items as $key => $value) {
+        $new_items[$key] = $value;
+        if ($key === 'dashboard') {
+            $new_items['grip-designs'] = __('My Grip Designs', 'twintack2025');
+        }
+    }
+    return $new_items;
+}
+add_filter('woocommerce_account_menu_items', 'twintack_add_account_menu_items', 10);
+
+/**
+ * Register grip designs endpoint content
+ */
+function twintack_grip_designs_endpoint_content() {
+    wc_get_template('myaccount/grip-designs.php');
+}
+add_action('woocommerce_account_grip-designs_endpoint', 'twintack_grip_designs_endpoint_content');
