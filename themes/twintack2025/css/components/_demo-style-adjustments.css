@@ -66,9 +66,17 @@ a.marquee-link {
 }
 
 header#masthead {
-    padding: 3em;
+    padding: 2.5em;
     display: flex;
-    background: linear-gradient(180deg, black, transparent);
+    background: linear-gradient(90deg, black, transparent);
+}
+
+[data-nav-state="open"] .header-controls::before {
+    display: none;
+}
+
+.nav-section a {
+    padding: 0 0 0.3rem 0;
 }
 
 /*Custom Form Styles*/
@@ -208,4 +216,11 @@ h2.woocommerce-loop-product__title {
 }
 
 
-/* Product Page */
+/* Login Page */
+.login .twintack-user-type-selection, .register .twintack-user-type-selection {
+    display: none;
+}
+
+.twintack-login-page {
+    margin: 15vh auto;
+}
