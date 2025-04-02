@@ -174,12 +174,13 @@ if (have_rows('content_configurations')) :
             $content = get_sub_field('content');
             $link_text = get_sub_field('link_text');
             $link_url = get_sub_field('link_url');
-            
-            // Debug the color value
-            // var_dump($background_color);
+            $content_id = get_sub_field('content_id');
             ?>
             
-            <section class="twintack-info-block" <?php if ($background_color) : ?>style="background-color: <?php echo esc_attr($background_color); ?>"<?php endif; ?>>
+            <section class="twintack-info-block" <?php if ($background_color || $content_id) : ?>
+                <?php if ($background_color) : ?>style="background-color: <?php echo esc_attr($background_color); ?>"<?php endif; ?>
+                <?php if ($content_id) : ?>id="<?php echo esc_attr($content_id); ?>"<?php endif; ?>
+            <?php endif; ?>>
                 <div class="container">
                     <?php if ($title) : ?>
                         <h2 class="info-block-title"><?php echo esc_html($title); ?></h2>
@@ -213,9 +214,13 @@ if (have_rows('content_configurations')) :
         // TwinTack Callouts Layout
         elseif (get_row_layout() == 'twintack_callouts') :
             $background_color = get_sub_field('background_color');
+            $content_id = get_sub_field('content_id');
             ?>
             
-            <section class="twintack-callouts" <?php if ($background_color) : ?>style="background-color: <?php echo esc_attr($background_color); ?>"<?php endif; ?>>
+            <section class="twintack-callouts" <?php if ($background_color || $content_id) : ?>
+                <?php if ($background_color) : ?>style="background-color: <?php echo esc_attr($background_color); ?>"<?php endif; ?>
+                <?php if ($content_id) : ?>id="<?php echo esc_attr($content_id); ?>"<?php endif; ?>
+            <?php endif; ?>>
                 <div class="container">
                     <?php if (have_rows('twintack_callouts')) : ?>
                         <div class="callouts-grid">

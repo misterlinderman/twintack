@@ -54,11 +54,11 @@ get_header();
 
             
             <!-- Team Members Section -->
-            <section id="our-team" class="team-section">
+            <!--section id="our-team" class="team-section">
                 <div class="container">
-                    <?php get_template_part('template-parts/content', 'company-team'); ?>
+                    <?php //get_template_part('template-parts/content', 'company-team'); ?>
                 </div>
-            </section>
+            </section-->
 
         <?php endwhile; ?>
     </main>
