@@ -224,3 +224,28 @@ h2.woocommerce-loop-product__title {
 .twintack-login-page {
     margin: 15vh auto;
 }
+
+
+/* My Account Grips */
+.grip-design-content {
+    position: initial !important;
+    top: initial !important;
+    left: initial !important;
+    right: initial !important;
+    bottom: initial !important;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 2;
+    color: black !important;
+}
+
+.grip-designs-header {
+    display: none !important;
+}
+
+.grip-designs-grid {
+    display: none !important;
+}
+

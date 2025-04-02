@@ -71,12 +71,6 @@ class TwinTack_Grip_Post_Type {
         global $post;
 
         if ($post->post_type === 'grip_design') {
-            // Skip loading the custom template if we're in the My Account area
-            // This prevents double content display in the account area
-            if (is_account_page()) {
-                return $template;
-            }
-            
             $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/single-grip-design.php';
             if (file_exists($custom_template)) {
                 return $custom_template;

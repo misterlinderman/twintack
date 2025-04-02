@@ -59,40 +59,6 @@ class TwinTack_Grip_Admin {
             echo '</p>';
         }
         
-        // Add color fields from new form if they exist
-        $design_layout = get_post_meta($post->ID, '_grip_design_layout', true);
-        if (!empty($design_layout)) {
-            echo '<hr>';
-            echo '<h3>Pattern & Color Details</h3>';
-            
-            echo '<p>';
-            echo '<label for="_grip_design_layout">Pattern:</label>';
-            echo '<input type="text" id="_grip_design_layout" name="_grip_design_layout" value="' . esc_attr($design_layout) . '" class="widefat" />';
-            echo '</p>';
-            
-            $primary_color = get_post_meta($post->ID, '_grip_primary_color', true);
-            echo '<p>';
-            echo '<label for="_grip_primary_color">Primary Color:</label>';
-            echo '<input type="text" id="_grip_primary_color" name="_grip_primary_color" value="' . esc_attr($primary_color) . '" class="widefat" />';
-            echo '</p>';
-            
-            $secondary_color = get_post_meta($post->ID, '_grip_secondary_color', true);
-            if (!empty($secondary_color)) {
-                echo '<p>';
-                echo '<label for="_grip_secondary_color">Secondary Color:</label>';
-                echo '<input type="text" id="_grip_secondary_color" name="_grip_secondary_color" value="' . esc_attr($secondary_color) . '" class="widefat" />';
-                echo '</p>';
-            }
-            
-            $tertiary_color = get_post_meta($post->ID, '_grip_tertiary_color', true);
-            if (!empty($tertiary_color)) {
-                echo '<p>';
-                echo '<label for="_grip_tertiary_color">Tertiary Color:</label>';
-                echo '<input type="text" id="_grip_tertiary_color" name="_grip_tertiary_color" value="' . esc_attr($tertiary_color) . '" class="widefat" />';
-                echo '</p>';
-            }
-        }
-        
         // Add Design Instructions field
         $feedback = get_post_meta($post->ID, '_grip_feedback', true);
         echo '<p>';
@@ -110,7 +76,7 @@ class TwinTack_Grip_Admin {
         <div class="grip-artwork-versions">
             <div class="original-artwork">
                 <h4>Original Submitted Artwork</h4>
-                <?php if (!empty($artwork_url) && filter_var($artwork_url, FILTER_VALIDATE_URL)): ?>
+                <?php if ($artwork_url): ?>
                     <div class="artwork-preview">
                         <img src="<?php echo esc_url($artwork_url); ?>" alt="Original Artwork" style="max-width: 100%; height: auto;" />
                     </div>
@@ -118,16 +84,7 @@ class TwinTack_Grip_Admin {
                         File: <a href="<?php echo esc_url($artwork_url); ?>" target="_blank"><?php echo esc_html($filename); ?></a>
                     </p>
                 <?php else: ?>
-                    <div class="artwork-preview no-artwork" style="background: #f5f5f5; padding: 30px; text-align: center; border: 1px dashed #ddd;">
-                        <p>No artwork available for preview</p>
-                    </div>
-                    <?php if (!empty($filename)): ?>
-                        <p class="artwork-url">
-                            File: <?php echo esc_html($filename); ?> (URL unavailable)
-                        </p>
-                    <?php else: ?>
-                        <p>No artwork uploaded yet.</p>
-                    <?php endif; ?>
+                    <p>No artwork uploaded yet.</p>
                 <?php endif; ?>
             </div>
         </div>
@@ -149,12 +106,7 @@ class TwinTack_Grip_Admin {
             '_grip_team_name',
             '_grip_design_type',
             '_grip_quantity',
-            '_grip_feedback',
-            // Add new color fields
-            '_grip_design_layout',
-            '_grip_primary_color',
-            '_grip_secondary_color',
-            '_grip_tertiary_color'
+            '_grip_feedback'
         );
         
         foreach ($fields as $field) {

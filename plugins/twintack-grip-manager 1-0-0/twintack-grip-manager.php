@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Grip Manager
  * Description: Manages custom grip orders with Gravity Forms and WooCommerce integration
- * Version: 1.3.1
+ * Version: 1.0.0
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -59,31 +59,10 @@ class TwinTack_Grip_Manager {
         // Initialize account features
         if (!is_admin()) {
             TwinTack_Grip_Account::get_instance();
-            
-            // Prevent theme template from hijacking our endpoint
-            add_action('template_redirect', array($this, 'prevent_theme_template_hijacking'));
         }
 
         // Add CSS for grip designs
         add_action('wp_enqueue_scripts', array($this, 'enqueue_styles'));
-    }
-    
-    public function prevent_theme_template_hijacking() {
-        global $wp_query;
-        
-        // Check if we're on the grip-designs endpoint
-        if (isset($wp_query->query_vars['grip-designs'])) {
-            // Remove any theme template hooks that might be interfering
-            remove_all_filters('template_include');
-            
-            // Add our template include filter back with high priority
-            add_filter('template_include', array($this, 'use_default_template'), 999);
-        }
-    }
-    
-    public function use_default_template($template) {
-        // Use the default template for our endpoint
-        return locate_template(array('page.php', 'single.php', 'index.php'));
     }
     
     public function woocommerce_missing_notice() {
@@ -116,9 +95,9 @@ class TwinTack_Grip_Manager {
     public function enqueue_styles() {
         wp_enqueue_style(
             'grip-designs',
-            plugins_url('assets/css/grip-designs.css', __FILE__),
+            plugins_url('assets/css/grip-designs.css', dirname(__FILE__)),
             array(),
-            '1.3.0'
+            '1.0.0'
         );
     }
 }
