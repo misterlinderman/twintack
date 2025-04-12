@@ -1,7 +1,6 @@
 /* Product Page Layout */
 div.product.type-product.product_cat-baseball, div.product.type-product.product_cat-fishing {
-    display: flex
-;
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
@@ -73,6 +72,22 @@ div.product.type-product.product_cat-baseball, div.product.type-product.product_
 
 .woocommerce-page div.product .woocommerce-tabs {
     width: 45%;
+}
+
+@media screen and (max-width: 680px) {
+    .woocommerce-page div.product div.images {
+        float: none;
+        width: 100%;
+    }
+
+    .woocommerce-page div.product div.summary {
+        float: none;
+        width: 100%;
+    }
+
+    .woocommerce-page div.product .woocommerce-tabs {
+        width: 100%;
+    }
 }
 
 /* Product Title and Price */
