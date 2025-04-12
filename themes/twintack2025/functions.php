@@ -214,11 +214,95 @@ function twintack2025_scripts() {
 add_action( 'wp_enqueue_scripts', 'twintack2025_scripts' );
 
 /**
+ * Add a simple admin notice if Klaviyo list ID is not set
+ */
+function twintack_check_klaviyo_credentials() {
+	// Only show to administrators
+	if (!current_user_can('manage_options')) {
+		return;
+	}
+	
+	// Get the values
+	$klaviyo_data = twintack_get_klaviyo_data();
+	$list_id = $klaviyo_data['listId'];
+	
+	// Check if list ID is missing or empty
+	if (empty($list_id)) {
+		?>
+		<div class="notice notice-warning is-dismissible">
+			<p><strong>TwinTack Klaviyo Integration:</strong> Please set your Klaviyo List ID to enable newsletter signups. <a href="<?php echo admin_url('options-general.php?page=twintack-klaviyo-settings'); ?>">Configure settings</a></p>
+		</div>
+		<?php
+	}
+}
+add_action('admin_notices', 'twintack_check_klaviyo_credentials');
+
+/**
+ * Update the Klaviyo enqueue function to use the constants
+ */
+function twintack_enqueue_klaviyo_script() {
+	// Check if required files exist before trying to get filemtime
+	$css_file = get_template_directory() . '/css/klaviyo-form.css';
+	$js_file = get_template_directory() . '/js/klaviyo-newsletter.js';
+	
+	if (!file_exists($css_file)) {
+		error_log('Klaviyo CSS file not found: ' . $css_file);
+	}
+	
+	if (!file_exists($js_file)) {
+		error_log('Klaviyo JS file not found: ' . $js_file);
+	}
+	
+	// Enqueue the CSS file
+	wp_enqueue_style(
+		'twintack-klaviyo-styles',
+		get_template_directory_uri() . '/css/klaviyo-form.css',
+		array(),
+		file_exists($css_file) ? filemtime($css_file) : _S_VERSION
+	);
+	
+	// Enqueue the JS file with jQuery dependency
+	wp_enqueue_script(
+		'twintack-klaviyo-newsletter',
+		get_template_directory_uri() . '/js/klaviyo-newsletter.js',
+		array('jquery'),
+		file_exists($js_file) ? filemtime($js_file) : _S_VERSION,
+		true
+	);
+	
+	// Get Klaviyo data from the function that checks for constants
+	$klaviyo_data = twintack_get_klaviyo_data();
+	
+	// Add AJAX URL and nonce for security
+	$klaviyo_data['ajaxUrl'] = admin_url('admin-ajax.php');
+	$klaviyo_data['nonce'] = wp_create_nonce('klaviyo_subscribe_nonce');
+	
+	// Debug output
+	if (WP_DEBUG) {
+		error_log('Klaviyo data for JS: ' . print_r($klaviyo_data, true));
+	}
+	
+	// Pass data to the script
+	wp_localize_script('twintack-klaviyo-newsletter', 'klaviyoData', $klaviyo_data);
+}
+add_action('wp_enqueue_scripts', 'twintack_enqueue_klaviyo_script');
+
+/**
  * Load Jetpack compatibility file
  */
 if ( defined( 'JETPACK__VERSION' ) ) {
 	require_once get_template_directory() . '/inc/jetpack.php';
 }
+
+/**
+ * Load Klaviyo integration settings
+ */
+require_once get_template_directory() . '/inc/klaviyo-settings.php';
+
+/**
+ * Load Klaviyo proxy for handling API requests
+ */
+require_once get_template_directory() . '/inc/klaviyo-proxy.php';
 
 function twintack2025_enqueue_fonts() {
     wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@100;200;300;400;500;600;700;800;900&display=swap', array(), null);

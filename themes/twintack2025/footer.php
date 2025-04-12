@@ -49,27 +49,34 @@
 			</div>
 
 			<!-- My Account Column -->
-			<div class="footer-column">
+			<?php if ( is_user_logged_in() ) : ?>
+			<div class="footer-column footer-myaccount">
 				<h3>My Account</h3>
 				<nav class="footer-nav">
-					<a href="/my-account">My Account</a>
-					<a href="/orders">Orders</a>
-					<a href="/wishlist">Wishlist</a>
-					<a href="/address-book">Address Book</a>
-					<a href="/edit-address">Edit Address</a>
-					<a href="/customer-logout">Logout</a>
+					<a href="/my-account">Dashboard</a>
+					<a href="/my-account/grip-designs">My Grip Designs</a>
+					<a href="/my-account/orders">Orders</a>
+					<a href="/my-account/edit-address">Addresses</a>
+					<a href="/my-account/edit-account">Account Details</a>
+					<a href="/my-account/customer-logout">Log out</a>
 				</nav>
 			</div>
+			<?php endif; ?>
 
 			<!-- Newsletter Column -->
 			<div class="footer-column">
 				<h3>Newsletter</h3>
 				<div class="newsletter-form">
 					<p>Stay updated with our latest products, news and special offers.</p>
-					<form class="form-group">
-						<input type="email" placeholder="Your email address" required aria-label="Email">
-						<button type="submit">Subscribe</button>
-					</form>
+					<!-- Klaviyo Embedded Form -->
+					<div class="klaviyo-form-wrapper" id="klaviyo-form-wrapper">
+						<form id="email_signup" class="form-group klaviyo-newsletter-form" action="https://manage.kmail-lists.com/subscriptions/subscribe" data-ajax-submit="https://manage.kmail-lists.com/ajax/subscriptions/subscribe" method="GET" target="_blank" novalidate="novalidate">
+							<input type="hidden" name="g" value="<?php echo esc_attr(twintack_get_klaviyo_data()['listId']); ?>">
+							<input type="email" name="email" id="k_id_email" placeholder="Your email address" required aria-label="Email">
+							<button type="submit" name="klaviyo_submit" id="klaviyo_submit">Subscribe</button>
+						</form>
+						<div class="klaviyo-form-message"></div>
+					</div>
 				</div>
 			</div>
 		</div>
