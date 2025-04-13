@@ -286,3 +286,24 @@ span.wc-block-formatted-money-amount.wc-block-components-formatted-money-amount.
 .editor-styles-wrapper table.wc-block-cart-items .wc-block-cart-items__header th, table.wc-block-cart-items .wc-block-cart-items__header th {
     font-size: 2rem !important;
 }
+
+
+
+/* My Account Styles */
+nav.woocommerce-MyAccount-navigation a {
+    color: rgba(0, 0, 0, .3);
+    font-size: 1.5rem;
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: -0.04rem;
+    text-transform: uppercase;
+}
+
+nav.woocommerce-MyAccount-navigation li.is-active a {
+    color: rgba(0, 0, 0, 1);
+    font-size: 1.5rem;
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: -0.04rem;
+    text-transform: uppercase;
+}
