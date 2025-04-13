@@ -60,12 +60,12 @@ a:hover {
     color: var(--primary-dark);
 }
 
-/* Base List Styling */
+/* Base List Styling 
 ul, ol {
     margin: 0;
     padding: 0;
     list-style: none;
-}
+}*/
 
 /* Base Heading Styles */
 h1, h2, h3, h4, h5, h6 {
