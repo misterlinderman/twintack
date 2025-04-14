@@ -362,7 +362,7 @@ class TwinTack_Category_Display {
         
         echo '<div class="product-variation">';
         echo '<a class="product-variation-link" href="' . esc_url(add_query_arg('variation_id', $variation['variation_id'], get_permalink($product->get_id()))) . '">';
-        echo wp_get_attachment_image($variation['image_id'], 'woocommerce_thumbnail');
+        echo wp_get_attachment_image($variation['image_id'], 'woocommerce_thumbnail', false, array('class' => 'attachment-woocommerce_thumbnail size-woocommerce_thumbnail'));
         echo '<h2 class="woocommerce-loop-product__title">';
         echo esc_html($product->get_title());
         if (!empty($variation['attributes'])) {
@@ -1658,26 +1658,21 @@ require get_template_directory() . '/inc/carousel-integration.php';
  * Customize My Account menu items
  */
 function twintack_customize_account_menu_items($items) {
-    // Remove downloads
-    unset($items['downloads']);
+    $new_items = array();
+    
+    // Copy existing items
+    foreach ($items as $key => $value) {
+        $new_items[$key] = $value;
+    }
     
     // Add wholesale-specific menu items for wholesale users
     if (current_user_can('wholesale_customer')) {
-        $items['wholesale_orderforms'] = __('Order Forms', 'twintack2025');
-        // Insert it after dashboard
-        $new_items = array();
-        foreach ($items as $key => $value) {
-            $new_items[$key] = $value;
-            if ($key === 'dashboard') {
-                $new_items['wholesale_orderforms'] = __('Order Forms', 'twintack2025');
-            }
-        }
-        $items = $new_items;
+        $new_items['wholesale-orderforms'] = __('Order Forms', 'twintack2025');
     }
     
-    return $items;
+    return $new_items;
 }
-add_filter('woocommerce_account_menu_items', 'twintack_customize_account_menu_items', 10);
+add_filter('woocommerce_account_menu_items', 'twintack_customize_account_menu_items');
 
 /**
  * Add custom endpoint for wholesale order forms
@@ -1701,12 +1696,12 @@ function twintack_wholesale_orderforms_content() {
                 array(
                     'title' => 'Baseball Order Form',
                     'description' => 'Order baseball grips and accessories',
-                    'link' => home_url('/baseball-order-form'),
+                    'link' => home_url('/wholesale-ordering/'),
                 ),
                 array(
                     'title' => 'Fishing Order Form',
                     'description' => 'Order fishing grips and accessories',
-                    'link' => home_url('/fishing-order-form'),
+                    'link' => home_url('/wholesale-fishing-ordering/'),
                 ),
                 // Add more order forms as needed
             );
