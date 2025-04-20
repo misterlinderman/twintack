@@ -103,6 +103,9 @@ if ($product && $product->is_type('variable') && isset($_GET['variation_id'])) {
 		 * @hooked WC_Structured_Data::generate_product_data() - 60
 		 */
 		do_action( 'woocommerce_single_product_summary' );
+        
+        // Add description and specs tabs in summary section
+        wc_get_template('single-product/summary-tabs.php');
 		?>
 	</div>
 
@@ -115,6 +118,9 @@ if ($product && $product->is_type('variable') && isset($_GET['variation_id'])) {
 	 * @hooked woocommerce_output_related_products - 20
 	 */
 	do_action( 'woocommerce_after_single_product_summary' );
+    
+    // Add standalone reviews section
+    wc_get_template('single-product/tabs/review-content.php');
 	?>
 </div>
 

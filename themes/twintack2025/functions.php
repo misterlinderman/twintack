@@ -182,6 +182,16 @@ function twintack2025_scripts() {
 		filemtime(get_template_directory() . '/css/main.css')
 	);
 	
+	// WooCommerce custom styles
+    if (class_exists('WooCommerce')) {
+        wp_enqueue_style(
+            'twintack2025-woocommerce-custom',
+            get_template_directory_uri() . '/css/woocommerce-custom.css',
+            array(),
+            filemtime(get_template_directory() . '/css/woocommerce-custom.css')
+        );
+    }
+	
 	wp_enqueue_style( 'twintack2025-style', get_stylesheet_uri(), array('bootstrap'), _S_VERSION );
 	wp_style_add_data( 'twintack2025-style', 'rtl', 'replace' );
 
@@ -204,6 +214,17 @@ function twintack2025_scripts() {
 			filemtime(get_template_directory() . '/js/cart-update.js'),
 			true
 		);
+        
+        // Enqueue custom product tabs JS on product pages
+        if (is_product()) {
+            wp_enqueue_script(
+                'twintack2025-product-tabs',
+                get_template_directory_uri() . '/js/product-tabs.js',
+                array('jquery'),
+                filemtime(get_template_directory() . '/js/product-tabs.js'),
+                true
+            );
+        }
 	}
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {

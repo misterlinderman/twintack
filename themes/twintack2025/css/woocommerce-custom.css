@@ -1,0 +1,85 @@
+/* Summary Tabs Styling */
+.woocommerce-summary-tabs {
+    margin-top: 30px;
+    clear: both;
+}
+
+.woocommerce-summary-tabs .tabs {
+    border-bottom: 1px solid #e5e5e5;
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.woocommerce-summary-tabs .tabs li {
+    display: inline-block;
+    margin: 0 15px 0 0;
+    padding: 0;
+}
+
+.woocommerce-summary-tabs .tabs li a {
+    display: block;
+    padding: 10px 0;
+    font-weight: 500;
+    color: #6d6d6d;
+    text-decoration: none;
+    position: relative;
+}
+
+.woocommerce-summary-tabs .tabs li.active a {
+    color: #333;
+}
+
+.woocommerce-summary-tabs .tabs li.active a:after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #333;
+}
+
+.woocommerce-summary-tabs .woocommerce-Tabs-panel {
+    margin-bottom: 30px;
+}
+
+/* Standalone Reviews Styling */
+.woocommerce-reviews-section {
+    margin: 50px 0;
+    padding-top: 30px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.woocommerce-reviews-section h2 {
+    margin-bottom: 30px;
+}
+
+/* Hide original tabs that are output by default hooks */
+.woocommerce-tabs.wc-tabs-wrapper {
+    display: none;
+}
+
+/* General tabs styles */
+.woocommerce-Tabs-panel h2:first-of-type {
+    display: none; /* Hide duplicate headings */
+}
+
+/* Make sure the summary tabs respond well on mobile */
+@media (max-width: 768px) {
+    .woocommerce-summary-tabs .tabs li {
+        display: block;
+        margin: 0;
+        width: 100%;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .woocommerce-summary-tabs .tabs li a {
+        padding: 12px 0;
+    }
+    
+    .woocommerce-summary-tabs .tabs li.active a:after {
+        bottom: 0;
+    }
+} 
