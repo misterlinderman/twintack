@@ -22,7 +22,6 @@ require_once get_template_directory() . '/inc/template-functions.php';
 require_once get_template_directory() . '/inc/customizer.php';
 require_once get_template_directory() . '/inc/class-twintack-role-pricing.php';
 require_once get_template_directory() . '/inc/class-twintack-custom-products.php';
-require_once get_template_directory() . '/inc/class-twintack-product-forms.php';
 require_once get_template_directory() . '/inc/class-category-customizer.php';
 require_once get_template_directory() . '/inc/header/class-header-configuration.php';//remove once marquee is working
 require_once get_template_directory() . '/inc/marquee/class-marquee-configuration.php';
@@ -308,18 +307,6 @@ function twintack2025_enqueue_fonts() {
     wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@100;200;300;400;500;600;700;800;900&display=swap', array(), null);
 }
 add_action('wp_enqueue_scripts', 'twintack2025_enqueue_fonts');
-
-function twintack_load_variation_display() {
-    require_once get_template_directory() . '/inc/class-variation-display.php';
-    TwinTack_Variation_Display::get_instance();
-}
-add_action('after_setup_theme', 'twintack_load_variation_display');
-
-// Add the image size to the existing function
-add_action('after_setup_theme', function() {
-    // Add variation image size
-    add_image_size('variation-thumbnail', 300, 300, true);
-});
 
 function twintack_locate_variation_template($template, $template_name, $template_path) {
     if ($template_name === 'content-product-variation.php') {
@@ -832,34 +819,6 @@ function twintack_product_display_scripts() {
 add_action('wp_enqueue_scripts', 'twintack_product_display_scripts');
 
 /**
- * Add Display Type custom field to WooCommerce products
- */
-function twintack_add_display_type_field() {
-    woocommerce_wp_select(
-        array(
-            'id'          => 'display_type',
-            'label'       => __('Display Type', 'twintack2025'),
-            'description' => __('Choose how this product should be displayed in the shop', 'twintack2025'),
-            'desc_tip'    => true,
-            'options'     => array(
-                ''              => __('Standard Grid (Default)', 'twintack2025'),
-                'grip_carousel' => __('Grip Carousel', 'twintack2025')
-            )
-        )
-    );
-}
-add_action('woocommerce_product_options_general_product_data', 'twintack_add_display_type_field');
-
-/**
- * Save Display Type custom field
- */
-function twintack_save_display_type_field($post_id) {
-    $display_type = isset($_POST['display_type']) ? $_POST['display_type'] : '';
-    update_post_meta($post_id, 'display_type', $display_type);
-}
-add_action('woocommerce_process_product_meta', 'twintack_save_display_type_field');
-
-/**
  * Modify WooCommerce query to show all products without pagination
  */
 function twintack_show_all_products($query) {
@@ -885,79 +844,6 @@ function twintack_remove_pagination() {
     }
 }
 add_action('woocommerce_before_shop_loop', 'twintack_remove_pagination', 5);
-
-/**
- * Add custom image sizes for different product displays
- */
-function twintack_add_custom_image_sizes() {
-    // Add image size specifically for grip products in the carousel
-    // Taller, narrower image optimized for the vertical bat-rack style display
-    add_image_size('grip-carousel', 200, 600, false); // Width: 200px, Height: 600px, Soft crop
-    
-    // Standard product grid image (square format)
-    add_image_size('product-grid', 400, 400, true); // Width: 400px, Height: 400px, Hard crop
-}
-add_action('after_setup_theme', 'twintack_add_custom_image_sizes');
-
-/**
- * Add the custom image sizes to the media library dropdown
- */
-function twintack_custom_image_sizes_names($sizes) {
-    return array_merge($sizes, array(
-        'grip-carousel' => __('Grip Carousel Image', 'twintack2025'),
-        'product-grid' => __('Product Grid Image', 'twintack2025')
-    ));
-}
-add_filter('image_size_names_choose', 'twintack_custom_image_sizes_names');
-
-/**
- * Add admin notice to regenerate thumbnails after adding new image sizes
- */
-function twintack_thumbnail_notice() {
-    // Only show to administrators
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-    
-    // Check if we've already dismissed this notice
-    if (get_option('twintack_thumbnail_notice_dismissed')) {
-        return;
-    }
-    
-    ?>
-    <div class="notice notice-warning is-dismissible" id="twintack-thumbnail-notice">
-        <p>
-            <strong>TwinTack:</strong> New product image sizes have been added. 
-            <a href="<?php echo esc_url(admin_url('admin.php?page=wc-status&tab=tools')); ?>">
-                Please regenerate your thumbnails
-            </a> 
-            to ensure all products display correctly.
-        </p>
-    </div>
-    <script>
-        jQuery(document).ready(function($) {
-            $(document).on('click', '#twintack-thumbnail-notice .notice-dismiss', function() {
-                $.ajax({
-                    url: ajaxurl,
-                    data: {
-                        action: 'dismiss_thumbnail_notice'
-                    }
-                });
-            });
-        });
-    </script>
-    <?php
-}
-add_action('admin_notices', 'twintack_thumbnail_notice');
-
-/**
- * AJAX handler to dismiss the thumbnail notice
- */
-function twintack_dismiss_thumbnail_notice() {
-    update_option('twintack_thumbnail_notice_dismissed', true);
-    wp_die();
-}
-add_action('wp_ajax_dismiss_thumbnail_notice', 'twintack_dismiss_thumbnail_notice');
 
 /**
  * Handle product filtering based on attributes
