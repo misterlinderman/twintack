@@ -6,8 +6,9 @@
  * with a set password link instead of including the new password in email
  * content.
  *
- * @package  WooCommerce/Blocks
- * @version 9.7.0
+ * @see https://woocommerce.com/document/template-structure/
+ * @package WooCommerce\Templates\Emails\HTML
+ * @version 9.8.0
  */
 
 use Automattic\WooCommerce\Utilities\FeaturesUtil;

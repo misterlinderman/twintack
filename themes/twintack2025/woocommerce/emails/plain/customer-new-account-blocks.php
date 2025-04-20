@@ -6,7 +6,9 @@
  * with a set password link instead of including the new password in email
  * content.
  *
- * @package  WooCommerce/Blocks
+ * @see https://woocommerce.com/document/template-structure/
+ * @package WooCommerce\Templates\Emails\Plain
+ * @version 9.8.0
  */
 
 defined( 'ABSPATH' ) || exit;
