@@ -517,6 +517,15 @@ function custom_logo_svg() {
 
 // Redirect all login URLs to the unified login page
 function twintack_login_url_filter( $login_url, $redirect = '' ) {
+    // Check if this is a WooCommerce Auth endpoint request - if so, return original URL
+    if (isset($_SERVER['REQUEST_URI']) && (
+        strpos($_SERVER['REQUEST_URI'], '/wc-auth/v1/') !== false || 
+        strpos($_SERVER['REQUEST_URI'], '/wc-auth/') !== false ||
+        strpos($_SERVER['REQUEST_URI'], '/my-account/wc-auth/') !== false
+    )) {
+        return $login_url;
+    }
+    
     // Don't modify the URL if we're already on the login page
     // This prevents redirect loops
     if ( is_page( 'login' ) ) {
@@ -1280,91 +1289,113 @@ add_action('wp_login', 'twintack_force_login_redirect', 10, 2);
  */
 function twintack_register_woocommerce_endpoints() {
     // Register standard WooCommerce endpoints
-    add_rewrite_endpoint('orders', EP_ROOT | EP_PAGES);
-    add_rewrite_endpoint('view-order', EP_ROOT | EP_PAGES);
-    add_rewrite_endpoint('downloads', EP_ROOT | EP_PAGES);
-    add_rewrite_endpoint('edit-account', EP_ROOT | EP_PAGES);
-    add_rewrite_endpoint('edit-address', EP_ROOT | EP_PAGES);
-    add_rewrite_endpoint('payment-methods', EP_ROOT | EP_PAGES);
-    add_rewrite_endpoint('customer-logout', EP_ROOT | EP_PAGES);
-    add_rewrite_endpoint('add-payment-method', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint( 'orders', EP_PAGES );
+    add_rewrite_endpoint( 'view-order', EP_PAGES );
+    add_rewrite_endpoint( 'downloads', EP_PAGES );
+    add_rewrite_endpoint( 'edit-account', EP_PAGES );
+    add_rewrite_endpoint( 'edit-address', EP_PAGES );
+    add_rewrite_endpoint( 'payment-methods', EP_PAGES );
+    add_rewrite_endpoint( 'customer-logout', EP_PAGES );
+    add_rewrite_endpoint( 'lost-password', EP_PAGES );
     
-    // This is important - you'll need to flush rewrite rules once
-    // But don't do this on every page load as it's expensive
-    // Uncomment this only when you're making changes to endpoints
-    // flush_rewrite_rules();
+    // Register custom TwinTack endpoints
+    add_rewrite_endpoint( 'grip-designs', EP_PAGES );
+    add_rewrite_endpoint( 'wholesale-orderforms', EP_PAGES );
+    
+    // Critical: Properly register WooCommerce authentication endpoints
+    add_rewrite_endpoint( 'wc-auth', EP_ROOT );
+    add_rewrite_rule( '^wc-auth/v([1-9]+)/(.*)/?', 'index.php?wc-auth=$matches[2]&wc-api=wc_auth', 'top' );
+    add_rewrite_rule( '^my-account/wc-auth/v([1-9]+)/(.*)/?', 'index.php?wc-auth=$matches[2]&wc-api=wc_auth', 'top' );
+    
+    // Ensure 'access_granted' endpoint is registered
+    add_rewrite_endpoint( 'access_granted', EP_PAGES );
 }
 add_action('init', 'twintack_register_woocommerce_endpoints');
 
 /**
  * Fix WooCommerce endpoint URLs
- * This ensures account endpoint URLs are properly constructed
  */
 function twintack_fix_account_endpoints($url, $endpoint, $value, $permalink) {
-    // Check if the URL incorrectly contains /login/ for account endpoints
-    if (strpos($url, '/login/') !== false && 
-        in_array($endpoint, ['orders', 'view-order', 'downloads', 'edit-account', 'edit-address', 
-                             'payment-methods', 'customer-logout', 'add-payment-method', 'grip-designs'])) {
-        
-        // Get the my account page URL
-        $my_account_url = wc_get_page_permalink('myaccount');
-        
-        // Reconstruct the URL properly
-        if ($value) {
-            $url = trailingslashit($my_account_url) . trailingslashit($endpoint) . $value;
-        } else {
-            $url = trailingslashit($my_account_url) . $endpoint;
+    // Don't modify auth-related endpoints
+    if ($endpoint === 'wc-auth' || 
+        $endpoint === 'access_granted' || 
+        strpos($url, 'wc-auth') !== false || 
+        strpos($url, 'access_granted') !== false) {
+        return $url;
+    }
+
+    // We set the account page as static - change this if needed
+    $account_page_url = site_url('/my-account/');
+    
+    // If our endpoint starts with the account URL, it's already correct
+    if (strpos($url, $account_page_url) === 0) {
+        return $url;
+    }
+    
+    // Use our custom account URL instead
+    $endpoint_url = $account_page_url;
+    
+    if (!empty($endpoint)) {
+        $endpoint_url .= $endpoint . '/';
+        if (!empty($value)) {
+            $endpoint_url .= $value . '/';
         }
     }
     
-    return $url;
+    return $endpoint_url;
 }
 add_filter('woocommerce_get_endpoint_url', 'twintack_fix_account_endpoints', 20, 4);
 
 /**
  * Advanced override of WooCommerce endpoint URLs
- * Use this if the regular approach doesn't work
  */
 function twintack_force_correct_account_urls() {
-    // Only run this on front-end requests
-    if (is_admin()) {
-        return;
-    }
+    // Get the current theme's account page URL
+    $account_page_url = site_url('/my-account/');
     
-    // Get the Account page ID and URL
-    $account_page_id = wc_get_page_id('myaccount');
-    if ($account_page_id <= 0) {
-        return;
-    }
-    
-    // Get the account page URL
-    $account_page_url = get_permalink($account_page_id);
-    if (!$account_page_url) {
-        return;
-    }
-    
-    // Make sure it's using the correct URL structure
-    global $woocommerce;
-    
-    // Force the account page URL to be the correct one
-    add_filter('woocommerce_get_myaccount_page_permalink', function() use ($account_page_url) {
-        return $account_page_url;
-    }, 999);
-    
-    // Override all endpoint URLs with high priority
-    add_filter('woocommerce_get_endpoint_url', function($url, $endpoint, $value, $permalink) use ($account_page_url) {
-        // Don't modify lost-password endpoint as that's handled by custom login
-        if ($endpoint === 'lost-password') {
+    // Prevent any redirects or modifications for WooCommerce Auth endpoints
+    add_filter('woocommerce_get_endpoint_url', function($url, $endpoint, $value, $permalink) {
+        if ($endpoint === 'wc-auth' || 
+            strpos($url, 'wc-auth') !== false || 
+            strpos($url, 'access_granted') !== false) {
+            // Don't modify auth-related URLs at all
             return $url;
         }
         
-        // Rebuild the endpoint URL using the correct account page
-        if ($value) {
-            return trailingslashit($account_page_url) . trailingslashit($endpoint) . $value;
-        } else {
-            return trailingslashit($account_page_url) . $endpoint;
-        }
-    }, 999, 4);
+        return $url;
+    }, 999, 4); // Very high priority to override other filters
+    
+    global $woocommerce;
+    
+    // Only override the standard myaccount page permalink if not on auth pages
+    if (!isset($_GET['wc-auth']) && !isset($_GET['wc-api']) && 
+        (empty($_SERVER['REQUEST_URI']) || 
+         (strpos($_SERVER['REQUEST_URI'], 'wc-auth') === false && 
+          strpos($_SERVER['REQUEST_URI'], 'access_granted') === false))) {
+        
+        add_filter('woocommerce_get_myaccount_page_permalink', function() use ($account_page_url) {
+            return $account_page_url;
+        }, 999);
+        
+        add_filter('woocommerce_get_endpoint_url', function($url, $endpoint, $value, $permalink) use ($account_page_url) {
+            // Skip auth related endpoints
+            if ($endpoint === 'wc-auth' || 
+                strpos($url, 'wc-auth') !== false || 
+                strpos($url, 'access_granted') !== false) {
+                return $url;
+            }
+            
+            if ($endpoint) {
+                if ($value) {
+                    return $account_page_url . $endpoint . '/' . $value . '/';
+                } else {
+                    return $account_page_url . $endpoint . '/';
+                }
+            } else {
+                return $account_page_url;
+            }
+        }, 999, 4); // Very high priority
+    }
 }
 add_action('init', 'twintack_force_correct_account_urls', 5);
 
@@ -1720,3 +1751,26 @@ function twintack_grip_designs_endpoint_content() {
     wc_get_template('myaccount/grip-designs.php');
 }
 add_action('woocommerce_account_grip-designs_endpoint', 'twintack_grip_designs_endpoint_content');
+
+/**
+ * Flush rewrite rules to ensure WooCommerce Auth endpoints work
+ * This should happen ONCE after our code changes are applied
+ */
+function twintack_flush_auth_rewrite_rules() {
+    // Use an option to ensure this only runs once after our update
+    $current_version = '1.1.0'; // Increment this when changes are made
+    $saved_version = get_option('twintack_auth_version', '0');
+    
+    if ($current_version !== $saved_version) {
+        // Force flush on next request
+        update_option('twintack_flush_needed', 'yes');
+        update_option('twintack_auth_version', $current_version);
+    }
+    
+    // Check if we need to flush
+    if (get_option('twintack_flush_needed') === 'yes') {
+        flush_rewrite_rules();
+        update_option('twintack_flush_needed', 'no');
+    }
+}
+add_action('init', 'twintack_flush_auth_rewrite_rules', 999); // Very late priority
