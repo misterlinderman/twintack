@@ -19,37 +19,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Get the my account page URL for consistent base
-$account_url = wc_get_page_permalink('myaccount');
-// Make sure it ends with a slash
-$account_url = trailingslashit($account_url);
-
 do_action( 'woocommerce_before_account_navigation' );
 ?>
 
 <nav class="woocommerce-MyAccount-navigation" aria-label="<?php esc_html_e( 'Account pages', 'woocommerce' ); ?>">
 	<ul>
-		<?php 
-		// Get the menu items
-		$menu_items = wc_get_account_menu_items();
-		
-		// Loop through each menu item
-		foreach ( $menu_items as $endpoint => $label ) : 
-			// Generate the correct URL
-			if ($endpoint === 'dashboard') {
-				$url = $account_url;
-			} else {
-				$url = $account_url . $endpoint;
-			}
-			
-			// Add trailing slash for consistency
-			$url = trailingslashit($url);
-			
-			// Get the classes
-			$classes = wc_get_account_menu_item_classes( $endpoint );
-		?>
-			<li class="<?php echo esc_attr($classes); ?>">
-				<a href="<?php echo esc_url($url); ?>" <?php echo wc_is_current_account_menu_item( $endpoint ) ? 'aria-current="page"' : ''; ?>>
+		<?php foreach ( wc_get_account_menu_items() as $endpoint => $label ) : ?>
+			<li class="<?php echo wc_get_account_menu_item_classes( $endpoint ); ?>">
+				<a href="<?php echo esc_url( wc_get_account_endpoint_url( $endpoint ) ); ?>" <?php echo wc_is_current_account_menu_item( $endpoint ) ? 'aria-current="page"' : ''; ?>>
 					<?php echo esc_html( $label ); ?>
 				</a>
 			</li>

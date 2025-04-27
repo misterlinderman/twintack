@@ -30,51 +30,6 @@ if ( post_password_required() ) {
 	echo get_the_password_form(); // WPCS: XSS ok.
 	return;
 }
-
-// Add this code before the hooks to handle variation selection
-if ($product && $product->is_type('variable') && isset($_GET['variation_id'])) {
-    $variation_id = absint($_GET['variation_id']);
-    
-    // Add inline script to pre-select the variation but allow changing
-    ?>
-    <script type="text/javascript">
-    jQuery(document).ready(function($) {
-        // Wait for variations to be initialized
-        $(document).on('woocommerce_variation_has_changed wc_variation_form', function() {
-            // Only run this once when the page loads
-            if (typeof window.variationPreselected === 'undefined') {
-                window.variationPreselected = true;
-                
-                // Get the variation attributes
-                var $form = $('form.variations_form');
-                var variationData = $form.data('product_variations');
-                var variationId = <?php echo $variation_id; ?>;
-                
-                // Find the matching variation
-                for (var i = 0; i < variationData.length; i++) {
-                    if (variationData[i].variation_id === variationId) {
-                        // Set each attribute to match this variation
-                        $.each(variationData[i].attributes, function(attr_name, attr_value) {
-                            // Skip if "any" is allowed
-                            if (attr_value === '') return;
-                            
-                            // Select the matching option
-                            var $select = $form.find('select[name="' + attr_name + '"]');
-                            $select.val(attr_value).trigger('change');
-                        });
-                        
-                        break;
-                    }
-                }
-                
-                // Enable all selects to allow changing variations
-                $form.find('select').prop('disabled', false);
-            }
-        });
-    });
-    </script>
-    <?php
-}
 ?>
 <div id="product-<?php the_ID(); ?>" <?php wc_product_class( '', $product ); ?>>
 
@@ -103,9 +58,6 @@ if ($product && $product->is_type('variable') && isset($_GET['variation_id'])) {
 		 * @hooked WC_Structured_Data::generate_product_data() - 60
 		 */
 		do_action( 'woocommerce_single_product_summary' );
-        
-        // Add description and specs tabs in summary section
-        wc_get_template('single-product/summary-tabs.php');
 		?>
 	</div>
 
@@ -118,9 +70,6 @@ if ($product && $product->is_type('variable') && isset($_GET['variation_id'])) {
 	 * @hooked woocommerce_output_related_products - 20
 	 */
 	do_action( 'woocommerce_after_single_product_summary' );
-    
-    // Add standalone reviews section
-    wc_get_template('single-product/tabs/review-content.php');
 	?>
 </div>
 
