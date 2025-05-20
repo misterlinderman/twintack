@@ -40,42 +40,26 @@ $email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improveme
 						<table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="inner_wrapper">
 							<tr>
 								<td align="center" valign="top">
-									<?php
-									$img = get_option( 'woocommerce_email_header_image' );
-									/**
-									 * This filter is documented in templates/emails/email-styles.php
-									 *
-									 * @since 9.6.0
-									 */
-									if ( apply_filters( 'woocommerce_is_email_preview', false ) ) {
-										$img_transient = get_transient( 'woocommerce_email_header_image' );
-										$img           = false !== $img_transient ? $img_transient : $img;
-									}
+									<div id="template_header_image">
+										<?php
+										$img = get_option( 'woocommerce_email_header_image' );
+										/**
+										 * This filter is documented in templates/emails/email-styles.php
+										 *
+										 * @since 9.6.0
+										 */
+										if ( apply_filters( 'woocommerce_is_email_preview', false ) ) {
+											$img_transient = get_transient( 'woocommerce_email_header_image' );
+											$img           = false !== $img_transient ? $img_transient : $img;
+										}
 
-									if ( $email_improvements_enabled ) :
+										if ( $img ) {
+											echo '<p style="margin-top:0;"><img src="' . esc_url( $img ) . '" alt="' . esc_attr( get_bloginfo( 'name', 'display' ) ) . '" /></p>';
+										} elseif ( $email_improvements_enabled ) {
+											echo '<p class="email-logo-text">' . esc_html( get_bloginfo( 'name', 'display' ) ) . '</p>';
+										}
 										?>
-										<table border="0" cellpadding="0" cellspacing="0" width="100%">
-											<tr>
-												<td id="template_header_image">
-													<?php
-													if ( $img ) {
-														echo '<p style="margin-top:0;"><img src="' . esc_url( $img ) . '" alt="' . esc_attr( get_bloginfo( 'name', 'display' ) ) . '" /></p>';
-													} else {
-														echo '<p class="email-logo-text">' . esc_html( get_bloginfo( 'name', 'display' ) ) . '</p>';
-													}
-													?>
-												</td>
-											</tr>
-										</table>
-									<?php else : ?>
-										<div id="template_header_image">
-											<?php
-											if ( $img ) {
-												echo '<p style="margin-top:0;"><img src="' . esc_url( $img ) . '" alt="' . esc_attr( get_bloginfo( 'name', 'display' ) ) . '" /></p>';
-											}
-											?>
-										</div>
-									<?php endif; ?>
+									</div>
 									<table border="0" cellpadding="0" cellspacing="0" width="100%" id="template_container">
 										<tr>
 											<td align="center" valign="top">
@@ -99,5 +83,5 @@ $email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improveme
 															<!-- Content -->
 															<table border="0" cellpadding="20" cellspacing="0" width="100%">
 																<tr>
-																	<td valign="top" id="body_content_inner_cell">
+																	<td valign="top">
 																		<div id="body_content_inner">

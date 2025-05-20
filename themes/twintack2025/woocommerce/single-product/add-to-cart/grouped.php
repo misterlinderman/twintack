@@ -82,7 +82,6 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 									);
 								}
 								echo '</label>';
-
 							} else {
 								do_action( 'woocommerce_before_add_to_cart_quantity' );
 

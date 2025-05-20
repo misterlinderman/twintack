@@ -307,3 +307,22 @@ nav.woocommerce-MyAccount-navigation li.is-active a {
     letter-spacing: -0.04rem;
     text-transform: uppercase;
 }
+
+
+
+/* Homepage Edits */
+.callout-card a.button {
+    color: white;
+    font-size: 1.5em;
+    text-transform: uppercase;
+    padding: 0;
+    margin: 0;
+}
+
+.callout-cta {
+    padding: 1.5rem;
+    text-align: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: black;
+    /* color: white !important; */
+}

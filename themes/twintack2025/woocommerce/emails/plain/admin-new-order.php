@@ -15,23 +15,14 @@
  * @version 9.8.0
  */
 
-use Automattic\WooCommerce\Utilities\FeaturesUtil;
-
 defined( 'ABSPATH' ) || exit;
-
-$email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improvements' );
 
 echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n";
 echo esc_html( wp_strip_all_tags( $email_heading ) );
 echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
 
 /* translators: %s: Customer billing full name */
-$text = __( 'You’ve received the following order from %s:', 'woocommerce' );
-if ( $email_improvements_enabled ) {
-	/* translators: %s: Customer billing full name */
-	$text = __( 'Woo! You’ve received a new order from %s:', 'woocommerce' );
-}
-echo sprintf( esc_html( $text ), esc_html( $order->get_formatted_billing_full_name() ) ) . "\n\n";
+echo sprintf( esc_html__( 'You've received the following order from %s:', 'woocommerce' ), esc_html( $order->get_formatted_billing_full_name() ) ) . "\n\n";
 
 /*
  * @hooked WC_Emails::order_details() Shows the order details table.

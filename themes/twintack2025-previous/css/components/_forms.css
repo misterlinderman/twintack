@@ -1,0 +1,53 @@
+/* Custom Product Forms */
+.product-custom-form {
+    background: #f8f9fa;
+    padding: calc(var(--spacing-unit) * 2);
+    border-radius: var(--border-radius);
+    margin: calc(var(--spacing-unit) * 2) 0;
+}
+
+/* Gravity Forms Overrides */
+.gform_wrapper {
+    margin: 0 !important;
+}
+
+.gfield {
+    margin-bottom: var(--spacing-unit) !important;
+}
+
+/* Form Fields */
+.form-field {
+    margin-bottom: var(--spacing-unit);
+}
+
+/* Form Labels */
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+/* Form Inputs */
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--gray);
+    border-radius: var(--border-radius);
+    transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Form Validation */
+.form-field.error .form-input {
+    border-color: var(--error);
+}
+
+.form-field.error .error-message {
+    color: var(--error);
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}

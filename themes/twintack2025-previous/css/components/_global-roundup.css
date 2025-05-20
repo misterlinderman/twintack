@@ -1,0 +1,9 @@
+body.archive h1.page-title {
+    text-transform: uppercase;
+    font-style: italic;
+    letter-spacing: -2px;
+    font-weight: 900;
+    font-size: 4em;
+    margin: 0;
+    padding: 0 2rem 2rem;
+}
