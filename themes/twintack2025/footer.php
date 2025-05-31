@@ -39,9 +39,9 @@
 			<div class="footer-column">
 				<h3>Company</h3>
 				<nav class="footer-nav">
-					<a href="/technology">Technology</a>
-					<a href="/partners">Partners</a>
-					<a href="/about">About Us</a>
+					<a href="/twintack">TwinTack</a>
+					<a href="/twintack#technology">Technology</a>
+					<!--a href="/partners">Partners</a-->
 					<a href="/contact">Contact</a>
 					<a href=/wholesale-registration-page">Wholesale</a>
 					<a href="/affiliates">Affiliate Program</a>
