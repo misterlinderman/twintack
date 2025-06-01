@@ -1692,7 +1692,10 @@ function twintack_register_grip_design_post_type() {
         'has_archive'       => true,
         'hierarchical'      => false,
         'menu_position'     => null,
-        'supports'          => array('title', 'editor', 'thumbnail', 'custom-fields')
+        'supports'          => array('title', 'editor', 'thumbnail', 'custom-fields'),
+        'show_in_rest'      => true,
+        'rest_base'         => 'grip-designs',
+        'rest_controller_class' => 'WP_REST_Posts_Controller'
     );
 
     register_post_type('grip_design', $args);
