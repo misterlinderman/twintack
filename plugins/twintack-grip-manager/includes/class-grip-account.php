@@ -12,7 +12,7 @@ class TwinTack_Grip_Account {
     private function __construct() {
         add_action('init', array($this, 'register_endpoints'));
         add_filter('woocommerce_account_menu_items', array($this, 'add_grip_designs_endpoint'));
-        add_action('woocommerce_account_grip-designs_endpoint', array($this, 'grip_designs_content'));
+        add_action('woocommerce_account_grip-designs_endpoint', array($this, 'grip_designs_content'), 5); // Run before theme
     }
     
     public function register_endpoints() {
@@ -25,9 +25,11 @@ class TwinTack_Grip_Account {
     }
     
     public function grip_designs_content() {
-        // Check if content has already been rendered by theme
-        if (did_action('woocommerce_account_grip-designs_endpoint') > 1) {
-            return;
+        // Prevent any other handlers from running after this
+        if (!defined('TWINTACK_GRIP_CONTENT_LOADED')) {
+            define('TWINTACK_GRIP_CONTENT_LOADED', true);
+        } else {
+            return; // Already loaded
         }
         
         $customer_email = wp_get_current_user()->user_email;
@@ -91,7 +93,23 @@ class TwinTack_Grip_Account {
                     <div class="grip-design-preview" <?php echo $background_style; ?>>
                         <div class="grip-design-overlay">
                             <h3><?php the_title(); ?></h3>
-                            <p class="grip-design-status">Status: <?php echo get_post_status_object($status)->label; ?></p>
+                            <?php 
+                            // Use the theme's artwork status mapping if available
+                            if (function_exists('twintack_get_grip_status_label')) {
+                                $status_label = twintack_get_grip_status_label($status);
+                            } else {
+                                // Fallback mapping
+                                $status_map = array(
+                                    'draft'     => 'Artwork Pending',
+                                    'pending'   => 'Pending Review', 
+                                    'publish'   => 'Artwork Approved',
+                                    'private'   => 'Internal Review',
+                                    'future'    => 'Scheduled'
+                                );
+                                $status_label = isset($status_map[$status]) ? $status_map[$status] : ucfirst($status);
+                            }
+                            ?>
+                            <p class="grip-design-status">Status: <?php echo esc_html($status_label); ?></p>
                             <?php if (!$has_artwork): ?>
                                 <div class="no-artwork-placeholder">Artwork Pending</div>
                             <?php endif; ?>
@@ -180,9 +198,22 @@ class TwinTack_Grip_Account {
                 <h1><?php echo esc_html($post->post_title); ?></h1>
                 <?php 
                 $status = get_post_status($grip_id);
-                $status_object = get_post_status_object($status);
+                // Use the theme's artwork status mapping if available
+                if (function_exists('twintack_get_grip_status_label')) {
+                    $status_label = twintack_get_grip_status_label($status);
+                } else {
+                    // Fallback mapping
+                    $status_map = array(
+                        'draft'     => 'Artwork Pending',
+                        'pending'   => 'Pending Review', 
+                        'publish'   => 'Artwork Approved',
+                        'private'   => 'Internal Review',
+                        'future'    => 'Scheduled'
+                    );
+                    $status_label = isset($status_map[$status]) ? $status_map[$status] : ucfirst($status);
+                }
                 echo '<span class="status-label status-' . esc_attr($status) . '">';
-                echo esc_html($status_object->label);
+                echo esc_html($status_label);
                 echo '</span>';
                 ?>
             </div>

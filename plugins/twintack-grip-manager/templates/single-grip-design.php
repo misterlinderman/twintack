@@ -11,9 +11,12 @@ get_header(); ?>
         <div class="grip-design-status">
             <?php 
             $status = get_post_status();
-            $status_object = get_post_status_object($status);
+            // Use our custom grip design status mapping
+            $grip_status_label = function_exists('twintack_get_grip_status_label') 
+                ? twintack_get_grip_status_label($status) 
+                : get_post_status_object($status)->label;
             echo '<span class="status-label status-' . esc_attr($status) . '">';
-            echo esc_html($status_object->label);
+            echo esc_html($grip_status_label);
             echo '</span>';
             ?>
         </div>
@@ -84,6 +87,20 @@ get_header(); ?>
                         <th>Quantity:</th>
                         <td><?php echo esc_html(get_post_meta(get_the_ID(), '_grip_quantity', true)); ?></td>
                     </tr>
+                    <tr>
+                        <th>Artwork Status:</th>
+                        <td>
+                            <?php 
+                            $status = get_post_status();
+                            $grip_status_label = function_exists('twintack_get_grip_status_label') 
+                                ? twintack_get_grip_status_label($status) 
+                                : get_post_status_object($status)->label;
+                            echo '<span class="status-label status-' . esc_attr($status) . '">';
+                            echo esc_html($grip_status_label);
+                            echo '</span>';
+                            ?>
+                        </td>
+                    </tr>
                 </table>
 
                 <?php if ($feedback = get_post_meta(get_the_ID(), '_grip_feedback', true)): ?>
@@ -91,6 +108,15 @@ get_header(); ?>
                         <h3>Design Instructions</h3>
                         <div class="feedback-content">
                             <?php echo wpautop(esc_html($feedback)); ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($monday_feedback = get_post_meta(get_the_ID(), '_grip_monday_feedback', true)): ?>
+                    <div class="grip-feedback monday-feedback">
+                        <h3>Design Team Feedback</h3>
+                        <div class="feedback-content">
+                            <?php echo wpautop(esc_html($monday_feedback)); ?>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -120,6 +146,32 @@ get_header(); ?>
                     }
                 }
                 ?>
+
+                <?php 
+                // Display Design Mockup from Monday.com
+                $mockup_url = get_post_meta(get_the_ID(), '_grip_mockup_url', true);
+                $mockup_filename = get_post_meta(get_the_ID(), '_grip_mockup_filename', true);
+                if (!empty($mockup_url) || !empty($mockup_filename)): ?>
+                    <div class="grip-design-mockup">
+                        <h2>Design Mockup</h2>
+                        <?php if (!empty($mockup_url) && filter_var($mockup_url, FILTER_VALIDATE_URL)): ?>
+                            <div class="artwork-preview mockup-preview">
+                                <img src="<?php echo esc_url($mockup_url); ?>" alt="Design Mockup">
+                            </div>
+                            <p class="artwork-actions">
+                                <strong>File:</strong> <?php echo esc_html($mockup_filename); ?><br>
+                                <a href="<?php echo esc_url($mockup_url); ?>" class="button button-primary" target="_blank">View Full Size</a>
+                            </p>
+                        <?php else: ?>
+                            <div class="artwork-preview no-artwork">
+                                <div class="no-artwork-placeholder">Mockup In Progress</div>
+                            </div>
+                            <?php if (!empty($mockup_filename)): ?>
+                                <p><strong>Filename:</strong> <?php echo esc_html($mockup_filename); ?></p>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -146,6 +198,42 @@ get_header(); ?>
     background: #f0f0f0;
 }
 
+/* Artwork Pending - Draft Status */
+.status-draft {
+    background: #fff6d9;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* Pending Review - Pending Status */
+.status-pending {
+    background: #e1f5fe;
+    color: #0277bd;
+    border: 1px solid #81d4fa;
+}
+
+/* Artwork Approved - Publish Status */
+.status-publish {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Internal Review - Private Status */
+.status-private {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f1aeb5;
+}
+
+/* Scheduled - Future Status */
+.status-future {
+    background: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #ced4da;
+}
+
+/* Legacy support for old custom statuses */
 .status-artwork_pending {
     background: #fff6d9;
     color: #856404;
@@ -218,6 +306,35 @@ get_header(); ?>
     background: #f8f9fa;
     border: 1px solid #ddd;
     border-radius: 4px;
+}
+
+/* Monday.com specific styling */
+.monday-feedback {
+    background: #e8f4fd;
+    border-color: #0078d4;
+    border-left: 4px solid #0078d4;
+}
+
+.monday-feedback h3 {
+    color: #0078d4;
+}
+
+.grip-design-mockup {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #f0f9ff;
+    border: 1px solid #0078d4;
+    border-radius: 4px;
+}
+
+.grip-design-mockup h2 {
+    color: #0078d4;
+    margin-bottom: 1rem;
+}
+
+.mockup-preview {
+    background: #ffffff;
+    border: 2px dashed #0078d4;
 }
 
 .feedback-content {

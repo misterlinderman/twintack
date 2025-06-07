@@ -52,7 +52,8 @@ class TwinTack_Grip_Form_Handler {
                 'post_type' => 'grip_design',
                 'post_title' => $post_title,
                 'post_content' => $feedback,
-                'post_status' => 'artwork_pending',
+                'post_status' => 'draft',
+                'post_author' => get_current_user_id(),
                 'meta_input' => array(
                     '_grip_customer_name' => $customer_name,
                     '_grip_customer_email' => $customer_email,
@@ -62,7 +63,8 @@ class TwinTack_Grip_Form_Handler {
                     '_grip_form_entry_id' => $entry['id'],
                     '_grip_artwork_url' => $file_upload,
                     '_grip_artwork_filename' => $file_name,
-                    '_grip_feedback' => $feedback
+                    '_grip_feedback' => $feedback,
+                    '_grip_artwork_status' => 'artwork_pending'
                 )
             ));
 
@@ -146,7 +148,8 @@ class TwinTack_Grip_Form_Handler {
                 'post_type' => 'grip_design',
                 'post_title' => $post_title,
                 'post_content' => $feedback,
-                'post_status' => 'artwork_pending',
+                'post_status' => 'draft',
+                'post_author' => get_current_user_id(),
                 'meta_input' => array(
                     '_grip_customer_name' => $customer_name,
                     '_grip_customer_email' => $customer_email,
@@ -160,7 +163,8 @@ class TwinTack_Grip_Form_Handler {
                     '_grip_form_entry_id' => $entry['id'],
                     '_grip_artwork_url' => $file_upload,
                     '_grip_artwork_filename' => $file_name,
-                    '_grip_feedback' => $feedback
+                    '_grip_feedback' => $feedback,
+                    '_grip_artwork_status' => 'artwork_pending'
                 )
             ));
 
