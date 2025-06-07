@@ -1,3 +1,25 @@
+# TwinTack WordPress Theme
+
+A specialized WordPress theme designed for TwinTack, showcasing dual-purpose sports equipment for baseball and fishing.
+
+## Documentation
+
+Comprehensive documentation for this theme is available in the [docs](./docs) directory:
+
+- [Project Overview](./docs/PROJECT_OVERVIEW.md) - High-level overview of the project
+- [Directory Structure](./docs/DIRECTORY_STRUCTURE.md) - Theme structure and organization
+- [Features](./docs/FEATURES.md) - Catalog of theme features
+- [Development Guide](./docs/DEVELOPMENT_GUIDE.md) - Guidelines for development
+- [Claude Notes Reference](./docs/CLAUDE_NOTES.md) - Information about using AI conversation exports as development references
+
+Additionally, the project includes a `claude notes` directory at the root level containing reference files from Claude conversations that provide valuable context for feature development and layout decisions.
+
+## Original Theme Information
+
+This theme is based on the _s (Underscores) starter theme. The original README content is preserved below for reference.
+
+---
+
 [![Build Status](https://travis-ci.org/Automattic/_s.svg?branch=master)](https://travis-ci.org/Automattic/_s)
 
 _s

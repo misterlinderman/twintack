@@ -1,12 +1,24 @@
-tr.woocommerce-product-attributes-item.woocommerce-product-attributes-item--weight {
-    display: none;
+/* Product Page Layout */
+div.product.type-product.product_cat-baseball,
+div.product.type-product.product_cat-fishing {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    justify-content: space-between;
+    align-items: center;
 }
 
-tr.woocommerce-product-attributes-item.woocommerce-product-attributes-item--dimensions {
-    display: none;
+/* Category-specific backgrounds */
+div.product.type-product.product_cat-baseball {
+    background-color: rgb(194, 199, 230);
 }
 
-/* Add to your theme's style.css */
+div.product.type-product.product_cat-fishing {
+    background-color: rgb(199, 185, 185);
+}
+
+/* Product Gallery */
 .woocommerce-product-gallery {
     position: relative;
     margin-bottom: 3em;
@@ -21,6 +33,7 @@ tr.woocommerce-product-attributes-item.woocommerce-product-attributes-item--dime
     height: auto;
 }
 
+/* Variation Thumbnails */
 .variation-thumbnails {
     display: flex;
     gap: 10px;
@@ -57,27 +70,7 @@ tr.woocommerce-product-attributes-item.woocommerce-product-attributes-item--dime
     color: #666;
 }
 
-
-/* Product Page */
-
-div.product.type-product.product_cat-baseball,
-div.product.type-product.product_cat-fishing {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    justify-content: space-between;
-    align-items: center;
-}
-
-div.product.type-product.product_cat-baseball {
-    background-color: rgb(194, 199, 230);
-}
-
-div.product.type-product.product_cat-fishing {
-    background-color: rgb(199, 185, 185);
-}
-
+/* Product Summary */
 .summary.entry-summary {
     background-color: antiquewhite;
 }
@@ -94,6 +87,7 @@ section.related.products {
     background-color: aquamarine;
 }
 
+/* Layout Dimensions */
 .woocommerce-page div.product div.images {
     float: none;
     width: 48%;
@@ -109,8 +103,7 @@ section.related.products {
     width: 48%;
 }
 
-/* Product Summary */
-
+/* Product Title and Price */
 .woocommerce div.product .product_title {
     font-weight: 600;
 }
@@ -120,4 +113,10 @@ section.related.products {
     letter-spacing: -1px;
     font-size: 2em;
     line-height: 1;
+}
+
+/* Hide Unnecessary Elements */
+tr.woocommerce-product-attributes-item.woocommerce-product-attributes-item--weight,
+tr.woocommerce-product-attributes-item.woocommerce-product-attributes-item--dimensions {
+    display: none;
 }

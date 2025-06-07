@@ -72,7 +72,7 @@
 	/**
 	 * Sets or removes .focus class on an element.
 	 */
-	function toggleFocus() {
+	function toggleFocus(event) {
 		if ( event.type === 'focus' || event.type === 'blur' ) {
 			let self = this;
 			// Move up through the ancestors of the current link until we hit .nav-menu.
@@ -99,9 +99,27 @@
 }() );
 
 document.addEventListener('DOMContentLoaded', function() {
+    const header = document.querySelector('.site-header');
+    
+    if (!header) return;
+
+    // Set header height variable
+    const setHeaderHeight = () => {
+        const headerHeight = header.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+    };
+
+    setHeaderHeight();
+    window.addEventListener('resize', setHeaderHeight);
+});
+
+document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.querySelector('.menu-toggle');
     const mainNav = document.querySelector('.main-navigation');
     const header = document.querySelector('.site-header');
+
+    // Return early if required elements don't exist
+    if (!menuToggle || !mainNav || !header) return;
 
     // Set header height variable
     const setHeaderHeight = () => {
@@ -128,50 +146,72 @@ document.addEventListener('DOMContentLoaded', function() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const header = document.querySelector('.site-header');
+    if (!header) return;
+
     const navToggle = header.querySelector('.nav-toggle');
-    let lastScroll = 0;
-    const scrollThreshold = 100;
+    const headerControls = header.querySelector('.header-controls');
+    
+    if (!navToggle) return;
 
-    if (!header || !navToggle) return;
+    // Color contrast detection function
+    function getContrastYIQ(r, g, b) {
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return yiq >= 128 ? 'light' : 'dark';
+    }
 
-    // Set header height variable
-    const headerHeight = header.offsetHeight;
-    document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+    // Function to update navigation contrast
+    function updateNavigationContrast() {
+        if (!headerControls) return;
+
+        const rect = headerControls.getBoundingClientRect();
+        const x = rect.left + (rect.width / 2);
+        const y = rect.top + (rect.height / 2);
+        
+        const elements = document.elementsFromPoint(x, y);
+        let bgColor = 'rgba(0, 0, 0, 0)';
+        
+        // Find the first non-transparent background, excluding header elements
+        for (const element of elements) {
+            if (!header.contains(element)) {
+                const computedStyle = window.getComputedStyle(element);
+                bgColor = computedStyle.backgroundColor;
+                
+                if (bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+                    break;
+                }
+            }
+        }
+
+        const rgb = bgColor.match(/\d+/g);
+        if (rgb && rgb.length >= 3) {
+            const contrast = getContrastYIQ(
+                parseInt(rgb[0]), 
+                parseInt(rgb[1]), 
+                parseInt(rgb[2])
+            );
+            header.dataset.contrast = contrast;
+        } else {
+            header.dataset.contrast = 'light';
+        }
+    }
 
     // Toggle navigation
     navToggle.addEventListener('click', () => {
-        const currentState = header.dataset.navState;
-        header.dataset.navState = currentState === 'closed' ? 'open' : 'closed';
-        navToggle.setAttribute('aria-expanded', currentState === 'closed');
-    });
-
-    // Handle scroll behavior
-    function handleScroll() {
-        const currentScroll = window.pageYOffset;
-        const isExpanded = header.dataset.navState === 'open';
-
-        // Don't hide header when nav is expanded
-        if (isExpanded) return;
-
-        // Add/remove scrolled class based on scroll position
-        if (currentScroll > scrollThreshold) {
-            header.classList.add('scrolled');
+        const currentState = header.dataset.navState || 'closed';
+        const newState = currentState === 'closed' ? 'open' : 'closed';
+        header.dataset.navState = newState;
+        navToggle.setAttribute('aria-expanded', newState === 'open');
+        
+        if (newState === 'open') {
+            header.dataset.contrast = 'dark';
         } else {
-            header.classList.remove('scrolled');
-        }
-
-        lastScroll = currentScroll;
-    }
-
-    // Throttle scroll event
-    let ticking = false;
-    window.addEventListener('scroll', () => {
-        if (!ticking) {
-            window.requestAnimationFrame(() => {
-                handleScroll();
-                ticking = false;
+            // Force immediate contrast check when closing
+            requestAnimationFrame(() => {
+                updateNavigationContrast();
             });
-            ticking = true;
         }
     });
+
+    // Initial contrast check
+    updateNavigationContrast();
 });

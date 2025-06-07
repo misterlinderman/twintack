@@ -1,18 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Header scroll effect
-    const header = document.querySelector('.site-header');
     const marquee = document.querySelector('.site-marquee');
-    const scrollThreshold = marquee ? marquee.offsetHeight : 100;
-
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > scrollThreshold) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
-        }
-    });
-
-    // Marquee rotation
+    
+    // Marquee rotation only
     if (!marquee) return;
 
     const slides = marquee.querySelectorAll('.marquee-slide');

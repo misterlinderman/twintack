@@ -17,7 +17,7 @@ class TwinTack_Variation_Display {
     }
 
     public function modify_product_query($query) {
-        if (!is_admin() && $query->is_main_query() && (is_product_category('baseball') || is_product_category('fishing'))) {
+        if (!is_admin() && $query->is_main_query() && (is_shop() || is_product_category('baseball') || is_product_category('fishing'))) {
             $query->set('posts_per_page', -1);
             
             // Apply consistent ordering for both categories
@@ -28,7 +28,7 @@ class TwinTack_Variation_Display {
     }
 
     public function add_variations_to_loop($posts) {
-        if (!is_product_category('baseball') && !is_product_category('fishing')) {
+        if (!is_shop() && !is_product_category('baseball') && !is_product_category('fishing')) {
             return $posts;
         }
 

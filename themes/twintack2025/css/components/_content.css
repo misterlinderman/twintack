@@ -1,14 +1,42 @@
+/* Content area */
+.site-content {
+    position: relative;
+    z-index: 2;
+    background: var(--light);
+    padding-top: calc(var(--nav-height) + 2rem);
+    margin-left: 0;
+}
+
+/* Desktop Styles */
+@media (min-width: 768px) {
+    .site-content {
+        margin-left: 340px;
+        padding-top: 2rem;
+    }
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+    .site-content {
+        padding-top: calc(var(--nav-height) + 20px);
+        margin-left: 0;
+    }
+}
+
+/* Full Width Layout */
 section.layout-full {
     background-size: cover;
     background-position: center;
 }
 
+/* Content Layout */
 section.layout-full .callout-content {
     display: flex;
     flex-direction: column;
     width: 100%;
 }
 
+/* Wrapper Styles */
 section.layout-full .callout-wrapper {
     display: flex;
     justify-content: center;
@@ -17,11 +45,7 @@ section.layout-full .callout-wrapper {
     min-height: 450px;
 }
 
-section.layout-full .callout-content {
-    display: flex;
-    flex-direction: column;
-}
-
+/* Content Box Styling */
 section.layout-full .callout-content {
     display: flex;
     flex-direction: column;
@@ -31,23 +55,17 @@ section.layout-full .callout-content {
     width: 40%;
 }
 
-section#homepartners {
-    background-color: black;
-}
-
-section#hometeam {
-    background-color: black;
-}
-
-section#homestory {
-    background-color: black;
-}
-
+/* Section Background Colors */
+section#homepartners,
+section#hometeam,
+section#homestory,
 section#htptech {
     background-color: black;
 }
 
-section.layout-left, section.layout-right {
+/* Layout Spacing */
+section.layout-left,
+section.layout-right {
     padding: 60px 0;
 }
 
@@ -56,4 +74,40 @@ section.full-width-content.layout-full {
     background-color: black;
     color: white;
     padding: 3em 2em 2em;
+}
+
+/* Page Title Styling */
+h1.entry-title {
+    text-transform: uppercase;
+    font-style: italic;
+    letter-spacing: -2px;
+    font-weight: 900;
+    font-size: 4em;
+    margin: 0;
+    padding: 0 2rem 2rem;
+}
+
+/* Desktop Styles - Account for left nav tray */
+@media (min-width: 768px) {
+    h1.entry-title {
+        padding: 5rem 0 1rem;
+    }
+}
+
+/* Tablet Breakpoint */
+@media (max-width: 991px) {
+    h1.entry-title {
+        font-size: 3em;
+        padding: calc(var(--nav-height) + 1.5rem) 1.5rem 1.5rem;
+    }
+}
+
+/* Mobile Breakpoint */
+@media (max-width: 767px) {
+    h1.entry-title {
+        font-size: 2.5em;
+        margin-left: 0;
+        padding: 1rem;
+        letter-spacing: -1px;
+    }
 }

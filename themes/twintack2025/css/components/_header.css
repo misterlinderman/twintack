@@ -5,7 +5,6 @@
     left: 0;
     width: 100%;
     z-index: 1000;
-    transition: transform 0.3s ease;
 }
 
 /* Marquee styles */
@@ -126,32 +125,34 @@ a.marquee-link {
 
 /* Base header styles */
 .site-header {
-    /*position: sticky;*/
+    --nav-height: 90px;
+    position: fixed;
     top: 0;
+    left: 0;
     width: 100%;
     z-index: 1000;
-    background: var(--light);
+    background-color: transparent;
+    padding: 1.4em;
 }
 
 /* Main Navigation */
 .header-main {
     background: var(--light);
     border-bottom: 1px solid var(--gray);
+}
+
+.custom-logo-link {
+    display: block;
     transition: transform 0.3s ease;
 }
 
 .custom-logo-link svg {
     width: 240px;
-    /*height: 48px;  Matches your SVG's original height */
-    /*fill: currentColor;  This will allow you to change the color using color property */
+    transition: fill 0.3s ease;
 }
 
 /* Example of changing color on hover */
 .custom-logo-link:hover svg {
-    fill: white;
-}
-
-path#twintack-logo {
     fill: white;
 }
 
@@ -168,19 +169,17 @@ path#twintack-logo {
 
 /* Toggle button */
 .nav-toggle {
-    /*position: fixed;*/
-    top: 1rem;
-    right: 1rem;
-    z-index: 1001;
-    background: var(--light);
-    border: 1px solid var(--gray);
-    padding: 0.5rem;
-    border-radius: 4px;
-    display: flex;
+    display: flex !important;
+    background: none;
+    border: none;
+    padding: 0;
+    width: 30px;
+    height: 24px;
     flex-direction: column;
-    gap: 4px;
+    justify-content: space-between;
     cursor: pointer;
-    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1001;
 }
 
 .nav-toggle .toggle-icon {
@@ -222,12 +221,190 @@ path#twintack-logo {
 
 /* Header Base */
 .site-header {
-    --nav-height: 60px;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     z-index: 1000;
+    background-color: transparent;
+}
+
+/* Reset header controls to original state but prepare for gradient */
+.header-controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 340px;
+    padding: 1.5rem;
+    z-index: 1001;
+    overflow: hidden; /* Contain the pseudo-element */
+}
+
+/* Gradient pseudo-element with proper transition */
+.header-controls::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%; /* Start off-screen */
+    width: 100%;
+    height: 80px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%);
+    z-index: -1;
+    pointer-events: none;
+    
+    /* Critical fix: ensure transition works in both directions */
+    transition: left 0.3s ease; /* Same duration as the nav tray */
+    
+    /* Prevent layout issues */
+    box-sizing: content-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Move gradient into position when nav opens */
+[data-nav-state="open"] .header-controls::before {
+    left: 0;
+    transition-delay: 0.05s; /* Small delay to match the tray movement */
+}
+
+/* Ensure gradient is off-screen when nav is closed */
+[data-nav-state="closed"] .header-controls::before {
+    left: -100%;
+    transition-delay: 0s;
+}
+
+/* Logo */
+.custom-logo-link {
+    position: relative; /* Ensure it's above the gradient */
+    z-index: 1;
+    margin: 0;
+    padding: 0;
+}
+
+.custom-logo-link svg {
+    transition: fill 0.3s ease;
+}
+
+/* Toggle Lines */
+.toggle-line {
+    transition: background-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+    width: 100%;
+    height: 6px;
+}
+
+/* Contrast Variations */
+.site-header[data-contrast="light"] .custom-logo-link svg {
+    fill: black !important;
+}
+
+.site-header[data-contrast="dark"] .custom-logo-link svg {
+    fill: white !important;
+}
+
+.site-header[data-contrast="light"] .toggle-line {
+    background-color: black !important;
+}
+
+.site-header[data-contrast="dark"] .toggle-line {
+    background-color: white !important;
+}
+
+/* Navigation Toggle */
+.nav-toggle {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    padding: 0;
+}
+
+/* Navigation Panel */
+.nav-panels {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: black;
+    padding: 6rem 2rem 2rem;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+    max-height: 100vh;
+}
+
+/* Open State */
+.site-header[data-nav-state="open"] .nav-panels {
+    transform: translateX(0);
+}
+
+/* Toggle Animation */
+.site-header[data-nav-state="open"] .toggle-line:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+}
+
+.site-header[data-nav-state="open"] .toggle-line:nth-child(2) {
+    opacity: 0;
+}
+
+.site-header[data-nav-state="open"] .toggle-line:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+    .nav-panels {
+        padding: 5rem 1rem 1rem;
+        overflow-y: auto;
+        max-height: 100vh;
+    }
+    
+    .header-controls {
+        width: 320px;
+    }
+}
+
+/* Sport Icons */
+.sport-icons {
+    display: flex;
+    gap: 2rem;
+}
+
+.sport-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--color-white);
+    text-decoration: none;
+}
+
+.sport-icon svg {
+    width: 100%;
+    margin-bottom: -0.4em;
+}
+
+g#fishing, g#baseball {
+    fill: white;
+    width: 100%;
+}
+
+/* Navigation Links */
+.nav-section a {
+    display: block;
+    color: var(--color-white);
+    text-decoration: none;
+    font-size: 1.25rem;
+    padding: 0 0 2.5rem 0;
+}
+
+/* Desktop Styles */
+@media (min-width: 768px) {
+    .nav-panels {
+        width: 340px;
+    }
 }
 
 /* Corporate Navigation */
@@ -264,10 +441,7 @@ path#twintack-logo {
 
 /* Navigation Toggle */
 .nav-toggle {
-    background: none;
-    border: none;
-    padding: 0.5rem;
-    cursor: pointer;
+    display: flex !important;
 }
 
 .nav-arrow {
@@ -278,95 +452,6 @@ path#twintack-logo {
 [data-nav-state="open"] .nav-arrow {
     transform: rotate(180deg);
 }
-
-/* Category Navigation */
-.category-nav {
-    /*background: black;*/
-    color: black;
-    height: var(--nav-height);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 2rem;
-    transform: translateY(-100%);
-    transition: transform 0.3s ease;
-}
-
-.site-header[data-nav-state="open"] .category-nav {
-    transform: translateY(0%);
-}
-
-
-/* Top Level Page Navigation Modifications */
-header#masthead .container {
-    display: inherit;
-}
-
-.site-header .corporate-nav {
-    position: inherit;
-}
-
-.site-header .corporate-nav {
-    transform: translateY(-200%);
-}
-
-.site-header .category-nav {
-    transform: translateY(-200%);
-}
-
-.site-header[data-nav-state="open"] .corporate-nav {
-    transform: translateY(-100%);
-}
-
-.site-header[data-nav-state="open"] .category-nav {
-    transform: translateY(-100%);
-}
-
-body.home .site-header .corporate-nav,
-body.page-id-538 .site-header .corporate-nav,
-body.page-id-33 .site-header .corporate-nav,
-body.page-id-34 .site-header .corporate-nav,
-body.page-id-35 .site-header .corporate-nav,
-body.page-id-36 .site-header .corporate-nav {
-    transform: translateY(-100%);
-}
-
-body.home .nav-toggle,
-body.page-id-538 .nav-toggle,
-body.page-id-33 .nav-toggle,
-body.page-id-34 .nav-toggle,
-body.page-id-35 .nav-toggle,
-body.page-id-36 .nav-toggle {
-    display: none;
-}
-
-body.home .category-nav,
-body.page-id-538 .category-nav,
-body.page-id-33 .category-nav,
-body.page-id-34 .category-nav,
-body.page-id-35 .category-nav,
-body.page-id-36 .category-nav {
-    display: none;
-}
-
-header#masthead {
-    background-color: black;
-}
-
-body.home header#masthead,
-body.page-id-538 header#masthead,
-body.page-id-33 header#masthead,
-body.page-id-34 header#masthead,
-body.page-id-35 header#masthead,
-body.page-id-36 header#masthead {
-    background-color: black;
-}
-
-.category-nav {
-    background-color: black;
-    border-radius: 0 0 15px 15px;
-}
-
 
 
 /* Product Selector */
@@ -480,4 +565,155 @@ div.product-menu a.product-link:hover {
     .admin-bar .site-header.scrolled {
         top: 0;
     }
+}
+
+/* Reset old navigation styles */
+.site-navigation,
+.main-navigation,
+.header-main,
+.header-category-nav {
+    display: none !important; /* Temporarily force hide old navigation */
+}
+
+/* New Navigation Structure */
+.nav-panels {
+    position: fixed;
+    left: 0;
+    width: 100%;
+    height: 0;
+    background: black;
+    overflow: hidden;
+    transition: height 0.3s ease;
+    z-index: 999; /* Ensure it's above other content */
+}
+
+/* Sport Menu Styling */
+.sport-nav {
+    padding: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sport-menu-container {
+    margin-top: 1rem;
+}
+
+.sport-menu-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sport-menu-container li {
+    margin-bottom: 1rem;
+}
+
+.sport-menu-container a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Product Navigation */
+.product-nav {
+    padding: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Main Navigation */
+.main-nav {
+    padding: 2rem;
+}
+
+.main-menu-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.main-menu-container li {
+    margin-bottom: 1rem;
+}
+
+.main-menu-container a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
+/* Section Headers */
+.nav-panels h2 {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 900;
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+    font-style: italic;
+}
+
+/* Desktop Styles */
+@media (min-width: 768px) {
+    .nav-panels {
+        width: 340px;
+        height: calc(100vh);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .site-header[data-nav-state="open"] .nav-panels {
+        transform: translateX(0);
+    }
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+    .nav-panels {
+        width: 320px; /* Maintain consistent width */
+        height: 100vh;
+    }
+    
+    .header-controls {
+        width: 320px; /* Match nav panel width */
+    }
+}
+
+/* Update contrast variations */
+.site-header[data-contrast="light"] .custom-logo-link svg {
+    fill: black !important;
+}
+
+.site-header[data-contrast="dark"] .custom-logo-link svg {
+    fill: white !important;
+}
+
+.site-header[data-contrast="light"] .toggle-line {
+    background-color: black !important;
+}
+
+.site-header[data-contrast="dark"] .toggle-line {
+    background-color: white !important;
+}
+
+/* Add transitions */
+.custom-logo-link svg,
+.toggle-line {
+    transition: fill 0.3s ease, background-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-section:last-child {
+    padding-bottom: 2rem; /* Add some bottom padding to ensure last items are visible */
+}
+
+/* Add scrolling to navigation panels */
+.nav-panels {
+    overflow-y: auto;
+}
+
+/* Add gradient background to header controls when navigation is open */
+[data-nav-state="open"] .header-controls {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%);
+    /* height: 120px; - commented out as requested */
+    /* border-radius: 0 0 10px 0; - commented out as requested */
 }

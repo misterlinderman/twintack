@@ -1,5 +1,11 @@
-/* Base styles */
+/* Core Theme Variables */
 :root {
+    --primary: #ff4800;
+    --primary-dark: #cc3a00;
+    --secondary: #1a1a1a;
+    --text: #333333;
+    --light: #ffffff;
+    --gray: #f5f5f5;
     --primary-color: #007bff;
     --secondary-color: #6c757d;
     --baseball-primary: #002D72;
@@ -8,6 +14,82 @@
     --fishing-secondary: #00A3E0;
     --spacing-unit: 1rem;
     --border-radius: 4px;
+}
+
+/* Base Typography */
+html {
+    font-size: var(--font-size-base);
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-primary);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-base);
+    color: var(--text);
+    margin: 0;
+}
+
+/* Base Layout */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Base Section Styling */
+section {
+    position: relative;
+}
+
+/* Base Image Handling */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Base Link Styling */
+a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: var(--transition-base);
+}
+
+a:hover {
+    color: var(--primary-dark);
+}
+
+/* Base List Styling */
+ul, ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Base Heading Styles */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+    margin-bottom: var(--spacing-md);
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+p {
+    margin-bottom: var(--spacing-md);
+}
+
+/* Responsive Base */
+@media (max-width: 768px) {
+    :root {
+        --spacing-unit: 0.875rem;
+    }
 }
 
 /* Category Layout */
