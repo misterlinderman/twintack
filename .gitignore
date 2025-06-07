@@ -38,8 +38,11 @@ Thumbs.db
 # Log files
 *.log
 debug.log
+error_log
 
 # Temporary files
 *.swp
 *.swo
 *~
+
+#some other stuff
