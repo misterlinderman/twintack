@@ -142,14 +142,34 @@ wp_enqueue_script('magnific-popup', 'https://cdnjs.cloudflare.com/ajax/libs/magn
     color: #333;
 }
 
-.grip-design-status.pending {
+.grip-design-status.draft {
     background: rgba(255, 243, 205, 0.9);
     color: #856404;
 }
 
-.grip-design-status.approved {
+.grip-design-status.pending {
+    background: rgba(255, 193, 7, 0.9);
+    color: #533f03;
+}
+
+.grip-design-status.publish {
     background: rgba(212, 237, 218, 0.9);
     color: #155724;
+}
+
+.grip-design-status.private {
+    background: rgba(248, 249, 250, 0.9);
+    color: #6c757d;
+}
+
+/* Hide any duplicate grip design displays that might come from other sources */
+.grip-designs-grid:not(#main-grip-designs-display .grip-designs-grid) {
+    display: none !important;
+}
+
+/* Ensure our main display is always visible */
+#main-grip-designs-display .grip-designs-grid {
+    display: grid !important;
 }
 
 /* Lightbox customization */
@@ -262,6 +282,8 @@ wp_enqueue_script('magnific-popup', 'https://cdnjs.cloudflare.com/ajax/libs/magn
 }
 </style>
 
+<!-- START: Custom Grip Designs Template -->
+<div class="twintack-custom-grip-designs-wrapper" id="main-grip-designs-display">
 <div class="grip-designs-header">
     <h2><?php esc_html_e('My Grip Designs', 'twintack2025'); ?></h2>
     <p><?php _e('View and manage all your custom grip designs.', 'twintack2025'); ?></p>
@@ -269,22 +291,85 @@ wp_enqueue_script('magnific-popup', 'https://cdnjs.cloudflare.com/ajax/libs/magn
 
 <div class="grip-designs-grid">
     <?php
-    // Set up the query arguments
+    $current_user = wp_get_current_user();
+    $customer_email = $current_user->user_email;
+    
+    // Set up the query arguments - try multiple approaches to find grip designs
     $query_args = array(
         'post_type' => 'grip_design',
         'posts_per_page' => -1,
-        'post_status' => array('publish', 'artwork_pending', 'artwork_approved'),
+        'post_status' => array('publish', 'draft', 'pending', 'private'),
         'orderby' => 'date',
         'order' => 'DESC'
     );
 
-    // Only filter by author if user is not an administrator
-    if (!current_user_can('administrator')) {
-        $query_args['author'] = get_current_user_id();
+    // For administrators, show all designs
+    if (current_user_can('administrator')) {
+        // Admins can see all designs
+    } else {
+        // For regular users, try to match by author first, then by email
+        $meta_query = array(
+            'relation' => 'OR',
+            array(
+                'key' => '_grip_customer_email',
+                'value' => $customer_email,
+                'compare' => '='
+            )
+        );
+        
+        // Also include posts authored by this user
+        $author_posts_query = array(
+            'post_type' => 'grip_design',
+            'posts_per_page' => -1,
+            'post_status' => array('publish', 'draft', 'pending', 'private'),
+            'author' => $current_user->ID,
+            'orderby' => 'date',
+            'order' => 'DESC'
+        );
+        
+        // Get posts by email first
+        $query_args['meta_query'] = $meta_query;
+        $email_designs = get_posts($query_args);
+        
+        // Get posts by author
+        $author_designs = get_posts($author_posts_query);
+        
+        // Merge and deduplicate
+        $all_design_ids = array();
+        $grip_designs = array();
+        
+        foreach ($email_designs as $design) {
+            if (!in_array($design->ID, $all_design_ids)) {
+                $all_design_ids[] = $design->ID;
+                $grip_designs[] = $design;
+            }
+        }
+        
+        foreach ($author_designs as $design) {
+            if (!in_array($design->ID, $all_design_ids)) {
+                $all_design_ids[] = $design->ID;
+                $grip_designs[] = $design;
+            }
+        }
     }
 
-    // Get grip designs
-    $grip_designs = get_posts($query_args);
+    // If admin or if we didn't get designs from the merged approach above
+    if (current_user_can('administrator') || !isset($grip_designs)) {
+        $grip_designs = get_posts($query_args);
+    }
+
+    // Debug information for testing
+    if (isset($_GET['debug']) && current_user_can('administrator')) {
+        echo '<div style="background: #f0f0f0; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">';
+        echo '<strong>Debug Info:</strong><br>';
+        echo 'Current User ID: ' . $current_user->ID . '<br>';
+        echo 'Current User Email: ' . $customer_email . '<br>';
+        echo 'Found ' . count($grip_designs) . ' grip designs<br>';
+        if (!empty($grip_designs)) {
+            echo 'Design IDs: ' . implode(', ', array_map(function($design) { return $design->ID; }, $grip_designs)) . '<br>';
+        }
+        echo '</div>';
+    }
 
     if (empty($grip_designs)) {
         echo '<div class="woocommerce-message woocommerce-message--info">';
@@ -298,10 +383,29 @@ wp_enqueue_script('magnific-popup', 'https://cdnjs.cloudflare.com/ajax/libs/magn
             $thumbnail = wc_placeholder_img_src('large');
         }
         $date_created = get_the_date('F j, Y', $design->ID);
-        $status = $design->post_status === 'artwork_pending' ? 'Artwork Pending' : 
-                 ($design->post_status === 'artwork_approved' ? 'Artwork Approved' : 'Draft');
-        $status_class = sanitize_html_class(strtolower(str_replace(' ', '-', $status)));
-        $quantity = get_post_meta($design->ID, 'quantity', true);
+        
+        // Get artwork status using post status and our mapping function
+        $post_status = get_post_status($design->ID);
+        
+        // Use the mapping function if it exists, otherwise create our own mapping
+        if (function_exists('twintack_get_grip_status_label')) {
+            $status = twintack_get_grip_status_label($post_status);
+        } else {
+            // Fallback mapping if function doesn't exist
+            $status_map = array(
+                'draft'     => 'Artwork Pending',
+                'pending'   => 'Pending Review', 
+                'publish'   => 'Artwork Approved',
+                'private'   => 'Internal Review',
+                'future'    => 'Scheduled'
+            );
+            $status = isset($status_map[$post_status]) ? $status_map[$post_status] : ucfirst($post_status);
+        }
+        
+        $status_class = sanitize_html_class($post_status);
+        
+
+        $quantity = get_post_meta($design->ID, '_grip_quantity', true);
     ?>
         <div class="grip-design-card" data-design-id="<?php echo esc_attr($design->ID); ?>">
             <img src="<?php echo esc_url($thumbnail); ?>" 
@@ -322,7 +426,7 @@ wp_enqueue_script('magnific-popup', 'https://cdnjs.cloudflare.com/ajax/libs/magn
                     <span class="grip-design-author">
                         <?php 
                         $author = get_user_by('id', $design->post_author);
-                        printf(__('Customer: %s', 'twintack2025'), esc_html($author->display_name)); 
+                        printf(__('Customer: %s', 'twintack2025'), esc_html($author ? $author->display_name : 'Unknown')); 
                         ?>
                     </span>
                     <?php endif; ?>
@@ -392,4 +496,6 @@ jQuery(document).ready(function($) {
         });
     });
 });
-</script> 
+</script>
+</div>
+<!-- END: Custom Grip Designs Template --> 

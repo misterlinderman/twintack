@@ -39,9 +39,9 @@
 			<div class="footer-column">
 				<h3>Company</h3>
 				<nav class="footer-nav">
-					<a href="/technology">Technology</a>
-					<a href="/partners">Partners</a>
-					<a href="/about">About Us</a>
+					<a href="/twintack">TwinTack</a>
+					<a href="/twintack#technology">Technology</a>
+					<!--a href="/partners">Partners</a-->
 					<a href="/contact">Contact</a>
 					<a href=/wholesale-registration-page">Wholesale</a>
 					<a href="/affiliates">Affiliate Program</a>
@@ -71,7 +71,14 @@
 					<!-- Klaviyo Embedded Form -->
 					<div class="klaviyo-form-wrapper" id="klaviyo-form-wrapper">
 						<form id="email_signup" class="form-group klaviyo-newsletter-form" action="https://manage.kmail-lists.com/subscriptions/subscribe" data-ajax-submit="https://manage.kmail-lists.com/ajax/subscriptions/subscribe" method="GET" target="_blank" novalidate="novalidate">
-							<input type="hidden" name="g" value="<?php echo esc_attr(twintack_get_klaviyo_data()['listId']); ?>">
+							<input type="hidden" name="g" value="<?php 
+							// Fallback in case function doesn't exist
+							if (function_exists('twintack_get_klaviyo_data')) {
+								echo esc_attr(twintack_get_klaviyo_data()['listId']);
+							} else {
+								echo 'UXnNZg'; // Default list ID
+							}
+							?>">
 							<input type="email" name="email" id="k_id_email" placeholder="Your email address" required aria-label="Email">
 							<button type="submit" name="klaviyo_submit" id="klaviyo_submit">Subscribe</button>
 						</form>

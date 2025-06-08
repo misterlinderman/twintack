@@ -102,8 +102,8 @@
                     <nav class="main-nav">
                         <a href="/twintack">TWINTACK</a>
                         <a href="/twintack#technology">TECHNOLOGY</a>
-                        <a href="/twintack#our-team">OUR TEAM</a>
-                        <a href="/partners">PARTNERS</a>
+                        <!--a href="/twintack#our-team">OUR TEAM</a-->
+                        <!--a href="/partners">PARTNERS</a-->
                         <a href="/contact">CONTACT</a>
                         <a href="/temp-all-links/">TEMP ALL LINKS</a>
                     </nav>

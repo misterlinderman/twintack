@@ -182,16 +182,6 @@ function twintack2025_scripts() {
 		filemtime(get_template_directory() . '/css/main.css')
 	);
 	
-	// WooCommerce custom styles
-    if (class_exists('WooCommerce')) {
-        wp_enqueue_style(
-            'twintack2025-woocommerce-custom',
-            get_template_directory_uri() . '/css/woocommerce-custom.css',
-            array(),
-            filemtime(get_template_directory() . '/css/woocommerce-custom.css')
-        );
-    }
-	
 	wp_enqueue_style( 'twintack2025-style', get_stylesheet_uri(), array('bootstrap'), _S_VERSION );
 	wp_style_add_data( 'twintack2025-style', 'rtl', 'replace' );
 
@@ -212,19 +202,8 @@ function twintack2025_scripts() {
 			get_template_directory_uri() . '/js/cart-update.js',
 			array('jquery'),
 			filemtime(get_template_directory() . '/js/cart-update.js'),
-			true
-		);
-        
-        // Enqueue custom product tabs JS on product pages
-        if (is_product()) {
-            wp_enqueue_script(
-                'twintack2025-product-tabs',
-                get_template_directory_uri() . '/js/product-tabs.js',
-                array('jquery'),
-                filemtime(get_template_directory() . '/js/product-tabs.js'),
                 true
             );
-        }
 	}
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
@@ -1659,6 +1638,7 @@ add_action('woocommerce_account_wholesale-orderforms_endpoint', 'twintack_wholes
 
 /**
  * Add grip designs endpoint
+ * NOTE: Re-enabled for endpoint registration, but content is handled by plugin
  */
 function twintack_add_grip_designs_endpoint() {
     add_rewrite_endpoint('grip-designs', EP_ROOT | EP_PAGES);
@@ -1667,6 +1647,7 @@ add_action('init', 'twintack_add_grip_designs_endpoint');
 
 /**
  * Add grip designs to account menu items
+ * NOTE: Re-enabled for menu item, but content is handled by plugin
  */
 function twintack_add_grip_designs_menu_item($items) {
     $new_items = array();
@@ -1683,94 +1664,32 @@ function twintack_add_grip_designs_menu_item($items) {
 add_filter('woocommerce_account_menu_items', 'twintack_add_grip_designs_menu_item', 20);
 
 /**
- * Register grip design post type
+ * Get grip design status label based on WordPress status
+ * This function is used by the My Account template
  */
-function twintack_register_grip_design_post_type() {
-    $labels = array(
-        'name'               => __('Grip Designs', 'twintack2025'),
-        'singular_name'      => __('Grip Design', 'twintack2025'),
-        'add_new'           => __('Add New', 'twintack2025'),
-        'add_new_item'      => __('Add New Grip Design', 'twintack2025'),
-        'edit_item'         => __('Edit Grip Design', 'twintack2025'),
-        'new_item'          => __('New Grip Design', 'twintack2025'),
-        'view_item'         => __('View Grip Design', 'twintack2025'),
-        'search_items'      => __('Search Grip Designs', 'twintack2025'),
-        'not_found'         => __('No grip designs found', 'twintack2025'),
-        'not_found_in_trash'=> __('No grip designs found in trash', 'twintack2025'),
-        'parent_item_colon' => '',
-        'menu_name'         => __('Grip Designs', 'twintack2025')
+function twintack_get_grip_status_label($status) {
+    $status_map = array(
+        'draft'     => 'Artwork Pending',
+        'pending'   => 'Pending Review', 
+        'publish'   => 'Artwork Approved',
+        'private'   => 'Internal Review',
+        'future'    => 'Scheduled'
     );
-
-    $args = array(
-        'labels'             => $labels,
-        'public'             => true,
-        'publicly_queryable' => true,
-        'show_ui'           => true,
-        'show_in_menu'      => true,
-        'query_var'         => true,
-        'rewrite'           => array('slug' => 'grip-design'),
-        'capability_type'   => 'post',
-        'has_archive'       => true,
-        'hierarchical'      => false,
-        'menu_position'     => null,
-        'supports'          => array('title', 'editor', 'thumbnail', 'custom-fields')
-    );
-
-    register_post_type('grip_design', $args);
+    
+    return isset($status_map[$status]) ? $status_map[$status] : ucfirst($status);
 }
-add_action('init', 'twintack_register_grip_design_post_type');
 
-/**
- * Add WooCommerce endpoints and menu items
- */
-function twintack_add_endpoints() {
-    add_rewrite_endpoint('grip-designs', EP_ROOT | EP_PAGES);
-}
-add_action('init', 'twintack_add_endpoints');
 
-/**
- * Add menu items to My Account menu
- */
-function twintack_add_account_menu_items($items) {
-    // Add grip designs after dashboard
-    $new_items = array();
-    foreach ($items as $key => $value) {
-        $new_items[$key] = $value;
-        if ($key === 'dashboard') {
-            $new_items['grip-designs'] = __('My Grip Designs', 'twintack2025');
-        }
-    }
-    return $new_items;
-}
-add_filter('woocommerce_account_menu_items', 'twintack_add_account_menu_items', 10);
 
 /**
  * Register grip designs endpoint content
+ * NOTE: Only runs if plugin hasn't already loaded content
  */
 function twintack_grip_designs_endpoint_content() {
+    // Only load if plugin hasn't already provided content
+    if (!defined('TWINTACK_GRIP_CONTENT_LOADED')) {
     wc_get_template('myaccount/grip-designs.php');
 }
-add_action('woocommerce_account_grip-designs_endpoint', 'twintack_grip_designs_endpoint_content');
+add_action('woocommerce_account_grip-designs_endpoint', 'twintack_grip_designs_endpoint_content', 10);
 
-/**
- * Flush rewrite rules to ensure WooCommerce Auth endpoints work
- * This should happen ONCE after our code changes are applied
- */
-function twintack_flush_auth_rewrite_rules() {
-    // Use an option to ensure this only runs once after our update
-    $current_version = '1.1.0'; // Increment this when changes are made
-    $saved_version = get_option('twintack_auth_version', '0');
-    
-    if ($current_version !== $saved_version) {
-        // Force flush on next request
-        update_option('twintack_flush_needed', 'yes');
-        update_option('twintack_auth_version', $current_version);
-    }
-    
-    // Check if we need to flush
-    if (get_option('twintack_flush_needed') === 'yes') {
-        flush_rewrite_rules();
-        update_option('twintack_flush_needed', 'no');
-    }
-}
-add_action('init', 'twintack_flush_auth_rewrite_rules', 999); // Very late priority
+// Note: Grip design post type is registered by the TwinTack Grip Manager plugin

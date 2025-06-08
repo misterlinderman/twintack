@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: TwinTack Grip Manager
- * Description: Manages custom grip orders with Gravity Forms and WooCommerce integration
- * Version: 1.3.1
+ * Description: Manages custom grip orders with Gravity Forms and WooCommerce integration. Features separate post/artwork status, Monday.com integration, and customer dashboard display.
+ * Version: 1.5.0
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,13 +22,21 @@ class TwinTack_Grip_Manager {
     
     private function __construct() {
         // Hook into plugins_loaded to ensure WooCommerce is loaded first
-        add_action('plugins_loaded', array($this, 'init'), 0);
+        add_action('plugins_loaded', array($this, 'init'), 10);
         
         // Register activation hook
         register_activation_hook(__FILE__, array($this, 'activate'));
+        
+        // Add deactivation hook to clean up
+        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
     }
     
     public function init() {
+        // Debug log to confirm plugin is loading
+        if (WP_DEBUG) {
+            error_log('TwinTack Grip Manager initializing...');
+        }
+        
         // Check WooCommerce dependency first
         if (!class_exists('WooCommerce')) {
             add_action('admin_notices', array($this, 'woocommerce_missing_notice'));
@@ -47,8 +55,13 @@ class TwinTack_Grip_Manager {
         require_once plugin_dir_path(__FILE__) . 'includes/class-grip-admin.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-grip-account.php';
         
-        // Initialize components
-        TwinTack_Grip_Post_Type::get_instance();
+        // Initialize components - ensure post type is registered first
+        $post_type = TwinTack_Grip_Post_Type::get_instance();
+        
+        if (WP_DEBUG) {
+            error_log('TwinTack Grip Manager: Post type instance created');
+        }
+        
         TwinTack_Grip_Form_Handler::get_instance();
         
         // Only load admin in admin area
@@ -66,6 +79,25 @@ class TwinTack_Grip_Manager {
 
         // Add CSS for grip designs
         add_action('wp_enqueue_scripts', array($this, 'enqueue_styles'));
+        
+        // Force flush rewrite rules if needed (only once)
+        $this->maybe_flush_rules();
+    }
+    
+    private function maybe_flush_rules() {
+        $version_option = 'twintack_grip_manager_version';
+        $current_version = get_option($version_option);
+        $plugin_version = '1.3.6';
+        
+        if ($current_version !== $plugin_version) {
+            // Force flush rewrite rules
+            flush_rewrite_rules();
+            update_option($version_option, $plugin_version);
+            
+            if (WP_DEBUG) {
+                error_log('TwinTack Grip Manager: Flushed rewrite rules for version ' . $plugin_version);
+            }
+        }
     }
     
     public function prevent_theme_template_hijacking() {
@@ -107,10 +139,22 @@ class TwinTack_Grip_Manager {
         require_once plugin_dir_path(__FILE__) . 'includes/class-grip-post-type.php';
         $post_type = TwinTack_Grip_Post_Type::get_instance();
         $post_type->register_post_type();
-        $post_type->register_statuses();
         
         // Flush rewrite rules
         flush_rewrite_rules();
+        
+        if (WP_DEBUG) {
+            error_log('TwinTack Grip Manager activated');
+        }
+    }
+    
+    public function deactivate() {
+        // Flush rewrite rules on deactivation
+        flush_rewrite_rules();
+        
+        if (WP_DEBUG) {
+            error_log('TwinTack Grip Manager deactivated');
+        }
     }
 
     public function enqueue_styles() {
@@ -123,7 +167,7 @@ class TwinTack_Grip_Manager {
     }
 }
 
-// Initialize the plugin
-add_action('plugins_loaded', array('TwinTack_Grip_Manager', 'get_instance'), -10);
+// Initialize the plugin immediately
+TwinTack_Grip_Manager::get_instance();
 
 

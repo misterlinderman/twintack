@@ -148,7 +148,7 @@ a.sport-icon {
 .nav-section a {
     display: block;
     /*color: var(--color-white);*/
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 1);
     text-decoration: none;
     font-size: 1.25rem;
     padding: 0 0 0.5rem 0;

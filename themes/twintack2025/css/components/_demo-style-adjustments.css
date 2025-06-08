@@ -21,7 +21,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 80vh;
+    height: 93vh;
     opacity: 0;
     transition: opacity 0.5s ease-in-out;
     background-size: cover;
@@ -306,4 +306,51 @@ nav.woocommerce-MyAccount-navigation li.is-active a {
     font-style: italic;
     letter-spacing: -0.04rem;
     text-transform: uppercase;
+}
+
+
+
+/* Homepage Edits */
+.callout-card a.button {
+    color: white;
+    font-size: 1.5em;
+    text-transform: uppercase;
+    padding: 0;
+    margin: 0;
+}
+
+.callout-cta {
+    padding: 1.5rem;
+    text-align: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: black;
+    /* color: white !important; */
+}
+
+
+
+
+/* Global Content Styles */
+
+.info-block-title {
+    font-size: 3rem;
+    font-weight: 900;
+    margin-bottom: 0.5em;
+    text-align: left;
+    color: black;
+    /* border-bottom: 2px solid; */
+    background: white;
+    transform: skew(-13deg, 0);
+    font-style: normal;
+    padding: 0 0 0 1.5rem;
+}
+
+.marquee-navigation {
+    position: absolute;
+    top: 93%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    gap: 10px;
 }

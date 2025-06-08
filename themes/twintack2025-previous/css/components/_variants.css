@@ -1,0 +1,9 @@
+.role-price {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.role-price-label {
+    font-size: 0.875em;
+    color: var(--secondary-color);
+}

@@ -1,0 +1,521 @@
+/* 
+ * Company Page Styles
+ * 
+ * Styles for the TwinTack company page template
+ */
+
+/* General layout and spacing */
+.company-page {
+    padding-bottom: 60px;
+}
+
+.company-page section {
+    margin-bottom: 40px;
+    padding: 20px 0;
+}
+
+/* Page Title Style (matching Contact and Partners pages exactly) */
+.company-page .entry-header {
+    margin-bottom: 30px;
+}
+
+.company-page .entry-title {
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    color: #333;
+    text-transform: none;
+    font-weight: bold;
+}
+
+/* Anchor Navigation - positioned below title */
+.anchor-navigation {
+    display: flex;
+    justify-content: flex-start;
+    background-color: transparent;
+    padding: 0 0 20px 0;
+    position: relative;
+    z-index: 100;
+    margin-bottom: 20px;
+    box-shadow: none;
+    border-bottom: 1px solid #eee;
+}
+
+.anchor-navigation ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 30px;
+}
+
+.anchor-navigation a {
+    text-decoration: none;
+    color: var(--primary-color, #0066cc);
+    font-weight: 500;
+    position: relative;
+    padding: 5px 0;
+}
+
+.anchor-navigation a:after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: var(--primary-color, #0066cc);
+    transition: width 0.3s ease;
+}
+
+.anchor-navigation a:hover:after {
+    width: 100%;
+}
+
+/* Section title styles */
+.company-page .section-title {
+    margin-bottom: 30px;
+    text-align: left;
+    font-size: 1.8rem;
+    position: relative;
+    color: #333;
+    font-weight: bold;
+}
+
+.company-page .section-title:after {
+    display: none;
+}
+
+/* Our Story Section */
+.our-story-section {
+    background-color: transparent;
+}
+
+.our-story-section .entry-content {
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* Team Members Section */
+.team-section {
+    background-color: transparent;
+}
+
+.team-members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.team-member-card {
+    background-color: #ffffff;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.team-member-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.member-photo {
+    height: 250px;
+    overflow: hidden;
+}
+
+.member-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.team-member-card:hover .member-photo img {
+    transform: scale(1.05);
+}
+
+.member-info {
+    padding: 20px;
+}
+
+.member-name {
+    font-size: 1.3rem;
+    margin: 0 0 5px;
+    color: #333;
+}
+
+.member-role {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0 0 15px;
+    font-style: italic;
+}
+
+.member-description-preview {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    color: #666;
+}
+
+.view-profile-btn {
+    background-color: var(--primary-color, #0066cc);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.view-profile-btn:hover {
+    background-color: #0055aa;
+}
+
+/* Team Member Modal Styles */
+.team-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+}
+
+.team-modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    width: 90%;
+    max-width: 900px;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    animation: modalFadeIn 0.3s ease-in-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 30px;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    z-index: 10;
+    transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+    color: #000;
+}
+
+.team-modal-inner {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .team-modal-inner {
+        flex-direction: row;
+    }
+}
+
+.modal-member-photo {
+    flex: 0 0 300px;
+    height: 400px;
+    overflow: hidden;
+}
+
+.modal-member-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal-member-info {
+    flex: 1;
+    padding: 30px;
+}
+
+.modal-member-name {
+    font-size: 1.8rem;
+    margin: 0 0 5px;
+    color: #333;
+}
+
+.modal-member-role {
+    font-size: 1.1rem;
+    color: #666;
+    margin: 0 0 20px;
+    font-style: italic;
+}
+
+.modal-member-description {
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .team-members-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .team-members-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .member-photo {
+        height: 200px;
+    }
+}
+
+/* Anchor navigation styling for smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Technology Section */
+.technology-section {
+    background-color: transparent;
+    padding: 20px 0;
+}
+
+.technology-section .section-title {
+    margin-bottom: 30px;
+}
+
+.technology-section .content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .technology-section .content-wrapper {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+.technology-section.layout-left .content-wrapper {
+    flex-direction: column-reverse;
+}
+
+@media (min-width: 768px) {
+    .technology-section.layout-left .content-wrapper {
+        flex-direction: row;
+    }
+}
+
+.technology-section.layout-right .content-wrapper {
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .technology-section.layout-right .content-wrapper {
+        flex-direction: row-reverse;
+    }
+}
+
+.technology-media {
+    flex: 0 0 100%;
+}
+
+@media (min-width: 768px) {
+    .technology-media {
+        flex: 0 0 45%;
+    }
+}
+
+.technology-image {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.technology-content {
+    flex: 0 0 100%;
+}
+
+@media (min-width: 768px) {
+    .technology-content {
+        flex: 0 0 55%;
+        padding: 0 20px;
+    }
+}
+
+.technology-text {
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* Enhanced flexible content styling */
+.full-width-callout {
+    padding: 20px 0;
+    background-color: transparent;
+}
+
+.callout-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .callout-wrapper {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    
+
+}
+
+.callout-media, .callout-content {
+    flex: 1;
+}
+
+.callout-image {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.callout-title {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.callout-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #444;
+}
+
+.partners-display {
+    padding: 20px 0;
+    background-color: transparent;
+}
+
+.partners-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.partner-card {
+    text-align: center;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: #fff;
+}
+
+.partner-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.partner-logo {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.partner-name {
+    font-size: 1.1rem;
+    margin: 0 0 10px;
+    color: #333;
+}
+
+.partner-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: var(--primary-color, #0066cc);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Full Width Content with Images */
+.full-width-content {
+    padding: 20px 0;
+    background-color: transparent;
+}
+
+.full-width-content .content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .full-width-content.layout-left .content-wrapper {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    
+    .full-width-content.layout-right .content-wrapper {
+        flex-direction: row-reverse;
+        align-items: flex-start;
+    }
+}
+
+.content-media {
+    flex: 0 0 100%;
+}
+
+@media (min-width: 768px) {
+    .content-media {
+        flex: 0 0 45%;
+    }
+    
+    .content-text {
+        flex: 0 0 55%;
+        padding: 0 20px;
+    }
+}
+
+.content-image {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.content-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #444;
+} 

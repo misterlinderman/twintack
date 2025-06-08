@@ -12,7 +12,7 @@ class TwinTack_Grip_Account {
     private function __construct() {
         add_action('init', array($this, 'register_endpoints'));
         add_filter('woocommerce_account_menu_items', array($this, 'add_grip_designs_endpoint'));
-        add_action('woocommerce_account_grip-designs_endpoint', array($this, 'grip_designs_content'));
+        add_action('woocommerce_account_grip-designs_endpoint', array($this, 'grip_designs_content'), 5); // Run before theme
     }
     
     public function register_endpoints() {
@@ -25,9 +25,11 @@ class TwinTack_Grip_Account {
     }
     
     public function grip_designs_content() {
-        // Check if content has already been rendered by theme
-        if (did_action('woocommerce_account_grip-designs_endpoint') > 1) {
-            return;
+        // Prevent any other handlers from running after this
+        if (!defined('TWINTACK_GRIP_CONTENT_LOADED')) {
+            define('TWINTACK_GRIP_CONTENT_LOADED', true);
+        } else {
+            return; // Already loaded
         }
         
         $customer_email = wp_get_current_user()->user_email;
@@ -81,19 +83,34 @@ class TwinTack_Grip_Account {
             echo '<div class="grip-designs-list">';
             while ($designs->have_posts()) {
                 $designs->the_post();
-                $status = get_post_status();
+                $artwork_status = get_post_meta(get_the_ID(), '_grip_artwork_status', true) ?: 'artwork_pending';
                 $artwork_url = get_post_meta(get_the_ID(), '_grip_artwork_url', true);
-                $has_artwork = !empty($artwork_url) && filter_var($artwork_url, FILTER_VALIDATE_URL);
-                $card_class = $has_artwork ? 'has-artwork' : 'no-artwork';
-                $background_style = $has_artwork ? 'style="background-image: url(' . esc_url($artwork_url) . ')"' : '';
+                
+                // Check for Monday.com mockup (priority over artwork)
+                $mockup_asset_url = get_post_meta(get_the_ID(), '_grip_mockup_asset_url', true);
+                $display_url = !empty($mockup_asset_url) ? $mockup_asset_url : $artwork_url;
+                $has_image = !empty($display_url) && filter_var($display_url, FILTER_VALIDATE_URL);
+                $card_class = $has_image ? 'has-artwork' : 'no-artwork';
+                $background_style = $has_image ? 'style="background-image: url(' . esc_url($display_url) . ')"' : '';
+                
+                // Get artwork status label
+                $status_labels = array(
+                    'artwork_pending'   => 'Artwork Pending',
+                    'pending_review'    => 'Pending Review',
+                    'artwork_approved'  => 'Artwork Approved',
+                    'internal_review'   => 'Internal Review',
+                    'in_production'     => 'In Production',
+                    'shipped'           => 'Shipped'
+                );
+                $status_label = isset($status_labels[$artwork_status]) ? $status_labels[$artwork_status] : 'Artwork Pending';
                 ?>
                 <div class="grip-design-item <?php echo esc_attr($card_class); ?>">
                     <div class="grip-design-preview" <?php echo $background_style; ?>>
                         <div class="grip-design-overlay">
                             <h3><?php the_title(); ?></h3>
-                            <p class="grip-design-status">Status: <?php echo get_post_status_object($status)->label; ?></p>
-                            <?php if (!$has_artwork): ?>
-                                <div class="no-artwork-placeholder">Artwork Pending</div>
+                            <p class="grip-design-status">Status: <?php echo esc_html($status_label); ?></p>
+                            <?php if (!$has_image): ?>
+                                <div class="no-artwork-placeholder">Awaiting Mockup</div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -179,10 +196,19 @@ class TwinTack_Grip_Account {
             <div class="grip-design-header">
                 <h1><?php echo esc_html($post->post_title); ?></h1>
                 <?php 
-                $status = get_post_status($grip_id);
-                $status_object = get_post_status_object($status);
-                echo '<span class="status-label status-' . esc_attr($status) . '">';
-                echo esc_html($status_object->label);
+                $artwork_status = get_post_meta($grip_id, '_grip_artwork_status', true) ?: 'artwork_pending';
+                // Get artwork status label
+                $status_labels = array(
+                    'artwork_pending'   => 'Artwork Pending',
+                    'pending_review'    => 'Pending Review',
+                    'artwork_approved'  => 'Artwork Approved',
+                    'internal_review'   => 'Internal Review',
+                    'in_production'     => 'In Production',
+                    'shipped'           => 'Shipped'
+                );
+                $status_label = isset($status_labels[$artwork_status]) ? $status_labels[$artwork_status] : 'Artwork Pending';
+                echo '<span class="status-label status-' . esc_attr($artwork_status) . '">';
+                echo esc_html($status_label);
                 echo '</span>';
                 ?>
             </div>
@@ -247,38 +273,76 @@ class TwinTack_Grip_Account {
 
                     <?php if ($feedback = get_post_meta($grip_id, '_grip_feedback', true)): ?>
                         <div class="grip-feedback">
-                            <h3>Design Instructions</h3>
+                            <h3>Your Design Instructions</h3>
                             <div class="feedback-content">
                                 <?php echo wpautop(esc_html($feedback)); ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php 
+                    $monday_feedback = get_post_meta($grip_id, '_grip_monday_feedback', true);
+                    if (!empty($monday_feedback)): ?>
+                        <div class="grip-monday-feedback">
+                            <h3>Message from Design Team</h3>
+                            <div class="monday-feedback-content">
+                                <?php echo wpautop(esc_html($monday_feedback)); ?>
                             </div>
                         </div>
                     <?php endif; ?>
                 </div>
 
                 <div class="grip-design-artwork">
-                    <h2>Submitted Artwork</h2>
                     <?php 
+                    $mockup_asset_url = get_post_meta($grip_id, '_grip_mockup_asset_url', true);
                     $artwork_url = get_post_meta($grip_id, '_grip_artwork_url', true);
                     $filename = get_post_meta($grip_id, '_grip_artwork_filename', true);
-                    if (!empty($artwork_url) && filter_var($artwork_url, FILTER_VALIDATE_URL)) {
-                        echo '<div class="artwork-preview">';
-                        echo '<img src="' . esc_url($artwork_url) . '" alt="Submitted Artwork">';
-                        echo '</div>';
-                        echo '<p class="artwork-actions">';
-                        echo '<strong>File:</strong> ' . esc_html($filename) . '<br>';
-                        echo '<a href="' . esc_url($artwork_url) . '" class="button" target="_blank">View Full Size</a>';
-                        echo '</p>';
-                    } else {
-                        echo '<div class="artwork-preview no-artwork">';
-                        echo '<div class="no-artwork-placeholder">No Artwork Available</div>';
-                        echo '</div>';
-                        if (!empty($filename)) {
-                            echo '<p><strong>Filename:</strong> ' . esc_html($filename) . '</p>';
-                        } else {
-                            echo '<p>No artwork submitted</p>';
-                        }
-                    }
-                    ?>
+                    
+                    // Show Monday.com mockup if available
+                    if (!empty($mockup_asset_url) && filter_var($mockup_asset_url, FILTER_VALIDATE_URL)): ?>
+                        <h2>Design Mockup</h2>
+                        <div class="artwork-preview">
+                            <img src="<?php echo esc_url($mockup_asset_url); ?>" alt="Design Mockup">
+                        </div>
+                        <p class="artwork-actions">
+                            <strong>Status:</strong> Mockup from design team<br>
+                            <a href="<?php echo esc_url($mockup_asset_url); ?>" class="button" target="_blank">View Full Size</a>
+                        </p>
+                        
+                        <?php if (!empty($artwork_url) && filter_var($artwork_url, FILTER_VALIDATE_URL)): ?>
+                            <div style="margin-top: 30px;">
+                                <h3>Your Original Artwork</h3>
+                                <div class="artwork-preview secondary">
+                                    <img src="<?php echo esc_url($artwork_url); ?>" alt="Original Submitted Artwork">
+                                </div>
+                                <p class="artwork-actions">
+                                    <strong>File:</strong> <?php echo esc_html($filename); ?><br>
+                                    <a href="<?php echo esc_url($artwork_url); ?>" class="button secondary" target="_blank">View Original</a>
+                                </p>
+                            </div>
+                        <?php endif; ?>
+                        
+                    <?php elseif (!empty($artwork_url) && filter_var($artwork_url, FILTER_VALIDATE_URL)): ?>
+                        <h2>Submitted Artwork</h2>
+                        <div class="artwork-preview">
+                            <img src="<?php echo esc_url($artwork_url); ?>" alt="Submitted Artwork">
+                        </div>
+                        <p class="artwork-actions">
+                            <strong>File:</strong> <?php echo esc_html($filename); ?><br>
+                            <a href="<?php echo esc_url($artwork_url); ?>" class="button" target="_blank">View Full Size</a>
+                        </p>
+                        
+                    <?php else: ?>
+                        <h2>Artwork Status</h2>
+                        <div class="artwork-preview no-artwork">
+                            <div class="no-artwork-placeholder">Awaiting Design Mockup</div>
+                        </div>
+                        <?php if (!empty($filename)): ?>
+                            <p><strong>Submitted Filename:</strong> <?php echo esc_html($filename); ?></p>
+                        <?php else: ?>
+                            <p>Design team is working on your mockup</p>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

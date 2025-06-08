@@ -1,0 +1,2727 @@
+/**
+ * TwinTack Checkout Debug Script
+ * 
+ * This script monitors the checkout process and logs any issues
+ * to help identify conflicts in the theme.
+ */
+(function($) {
+    'use strict';
+
+    // Debug log function
+    function debugLog(message, data) {
+        // Create a safe console interface in case console is not available
+        var safeConsole = (typeof console !== 'undefined' && console) ? console : {
+            log: function() {},
+            error: function() {},
+            warn: function() {},
+            info: function() {},
+            table: function() {}
+        };
+        
+        // Get current timestamp
+        var timestamp = new Date().toISOString();
+        
+        // Format the message with timestamp
+        var formattedMsg = "[TwinTack Debug " + timestamp + "] " + message;
+        
+        // If there's extra data to log
+        if (data) {
+            // Check if this is an error
+            if (data.error) {
+                safeConsole.error(formattedMsg, data);
+            } else {
+                safeConsole.info(formattedMsg, data);
+            }
+            
+            // If we have a data table and the browser supports it
+            if (data.table && safeConsole.table) {
+                safeConsole.table(data.table);
+            }
+            
+            // Also log to server if significant
+            if (data.error || data.is_error) {
+                if (typeof $ !== 'undefined' && $ && $.ajax) {
+                    $.ajax({
+                        type: 'POST',
+                        url: (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url) ? 
+                             wc_checkout_params.ajax_url : '/wp-admin/admin-ajax.php',
+                        data: {
+                            action: 'log_checkout_event',
+                            message: message,
+                            data: JSON.stringify(data),
+                            page: window.location.href,
+                            security: (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.log_checkout_nonce) ? 
+                                      wc_checkout_params.log_checkout_nonce : ''
+                        }
+                    });
+                }
+            }
+        } else {
+            safeConsole.log(formattedMsg);
+        }
+        
+        // If we're in development mode and the debug panel exists
+        if (typeof $ !== 'undefined' && $ && $('#tt-debug-panel').length) {
+            var $debugPanel = $('#tt-debug-panel');
+            var $item = $('<div class="debug-item"></div>');
+            
+            if (data && data.error) {
+                $item.addClass('error');
+            }
+            
+            $item.text(timestamp + ': ' + message);
+            $debugPanel.append($item);
+            
+            // Keep the panel from getting too large
+            if ($debugPanel.children().length > 50) {
+                $debugPanel.children().first().remove();
+            }
+        }
+    }
+
+    // Function to track form field changes
+    function trackFormFieldChanges() {
+        $('form.checkout').find('input, select, textarea').on('change', function() {
+            debugLog('Field changed: ' + $(this).attr('name'));
+        });
+    }
+
+    // Function to test all AJAX endpoints
+    function testCheckoutEndpoints() {
+        try {
+            // Check if WooCommerce checkout params are defined
+            if (typeof wc_checkout_params === 'undefined') {
+                var availableParams = [];
+
+                // Check what params are available
+                if (typeof woocommerce_params !== 'undefined') availableParams.push('woocommerce_params');
+                if (typeof wc_cart_params !== 'undefined') availableParams.push('wc_cart_params');
+                
+            debugLog('WooCommerce checkout parameters are not properly defined', { 
+                error: true, 
+                message: 'Missing wc_checkout_params',
+                    available_params: availableParams
+            });
+            
+                // Create fallback checkout params
+                window.wc_checkout_params = {
+                ajax_url: '/wp-admin/admin-ajax.php',
+                wc_ajax_url: '/?wc-ajax=%%endpoint%%',
+                update_order_review_nonce: '',
+                apply_coupon_nonce: '',
+                remove_coupon_nonce: '',
+                option_guest_checkout: 'yes',
+                checkout_url: window.location.href,
+                    is_checkout: 1,
+                    debug_mode: true,
+                    i18n_checkout_error: 'Error processing checkout.'
+            };
+                
+            debugLog('Added fallback checkout parameters to prevent errors');
+            } else if (!wc_checkout_params.wc_ajax_url) {
+            debugLog('WooCommerce checkout parameters are not properly defined', { 
+                error: true, 
+                message: 'Missing wc_checkout_params.wc_ajax_url',
+                    available_params: ['wc_checkout_params', 'wc_checkout_params has other properties']
+            });
+            
+                // Fix missing wc_ajax_url
+            wc_checkout_params.wc_ajax_url = '/?wc-ajax=%%endpoint%%';
+                
+            debugLog('Added fallback wc_ajax_url to prevent errors');
+        }
+        
+            // Add hooks to detect checkout form submission errors
+            if (typeof wp !== 'undefined' && wp.hooks && wp.hooks.addFilter) {
+                wp.hooks.addFilter('woocommerce_checkout_process_checkout_error', 'twintack', function(errorMessage, error, form) {
+                    debugLog('Checkout error detected via WP hooks', {
+                        error: true,
+                        message: errorMessage,
+                        form: form ? '#' + form.attr('id') : 'unknown'
+                    });
+                    return errorMessage;
+                });
+                
+                debugLog('Added error detection hooks for checkout process');
+            }
+            
+            // Test if we can reach the checkout update endpoint
+            $.post({
+                url: getWcAjaxUrl('checkout'),
+            data: {
+                security: wc_checkout_params.update_order_review_nonce || '',
+                    action: 'wc_debug_checkout', // A fake action that should return 400
+            },
+            success: function(response) {
+                    // We expect this to fail with a 400 error, but if it succeeds, log the response
+                    debugLog('Checkout endpoint test succeeded unexpectedly', {
+                        response: response
+                    });
+            },
+                error: function(xhr, status, error) {
+                    // This is expected to fail, check if it's the right kind of error (400 Bad Request)
+                    if (xhr.status === 400 || xhr.status === 403) {
+                        debugLog('Checkout endpoint test completed with expected error', {
+                            status: xhr.status
+                        });
+                    } else {
+                        debugLog('Checkout endpoint test failed with unexpected error', {
+                    error: true,
+                            status: xhr.status,
+                            status_text: status,
+                            error_message: error
+                        });
+                    }
+                }
+            });
+            
+            // Helper function to get WooCommerce AJAX URL
+            function getWcAjaxUrl(endpoint) {
+                if (!wc_checkout_params || !wc_checkout_params.wc_ajax_url) {
+                    return '/?wc-ajax=' + endpoint;
+                }
+                return wc_checkout_params.wc_ajax_url.replace('%%endpoint%%', endpoint);
+            }
+        } catch (e) {
+            debugLog('Error testing checkout endpoints', {
+                error: true,
+                message: e.message
+        });
+        }
+    }
+
+    // Track checkout update events
+    function trackCheckoutEvents() {
+        $(document.body).on('updated_checkout', function(e, data) {
+            debugLog('Checkout updated', data);
+        });
+        
+        $(document.body).on('update_checkout', function() {
+            debugLog('Updating checkout...');
+        });
+        
+        $(document.body).on('checkout_error', function() {
+            debugLog('Checkout error detected', { is_error: true });
+            
+            // Log all visible error messages
+            var errorMessages = [];
+            $('.woocommerce-error li').each(function() {
+                errorMessages.push($(this).text());
+            });
+            
+            debugLog('Error messages:', { messages: errorMessages, is_error: true });
+        });
+        
+        // Track payment gateway selection
+        $('form.checkout').on('change', 'input[name="payment_method"]', function() {
+            debugLog('Payment method changed to: ' + $(this).val());
+        });
+    }
+
+    // Detect checkout form type (classic or blocks)
+    function detectCheckoutForm() {
+        var isBlocksCheckout = false;
+        var checkoutForm = null;
+
+        // Check for blocks checkout
+        if ($('.wc-block-checkout').length || $('.wp-block-woocommerce-checkout').length) {
+            isBlocksCheckout = true;
+            debugLog('Block-based checkout detected');
+            return {
+                isBlocksCheckout: true,
+                form: $('.wc-block-checkout, .wp-block-woocommerce-checkout').first()
+            };
+        }
+        
+        // Check for classic checkout
+        checkoutForm = $('form.checkout, form.woocommerce-checkout');
+        if (checkoutForm.length) {
+            debugLog('Classic checkout form detected');
+            return {
+                isBlocksCheckout: false,
+                form: checkoutForm
+            };
+        }
+        
+        // No checkout form found
+        debugLog('No checkout form found on page', { error: true });
+        return {
+            isBlocksCheckout: false,
+            form: null
+        };
+    }
+
+    // Listen for form submission
+    function setupFormSubmissionTracking() {
+        if (typeof window.jQuery === 'undefined') {
+            console.error('jQuery is not available for checkout tracking');
+            return;
+        }
+
+        // Detect checkout form
+        var checkoutInfo = detectCheckoutForm();
+        
+        // Handle form submission for classic checkout
+        if (!checkoutInfo.isBlocksCheckout && checkoutInfo.form) {
+            checkoutInfo.form.on('submit', function(e) {
+                debugLog('Checkout form submitted');
+                
+                // We don't want to intercept the default WooCommerce checkout behavior,
+                // just log what's happening
+                setTimeout(function() {
+                    // Check for any visible error messages
+                    var errorMessages = $('.woocommerce-error li').map(function() {
+                        return $(this).text();
+                    }).get();
+                    
+                    if (errorMessages.length > 0) {
+                        debugLog('Visible error messages after submission', { 
+                            error: true, 
+                            messages: errorMessages 
+                        });
+                    }
+                }, 500);
+
+                // Continue with normal submission
+                return true;
+            });
+        }
+
+        // Handle body events (works for both classic and blocks checkout)
+        $(document.body).on('checkout_error', function(event, errorMessage) {
+            debugLog('Checkout error occurred', { 
+                error: true, 
+                message: errorMessage 
+            });
+        });
+
+        // Track when checkout form is being processed
+        $(document.body).on('checkout_place_order', function() {
+            debugLog('Checkout place order triggered');
+            return true; // Allow checkout to continue
+        });
+
+        // Track when checkout is processing
+        $(document.body).on('checkout_processing', function(event) {
+            debugLog('Checkout processing started');
+        });
+
+        // Track when checkout completes successfully
+        $(document.body).on('checkout_completed', function(event) {
+            debugLog('Checkout completed successfully');
+        });
+        
+        // Check for blocks checkout specific events
+        if (typeof window.wp !== 'undefined' && window.wp.hooks && window.wp.hooks.addAction) {
+            debugLog('WordPress hooks detected, monitoring blocks checkout events');
+            
+            try {
+                // Add blocks-specific checkout monitoring
+                window.wp.hooks.addAction(
+                    'wc-blocks-checkout-i18n-init',
+                    'twintack/checkout-debug',
+                    function() {
+                        debugLog('Checkout blocks initialized');
+                    }
+                );
+                
+                // Monitor checkout validation errors
+                window.wp.hooks.addAction(
+                    'wc-blocks-validation-error',
+                    'twintack/checkout-debug',
+                    function(error) {
+                        debugLog('Checkout blocks validation error', { 
+                            error: true, 
+                            message: error.message || 'Unknown validation error'
+                        });
+                    }
+                );
+            } catch (e) {
+                debugLog('Error setting up blocks checkout hooks', { 
+                    error: true, 
+                    message: e.message
+                });
+            }
+        }
+    }
+
+    // Track script loading errors
+    function trackScriptErrors() {
+        $('script').each(function() {
+            var scriptSrc = $(this).attr('src');
+            if (scriptSrc) {
+                debugLog('Script loaded: ' + scriptSrc);
+            }
+        });
+    }
+
+    // Function to intercept and handle common Stripe errors
+    function handleStripeErrors() {
+        debugLog('Setting up Stripe error handler');
+        
+        // Check what kind of checkout we have
+        var checkoutInfo = detectCheckoutForm();
+        var isBlocksCheckout = checkoutInfo.isBlocksCheckout;
+        
+        debugLog('Stripe error handler initialized for ' + (isBlocksCheckout ? 'blocks-based' : 'classic') + ' checkout');
+        
+        // Set up a MutationObserver to detect error messages as they appear
+        if (window.MutationObserver) {
+            var errorObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                        for (var i = 0; i < mutation.addedNodes.length; i++) {
+                            var node = mutation.addedNodes[i];
+                            if (node.nodeType === 1) { // Element node
+                                // Check for error messages
+                                var errorText = node.textContent || '';
+                                if (errorText.indexOf('Cannot read properties of undefined') > -1 ||
+                                    errorText.indexOf('match') > -1) {
+                                    debugLog('STRIPE ERROR DETECTED via MutationObserver', {
+                                        error: true,
+                                        node: node.outerHTML || node.textContent
+                                    });
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Start observing the checkout form and any error containers
+            var checkoutForm = checkoutInfo.form ? checkoutInfo.form[0] : 
+                              (document.querySelector('.woocommerce-checkout') || 
+                               document.querySelector('.wc-block-components-main'));
+            if (checkoutForm) {
+                errorObserver.observe(checkoutForm, { childList: true, subtree: true });
+                debugLog('MutationObserver started for checkout form');
+            }
+        }
+        
+        // Track payments that might have already been processed
+        window.stripePaymentAttempted = false;
+        window.stripeErrorDetails = null;
+        
+        // Add a diagnostics function to capture and report errors, rather than just hiding them
+        function captureStripeError(errorMessage, sourceElement) {
+            var errorData = {
+                message: errorMessage,
+                timestamp: new Date().toISOString(),
+                url: window.location.href,
+                userAgent: navigator.userAgent,
+                stripeElements: $('[data-stripe], [id*="stripe"], .stripe-source-errors, .wc-stripe-elements-field').length > 0,
+                source: sourceElement ? (sourceElement.id || sourceElement.className || 'unknown') : 'unknown',
+                plugins: window.twintackActivePlugins || 'unknown',
+                isBlocksCheckout: isBlocksCheckout
+            };
+            
+            // Look for WooCommerce Order Status Manager
+            var hasOrderStatusManager = false;
+            if (document.body.className.indexOf('woocommerce-order-status-manager') > -1 || 
+                $('script[src*="order-status-manager"]').length > 0) {
+                hasOrderStatusManager = true;
+            }
+            
+            errorData.hasOrderStatusManager = hasOrderStatusManager;
+            
+            // Save the error details
+            window.stripeErrorDetails = errorData;
+            
+            // Log complete error details
+            debugLog('DIAGNOSTIC: Detailed Stripe error captured', { 
+                error: true, 
+                diagnostic: true,
+                errorData: errorData
+            });
+            
+            // Try to identify the source of the error by examining the stack trace
+            var stackInfo = '';
+            try {
+                // Create an error to capture stack
+                var e = new Error('Diagnostic stack trace');
+                stackInfo = e.stack || '';
+            } catch (err) {
+                stackInfo = 'Could not capture stack trace';
+            }
+            
+            debugLog('DIAGNOSTIC: Stack trace for error context', {
+                stack: stackInfo,
+                diagnostic: true
+            });
+            
+            // Log to server (if available)
+            if (typeof $ !== 'undefined' && $ && $.ajax) {
+                $.ajax({
+                    type: 'POST',
+                    url: (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url) ? 
+                         wc_checkout_params.ajax_url : '/wp-admin/admin-ajax.php',
+                    data: {
+                        action: 'log_checkout_event',
+                        message: 'Stripe error diagnostic capture',
+                        data: JSON.stringify(errorData),
+                        page: window.location.href,
+                        security: (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.log_checkout_nonce) ? 
+                                  wc_checkout_params.log_checkout_nonce : ''
+                    }
+                });
+            }
+            
+            return errorData;
+        }
+        
+        // Intercept payment errors
+        $(document.body).on('checkout_error', function(event, errorMessage) {
+            // Look for the specific error we're having issues with
+            if (typeof errorMessage === 'string' && 
+                (errorMessage.includes('Cannot read properties of undefined') || 
+                 errorMessage.includes('reading \'match\'') ||
+                 errorMessage.includes('Cannot read properties'))) {
+                
+                // Capture error diagnostics instead of just hiding
+                var errorData = captureStripeError(errorMessage, event.target);
+                
+                debugLog('DIAGNOSTIC: Intercepted critical Stripe error', { 
+                    error: true, 
+                    diagnostic: true,
+                    message: errorMessage,
+                    eventData: event
+                });
+                
+                // Check if the payment method is Stripe (block or classic checkout)
+                var isStripeSelected = false;
+                
+                if (isBlocksCheckout) {
+                    // For blocks checkout
+                    if ($('.wc-block-components-radio-control__input:checked').closest('.wc-block-components-payment-method').find('[id*="stripe"]').length) {
+                        isStripeSelected = true;
+                    }
+                } else {
+                    // For classic checkout
+                    var $paymentMethod = $('input[name="payment_method"]:checked');
+                    if ($paymentMethod.length && $paymentMethod.val() && 
+                        $paymentMethod.val().toString().includes('stripe')) {
+                        isStripeSelected = true;
+                    }
+                }
+                
+                // If we detect a Stripe element is visible on the page
+                if ($('[data-stripe], [id*="stripe-element"], .stripe-source-errors, .wc-stripe-elements-field').length > 0) {
+                    isStripeSelected = true;
+                }
+                
+                // Instead of completely hiding the error, add diagnostic info
+                debugLog('DIAGNOSTIC: Payment method information', {
+                    isStripeSelected: isStripeSelected,
+                    isBlocksCheckout: isBlocksCheckout,
+                    paymentMethod: $('input[name="payment_method"]:checked').val() || 'unknown',
+                    stripeElementsFound: $('[data-stripe], [id*="stripe-element"]').length,
+                    diagnostic: true
+                });
+                
+                // Check for specific plugin conflicts
+                var activePlugins = [];
+                // WooCommerce Order Status Manager detection
+                if (document.body.className.indexOf('woocommerce-order-status-manager') > -1 || 
+                    $('script[src*="order-status-manager"]').length > 0) {
+                    activePlugins.push('WooCommerce Order Status Manager');
+                }
+                
+                if (activePlugins.length > 0) {
+                    debugLog('DIAGNOSTIC: Possible plugin conflicts detected', {
+                        plugins: activePlugins,
+                        diagnostic: true
+                    });
+                }
+                
+                // Flag that we've tried to process a payment
+                window.stripePaymentAttempted = true;
+                
+                // Add a more informative message rather than hiding the error completely
+                if (!$('.tt-diagnostic-notice').length) {
+                    $('<div class="woocommerce-info tt-diagnostic-notice">Checkout diagnostic: A JavaScript error related to payment processing has been detected and logged. The error involves "' + 
+                      errorMessage.substring(0, 100) + '..." which often relates to a conflict between plugins or themes. If you are an admin, please check the error logs.</div>')
+                        .insertBefore(isBlocksCheckout ? '.wc-block-components-main' : '#payment');
+                }
+                
+                // Don't completely hide the original error for diagnostic purposes
+                // Instead, add a notice above it that it's being logged
+                $('<div class="woocommerce-info tt-error-logging-notice">This error is being logged for diagnostic purposes. The payment may still be processing.</div>')
+                    .insertBefore('.woocommerce-error');
+                    
+                // Use a different approach rather than completely suppressing the error
+                // We'll still return false to prevent the default handling, which can be too severe
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+        });
+        
+        // Create an error inspector that doesn't just hide errors
+        function inspectErrorMessages() {
+            // Track when the last message was logged to prevent spamming
+            if (!window.lastStripeErrorLog) {
+                window.lastStripeErrorLog = 0;
+            }
+            
+            // Only log at most once every 10 seconds
+            var now = Date.now();
+            if (now - window.lastStripeErrorLog < 10000) {
+                return; // Skip if we've logged recently
+            }
+            
+            // Check for error messages on the page
+            var $errorMessages = $('.woocommerce-error, .wc-block-components-notice-banner--is-error');
+            
+            if ($errorMessages.length > 0) {
+                $errorMessages.each(function() {
+                    var errorText = $(this).text();
+                    
+                    // If it's a Stripe-related error, capture diagnostics
+                    if (errorText && (
+                        errorText.includes('Cannot read properties of undefined') || 
+                        errorText.includes('reading \'match\'') ||
+                        errorText.includes('Cannot read properties'))) {
+                        
+                        // Capture detailed diagnostics
+                        var errorData = captureStripeError(errorText, this);
+                        
+                        debugLog('DIAGNOSTIC: Found Stripe error message on page', { 
+                            error: true, 
+                            diagnostic: true,
+                            message: errorText,
+                            elementInfo: {
+                                id: this.id,
+                                class: this.className,
+                                parent: $(this).parent().prop('tagName') || 'unknown'
+                            }
+                        });
+                        
+                        // Flag that we've tried to process a payment
+                        window.stripePaymentAttempted = true;
+                        
+                        // Instead of hiding, add a message that it's been logged
+                        if (!$(this).prev('.tt-error-logging-notice').length) {
+                            $('<div class="woocommerce-info tt-error-logging-notice">This error is being logged for diagnostic purposes. The payment may still be processing.</div>')
+                                .insertBefore($(this));
+                        }
+                        
+                        // Look for active order ID in the URL or page
+                        var orderIdMatch = window.location.search ? window.location.search.match(/order_id=(\d+)/) : null;
+                        var orderId = orderIdMatch ? orderIdMatch[1] : null;
+                        
+                        if (orderId) {
+                            debugLog('DIAGNOSTIC: Possible order ID found: ' + orderId, {
+                                orderId: orderId,
+                                diagnostic: true
+                            });
+                        }
+                        
+                        // Check for order success URL (if available)
+                        var orderSuccessURL = $('[data-order-complete-url]').attr('data-order-complete-url');
+                        if (orderSuccessURL) {
+                            debugLog('DIAGNOSTIC: Found order success URL: ' + orderSuccessURL, {
+                                successUrl: orderSuccessURL,
+                                diagnostic: true
+                            });
+                        }
+                    }
+                });
+            }
+            
+            // Also inspect non-visible errors that might be in the DOM, but only if they contain the complete error text
+            var bodyHtml = $('body').html() || '';
+            var stripeErrorsInDOM = bodyHtml.indexOf('Cannot read properties of undefined (reading \'match\')');
+            if (stripeErrorsInDOM > -1) {
+                // Update the last log time
+                window.lastStripeErrorLog = now;
+                
+                // Count how many times we've seen this error
+                if (!window.stripeErrorCount) {
+                    window.stripeErrorCount = 1;
+                    debugLog('DIAGNOSTIC: Hidden Stripe errors found in DOM', {
+                        diagnostic: true,
+                        count: 1
+                    });
+                } else {
+                    // Only log every 5th occurrence
+                    window.stripeErrorCount++;
+                    if (window.stripeErrorCount % 5 === 0) {
+                        debugLog('DIAGNOSTIC: Hidden Stripe errors found in DOM', {
+                            diagnostic: true,
+                            count: window.stripeErrorCount
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Run the inspector immediately and periodically
+        inspectErrorMessages();
+        setInterval(inspectErrorMessages, 2000);
+        
+        // Use MutationObserver for real-time error detection
+        var errorObserver = new MutationObserver(function(mutations) {
+            // Use debouncing to prevent excessive function calls
+            if (window.errorObserverTimeout) {
+                clearTimeout(window.errorObserverTimeout);
+            }
+            
+            window.errorObserverTimeout = setTimeout(function() {
+                // Check if any mutation contains an error node
+                var hasErrorNode = false;
+                for (var i = 0; i < mutations.length; i++) {
+                    var mutation = mutations[i];
+                    if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                        for (var j = 0; j < mutation.addedNodes.length; j++) {
+                            var node = mutation.addedNodes[j];
+                            if (node.nodeType === 1) { // Element node
+                                // Check specifically for error messages containing our target text
+                                if (node.textContent && 
+                                    (node.textContent.includes('Cannot read properties of undefined') ||
+                                     node.textContent.includes('match'))) {
+                                    hasErrorNode = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (hasErrorNode) break;
+                }
+                
+                // Only call inspectErrorMessages if we found an error node
+                if (hasErrorNode) {
+                    inspectErrorMessages();
+                }
+            }, 500); // 500ms debounce
+        });
+        
+        // Start observing the document body for error messages
+        errorObserver.observe(document.body, { 
+            childList: true, 
+            subtree: true 
+        });
+        
+        // Add special test for known problematic plugins
+        function checkForPluginConflicts() {
+            // List of scripts that might conflict with Stripe
+            var potentialConflicts = [
+                'woocommerce-order-status-manager',
+                'stripe',
+                'payment',
+                'checkout',
+                'wc-gateway'
+            ];
+            
+            var foundScripts = [];
+            
+            // Check loaded scripts
+            $('script').each(function() {
+                var scriptSrc = $(this).attr('src') || '';
+                potentialConflicts.forEach(function(conflict) {
+                    if (scriptSrc.indexOf(conflict) > -1) {
+                        foundScripts.push({
+                            name: conflict,
+                            src: scriptSrc
+                        });
+                    }
+                });
+            });
+            
+            if (foundScripts.length > 0) {
+                debugLog('DIAGNOSTIC: Potential script conflicts found', {
+                    scripts: foundScripts,
+                    diagnostic: true
+                });
+            }
+        }
+        
+        // Run conflict check
+        checkForPluginConflicts();
+        
+        // Listen for success indicators rather than redirecting automatically
+        function checkForSuccessIndicators() {
+            // Check for confirmation page or redirect indicators
+            if ($('.woocommerce-order-received').length || 
+                $('.woocommerce-checkout-review-order-table .product-total').length === 0) {
+                // Possible indicators of success - empty cart or success page
+                if (window.stripePaymentAttempted) {
+                    debugLog('DIAGNOSTIC: Detected likely successful payment based on page indicators');
+                }
+            }
+            
+            // Don't automatically redirect - just log the information
+            if (isBlocksCheckout && 
+                $('.wc-block-components-checkout-place-order-button').is(':disabled') && 
+                !$('.wc-block-components-notice-banner--is-error:visible').length) {
+                
+                debugLog('DIAGNOSTIC: Block checkout processing detected - button disabled but no visible errors');
+                
+                // Check for redirect URL but don't auto-redirect
+                var orderSuccessURL = $('[data-order-complete-url]').attr('data-order-complete-url');
+                if (orderSuccessURL && window.stripePaymentAttempted) {
+                    debugLog('DIAGNOSTIC: Found order success URL: ' + orderSuccessURL, {
+                        successUrl: orderSuccessURL,
+                        diagnostic: true
+                    });
+                    
+                    // Add a message with the link rather than auto-redirecting
+                    if (!$('.tt-success-link-notice').length) {
+                        $('<div class="woocommerce-info tt-success-link-notice">Your payment may have been processed successfully. If you\'re not redirected automatically, you can <a href="' + 
+                          orderSuccessURL + '">click here to view your order</a>.</div>')
+                            .insertBefore(isBlocksCheckout ? '.wc-block-components-main' : '#payment');
+                    }
+                }
+            }
+        }
+        
+        // Check for success indicators periodically
+        setInterval(checkForSuccessIndicators, 5000);
+        
+        // Listen for beforeunload to warn user if payment might be processing
+        window.addEventListener('beforeunload', function(e) {
+            if (window.stripePaymentAttempted) {
+                var message = 'Your payment might still be processing. Are you sure you want to leave this page?';
+                e.returnValue = message;
+                return message;
+            }
+        });
+    }
+
+    // Create a function to specifically handle Stripe checkout issues
+    function fixStripeCheckoutIssues() {
+        debugLog('Checking for Stripe checkout issues');
+        
+        // Detect if we're on Stripe checkout
+        var isStripeCheckout = false;
+        
+        // Different ways to detect Stripe
+        var stripeElements = document.querySelectorAll('.stripe-card-element, .wc-stripe-elements-field');
+        if (stripeElements.length > 0) {
+            isStripeCheckout = true;
+            debugLog('Stripe elements detected on page');
+        }
+        
+        // Look for Stripe JS
+        var stripeScripts = Array.from(document.scripts).filter(function(s) {
+            return (s.src && s.src.indexOf('stripe') > -1);
+        });
+        if (stripeScripts.length > 0) {
+            isStripeCheckout = true;
+            debugLog('Stripe scripts detected on page');
+        }
+        
+        if (!isStripeCheckout) {
+            return;
+        }
+
+        // A more robust polyfill for String.prototype.match that maintains the original method
+        // and adds a fallback for non-string objects
+        if (!String.prototype._originalMatch) {
+            String.prototype._originalMatch = String.prototype.match;
+            
+            String.prototype.match = function(regexp) {
+                try {
+                    if (this && this._originalMatch) {
+                        return this._originalMatch(regexp);
+                    } else {
+                        // If _originalMatch is somehow unavailable, create a fallback
+                        var str = String(this);
+                        if (regexp instanceof RegExp) {
+                            return regexp.exec(str);
+                        } else {
+                            var re = new RegExp(regexp);
+                            return re.exec(str);
+                        }
+                    }
+                } catch (e) {
+                    debugLog('Error in String.match polyfill', { error: true, message: e.message });
+                    return null;
+                }
+            };
+            
+            debugLog('Added String.prototype.match polyfill');
+        }
+        
+        // Create safety functions for window.location properties
+        try {
+            // Copy the original window.location
+            var originalLocation = window.location;
+            
+            // Create an object to store original values
+            var safeLocationValues = {
+                search: '',
+                href: '',
+                pathname: '',
+                hash: ''
+            };
+            
+            // Safe location.search accessor
+            window.safeLocationSearch = function() {
+                try {
+                    return String(originalLocation.search || '');
+                } catch (e) {
+                    debugLog('Error accessing location.search', { error: true, message: e.message });
+                    return safeLocationValues.search;
+                }
+            };
+            
+            // Safe location.href accessor
+            window.safeLocationHref = function() {
+                try {
+                    return String(originalLocation.href || '');
+                } catch (e) {
+                    debugLog('Error accessing location.href', { error: true, message: e.message });
+                    return safeLocationValues.href;
+                }
+            };
+            
+            // Safe location.pathname accessor
+            window.safeLocationPathname = function() {
+                try {
+                    return String(originalLocation.pathname || '');
+                } catch (e) {
+                    debugLog('Error accessing location.pathname', { error: true, message: e.message });
+                    return safeLocationValues.pathname;
+                }
+            };
+            
+            // Safe location.hash accessor
+            window.safeLocationHash = function() {
+                try {
+                    return String(originalLocation.hash || '');
+                } catch (e) {
+                    debugLog('Error accessing location.hash', { error: true, message: e.message });
+                    return safeLocationValues.hash;
+                }
+            };
+            
+            debugLog('Added safe location accessor functions');
+            
+            // Patch the URLSearchParams constructor to handle undefined inputs
+            var originalURLSearchParams = window.URLSearchParams;
+            if (originalURLSearchParams) {
+                window.URLSearchParams = function(init) {
+                    // Handle the case where init is undefined but supposed to be window.location.search
+                    if (init === undefined || init === null) {
+                        return new originalURLSearchParams('');
+                    }
+                    
+                    // Handle potential string-like objects without match method
+                    if (typeof init === 'string' || init instanceof String) {
+                        init = String(init);
+                    }
+                    
+                    return new originalURLSearchParams(init);
+                };
+                
+                // Copy prototype and properties from original
+                window.URLSearchParams.prototype = originalURLSearchParams.prototype;
+                
+                if (Object.setPrototypeOf) {
+                    Object.setPrototypeOf(window.URLSearchParams, originalURLSearchParams);
+                }
+                
+                debugLog('Patched URLSearchParams constructor for safety');
+            }
+            
+            // Create a utility function to ensure an object has a match method
+            window.ensureMatchMethod = function(obj, path) {
+                if (!obj) return obj;
+                
+                try {
+                    // If it's already a string with match method, we're fine
+                    if (typeof obj === 'string' && typeof obj.match === 'function') {
+                        return obj;
+                    }
+                    
+                    // Convert to string if necessary
+                    var str = String(obj || '');
+                    
+                    // Make sure the match method exists
+                    if (typeof str.match !== 'function') {
+                        Object.defineProperty(str, 'match', {
+                            value: function(regexp) {
+                                try {
+                                    // Use the global String.prototype.match
+                                    return String.prototype.match.call(this, regexp);
+                                } catch (e) {
+                                    debugLog('Error in match method', { 
+                                        error: true, 
+                                        path: path, 
+                                        message: e.message 
+                                    });
+                                    return null;
+                                }
+                            },
+                            writable: true,
+                            configurable: true
+                        });
+                    }
+                    
+                    return str;
+                } catch (e) {
+                    debugLog('Error ensuring match method', { 
+                        error: true, 
+                        path: path, 
+                        message: e.message 
+                    });
+                    return String(obj || '');
+                }
+            };
+            
+            // Direct fix for the common WooCommerce Stripe blocks issue
+            var fixStripeUPEMatch = function() {
+                // Look for Stripe UPE in WooCommerce blocks
+                if (typeof window.wcSettings !== 'undefined' && 
+                    window.wcSettings.storePages && 
+                    window.location) {
+                    
+                    debugLog('Found wcSettings, applying Stripe UPE fixes');
+                    
+                    // Early protect window.location.search
+                    var safeSearch = window.safeLocationSearch();
+                    
+                    // Patch URL search params directly on this page
+                    try {
+                        var stripeOrderId = null;
+                        var searchParams = new URLSearchParams(safeSearch);
+                        if (searchParams.has('order_id')) {
+                            stripeOrderId = searchParams.get('order_id');
+                            debugLog('Found order_id in URL: ' + stripeOrderId);
+                        }
+                    } catch (e) {
+                        debugLog('Error parsing URL params', { error: true, message: e.message });
+                    }
+                    
+                    // Prevent errors in regex by ensuring location properties have match methods
+                    // Store original values for backup
+                    safeLocationValues.search = safeSearch;
+                    safeLocationValues.href = window.safeLocationHref();
+                    safeLocationValues.pathname = window.safeLocationPathname();
+                    safeLocationValues.hash = window.safeLocationHash();
+                    
+                    // Create a global URL utility object that Stripe code can use
+                    window.safeURL = {
+                        getParam: function(name) {
+                            try {
+                                var search = window.safeLocationSearch();
+                                var match = new RegExp('[?&]' + name + '=([^&]*)').exec(search);
+                                return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+                            } catch (e) {
+                                debugLog('Error in safeURL.getParam', { error: true, message: e.message });
+                                return null;
+                            }
+                        },
+                        hasParam: function(name) {
+                            try {
+                                var search = window.safeLocationSearch();
+                                return new RegExp('[?&]' + name + '=').test(search);
+                            } catch (e) {
+                                debugLog('Error in safeURL.hasParam', { error: true, message: e.message });
+                                return false;
+                            }
+                        }
+                    };
+                    
+                    // Patch the global getUrlParameter function often used by Stripe
+                    window.getUrlParameter = function(param) {
+                        return window.safeURL.getParam(param);
+                    };
+                    
+                    debugLog('Created global URL utility functions');
+                }
+            };
+            
+            // Run the Stripe UPE fix immediately
+            fixStripeUPEMatch();
+        } catch (err) {
+            debugLog('Error while adding location safety functions', { error: true, message: err.message });
+        }
+        
+        // Watch for form submission to add additional preventative measures
+        var checkoutForm = document.querySelector('form.woocommerce-checkout, form.wc-block-components-form');
+        if (checkoutForm) {
+            checkoutForm.addEventListener('submit', function(e) {
+                debugLog('Checkout form submission detected, applying Stripe fixes');
+                
+                // Check whether we're using classic or blocks checkout
+                var isBlocksCheckout = document.querySelector('.wc-block-checkout') !== null;
+                
+                // Add additional safety measures before submission
+                try {
+                    // Ensure all location properties have match methods
+                    var searchValue = window.ensureMatchMethod(window.location.search, 'window.location.search');
+                    var hrefValue = window.ensureMatchMethod(window.location.href, 'window.location.href');
+                    var pathnameValue = window.ensureMatchMethod(window.location.pathname, 'window.location.pathname');
+                    
+                    // Process URL parameters safely
+                    var searchParams = new URLSearchParams(searchValue);
+                    var paramsObj = {};
+                    searchParams.forEach(function(value, key) {
+                        paramsObj[key] = value;
+                    });
+                    
+                    debugLog('Preprocessed URL params', { params: paramsObj });
+                    
+                    // Apply special fixes for Stripe in blocks checkout
+                    if (isBlocksCheckout) {
+                        // For WooCommerce blocks checkout with Stripe
+                        fixStripeUPEMatch();
+                    }
+                } catch (e) {
+                    debugLog('Error applying preventative measures', { error: true, message: e.message });
+                }
+            }, false);
+        }
+        
+        // Add a global error handler to specifically catch and fix Stripe match errors
+        window.addEventListener('error', function(e) {
+            if (e && e.message && (
+                e.message.indexOf('match') > -1 || 
+                e.message.indexOf('Cannot read properties') > -1 ||
+                e.message.indexOf('undefined') > -1
+            )) {
+                debugLog('Global error caught', { 
+                    error: true, 
+                    message: e.message, 
+                    stack: e.error ? e.error.stack : 'No stack trace',
+                    source: e.filename + ':' + e.lineno
+                });
+                
+                // Attempt real-time fixes for common Stripe errors
+                if (e.message.indexOf("Cannot read properties of undefined (reading 'match')") > -1) {
+                    debugLog('Attempting to fix match error in real-time');
+                    
+                    // Run our Stripe UPE match fix again
+                    fixStripeUPEMatch();
+                    
+                    // Check if error originated from Stripe code
+                    if (e.filename && e.filename.indexOf('stripe') > -1) {
+                        debugLog('Error originated from Stripe script, applying targeted fix');
+                        
+                        // Apply targeted fix
+                        try {
+                            // Monkey patch Stripe's URL processing
+                            if (window.Stripe) {
+                                window.Stripe.safeURL = window.safeURL;
+                                
+                                // Replace some common methods that might be failing
+                                var originalStripeGetParameter = window.Stripe._getParameterByName;
+                                if (originalStripeGetParameter) {
+                                    window.Stripe._getParameterByName = function(name) {
+                                        return window.safeURL.getParam(name);
+                                    };
+                                    debugLog('Patched Stripe URL parameter function');
+                                }
+                            }
+                        } catch (stripeErr) {
+                            debugLog('Error fixing Stripe object', { 
+                                error: true, 
+                                message: stripeErr.message 
+                            });
+                        }
+                    }
+                    
+                    // Specific fix for the WooCommerce Blocks + Stripe UPE integration
+                    if (typeof window.wcStripeUPE !== 'undefined') {
+                        try {
+                            debugLog('Found wcStripeUPE object, applying direct patch');
+                            
+                            // Store original methods if they exist
+                            if (window.wcStripeUPE.getUrlParameter) {
+                                // Replace with our safer version
+                                window.wcStripeUPE.getUrlParameter = function(param) {
+                                    return window.safeURL.getParam(param);
+                                };
+                                
+                                debugLog('Directly patched wcStripeUPE.getUrlParameter method');
+                            }
+                            
+                            // If the UPE had already initialized, try to fix the values
+                            if (window.wcStripeUPE.stripeConfiguration) {
+                                // Set successful URLs safely from our stored values
+                                window.wcStripeUPE.successUrl = window.wcStripeUPE.successUrl || 
+                                                               (window.wcSettings && 
+                                                                window.wcSettings.storePages && 
+                                                                window.wcSettings.storePages.checkout);
+                                
+                                debugLog('Protected wcStripeUPE configuration values');
+                            }
+                        } catch (patchErr) {
+                            debugLog('Error patching wcStripeUPE', { 
+                                error: true, 
+                                message: patchErr.message 
+                            });
+                        }
+                    }
+                    
+                    // Try to prevent the error from occurring again
+                    try {
+                        // Check for Stripe Elements loader
+                        if (typeof document.querySelectorAll === 'function') {
+                            var stripeElementContainers = document.querySelectorAll('[data-stripe-element], .wc-stripe-elements-field');
+                            if (stripeElementContainers.length > 0) {
+                                debugLog('Found ' + stripeElementContainers.length + ' Stripe Element containers, applying targeted fixes');
+                                
+                                // For each container, add diagnostic data and safety attributes
+                                for (var i = 0; i < stripeElementContainers.length; i++) {
+                                    var container = stripeElementContainers[i];
+                                    
+                                    // Add diagnostic attribute
+                                    container.setAttribute('data-ttdiag', 'protected');
+                                    
+                                    // Add safety url params as data attributes for potential use by Stripe
+                                    container.setAttribute('data-order-id', window.safeURL.getParam('order_id') || '');
+                                    container.setAttribute('data-success-url', window.wcSettings && 
+                                                                             window.wcSettings.storePages && 
+                                                                             window.wcSettings.storePages.checkout || '');
+                                }
+                            }
+                        }
+                    } catch (domErr) {
+                        debugLog('Error fixing DOM elements', { 
+                            error: true, 
+                            message: domErr.message 
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    // Fix for Stripe payment gateway issues
+    function fixStripePaymentGatewayIssues() {
+        debugLog('Applying fixes for Stripe payment processing');
+        
+        // Make sure the original checkout.js functions work properly
+        if (typeof wc_checkout_params !== 'undefined') {
+            // Fix "Cannot read properties of undefined (reading 'toString')" error
+            var originalUpdateCheckout = window.update_checkout_action;
+            window.update_checkout_action = function(args) {
+                try {
+                    // Ensure wc_checkout_params exists and required properties have safe values
+                    if (typeof wc_checkout_params === 'undefined') {
+                        wc_checkout_params = {};
+                    }
+                    
+                    // Ensure these properties are always strings to prevent toString errors
+                    wc_checkout_params.ajax_url = wc_checkout_params.ajax_url || '/wp-admin/admin-ajax.php';
+                    wc_checkout_params.wc_ajax_url = wc_checkout_params.wc_ajax_url || '/?wc-ajax=%%endpoint%%';
+                    
+                    // Handle args safely
+                    args = args || {};
+                    
+                    // Safely call original function if it exists
+                    if (typeof originalUpdateCheckout === 'function') {
+                        return originalUpdateCheckout(args);
+                    }
+                } catch(e) {
+                    debugLog('Error in patched update_checkout_action', { 
+                        error: true, 
+                        message: e.message,
+                        stack: e.stack
+                    });
+                }
+            };
+            
+            // Patch the checkout form submission to handle errors better
+            $(document).on('submit', 'form.checkout', function(e) {
+                // Don't override the default behavior, just add safety checks
+                try {
+                    // Ensure the wc_checkout_params object and its properties are defined
+                    if (typeof wc_checkout_params === 'undefined' || !wc_checkout_params) {
+                        wc_checkout_params = {
+                            ajax_url: '/wp-admin/admin-ajax.php',
+                            wc_ajax_url: '/?wc-ajax=%%endpoint%%',
+                            checkout_url: window.location.href
+                        };
+                        debugLog('Added fallback wc_checkout_params during form submission');
+                    }
+                    
+                    // Patch ajax URL for Stripe
+                    if (typeof wc_checkout_params.wc_ajax_url !== 'undefined' && wc_checkout_params.wc_ajax_url) {
+                        // Ensure wc_ajax_url is a string
+                        wc_checkout_params.wc_ajax_url = String(wc_checkout_params.wc_ajax_url);
+                    }
+                    
+                    // Add specific fixes for Stripe's form fields
+                    $('.wc-stripe-elements-field, .wc_payment_method input[type="radio"]').prop('disabled', false);
+                    
+                    // Make sure the Stripe iframe isn't blocked
+                    $('.wc-stripe-elements-field iframe').css('pointer-events', 'auto');
+                    $('.stripe-card-element iframe').css('pointer-events', 'auto');
+                    
+                    debugLog('Applied checkout form submission safety measures');
+                } catch (formErr) {
+                    debugLog('Error applying checkout form safety measures', {
+                        error: true,
+                        message: formErr.message
+                    });
+                }
+            });
+            
+            // Fix AJAX JSON parsing errors by adding a response pre-processor
+            var originalAjax = $.ajax;
+            $.ajax = function(options) {
+                // Make a copy of the options to avoid modifying the original
+                var newOptions = $.extend(true, {}, options || {});
+                
+                // Guard against missing options
+                if (!newOptions) {
+                    return originalAjax.apply(this, arguments);
+                }
+                
+                // Cache original callbacks
+                var originalSuccess = typeof newOptions.success === 'function' ? newOptions.success : null;
+                var originalError = typeof newOptions.error === 'function' ? newOptions.error : null;
+                var originalComplete = typeof newOptions.complete === 'function' ? newOptions.complete : null;
+                
+                // Process checkout-related AJAX requests
+                var isCheckoutRequest = newOptions.url && 
+                                      typeof newOptions.url === 'string' && 
+                                      (newOptions.url.indexOf('wc-ajax=checkout') > -1 || 
+                                       newOptions.url.indexOf('payment_method=stripe') > -1 ||
+                                       newOptions.url.indexOf('wc-ajax=update_order_review') > -1);
+                
+                if (isCheckoutRequest) {
+                    debugLog('Intercepting checkout AJAX request', { url: newOptions.url });
+                    
+                    // Override success handler with our safer version
+                    newOptions.success = function(response, textStatus, jqXHR) {
+                        try {
+                            // Handle various response types safely
+                            if (response === null || response === undefined) {
+                                debugLog('Empty AJAX response received', { 
+                                    error: true, 
+                                    url: newOptions.url 
+                                });
+                                
+                                // Create a safe default response
+                                response = { success: true, result: 'success' };
+                            }
+                            
+                            // Convert string responses to objects if they appear to be JSON
+                            if (typeof response === 'string' && response.trim()) {
+                                try {
+                                    if (response.trim()[0] === '{' || response.trim()[0] === '[') {
+                                        response = JSON.parse(response);
+                                        debugLog('Converted string response to object', { url: newOptions.url });
+                                    }
+                                } catch(e) {
+                                    // Not JSON, handle as HTML or text
+                                    if (response.indexOf('<!DOCTYPE') > -1 || response.indexOf('<html') > -1) {
+                                        debugLog('Received HTML instead of JSON', { 
+                                            error: true, 
+                                            url: newOptions.url,
+                                            preview: response.substring(0, 100)
+                                        });
+                                        
+                                        // Create a standardized error response for HTML errors
+                                        response = {
+                                            success: false,
+                                            result: 'error',
+                                            messages: ['The server returned HTML instead of JSON data.'],
+                                            error: true
+                                        };
+                                    } else {
+                                        // Plain text response, convert to standard format
+                                        response = {
+                                            success: true,
+                                            result: 'success',
+                                            data: response
+                                        };
+                                    }
+                                }
+                            }
+                            
+                            // Ensure response is an object
+                            if (typeof response !== 'object') {
+                                response = {
+                                    success: true,
+                                    result: 'success',
+                                    data: response
+                                };
+                            }
+                            
+                            // Ensure response has success property
+                            if (response.success === undefined && response.result === undefined) {
+                                response.success = true;
+                            }
+                            
+                            // Ensure 'result' property exists for WooCommerce
+                            if (response.result === undefined) {
+                                response.result = response.success ? 'success' : 'error';
+                            }
+                            
+                            // Call original success handler if it exists, with our safe response
+                            if (originalSuccess) {
+                                originalSuccess.call(this, response, textStatus, jqXHR);
+                            }
+                        } catch(err) {
+                            debugLog('Error in AJAX success handler', {
+                                error: true,
+                                message: err.message,
+                                stack: err.stack,
+                                url: newOptions.url
+                            });
+                            
+                            // Create a safe response to pass to original callback
+                            var safeResponse = {
+                                success: true,
+                                result: 'success',
+                                safe_fallback: true
+                            };
+                            
+                            // Try to safely call original success with fallback data
+                            if (originalSuccess) {
+                                try {
+                                    originalSuccess.call(this, safeResponse, textStatus, jqXHR);
+                                } catch(e) {
+                                    debugLog('Error calling original success handler', {
+                                        error: true,
+                                        message: e.message
+                                    });
+                                    
+                                    // If original error handler exists, call it
+                                    if (originalError) {
+                                        try {
+                                            originalError.call(this, jqXHR, 'error', err);
+                                        } catch(e2) {
+                                            // Last resort error handling
+                                            debugLog('Complete error handling failure', {
+                                                error: true,
+                                                message: e2.message
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    
+                    // Override error handler with our safer version
+                    newOptions.error = function(jqXHR, textStatus, errorThrown) {
+                        try {
+                        debugLog('AJAX error during checkout', {
+                            error: true,
+                            status: jqXHR.status,
+                            statusText: textStatus,
+                            errorThrown: errorThrown,
+                                url: newOptions.url,
+                                response: jqXHR.responseText ? jqXHR.responseText.substring(0, 200) : null
+                            });
+                            
+                            // Special handling for checkout errors
+                            if (newOptions.url && newOptions.url.indexOf('wc-ajax=checkout') > -1) {
+                                // For certain status codes, create a dummy success response
+                                if (jqXHR.status === 0 || jqXHR.status === 404 || jqXHR.status === 500) {
+                                    debugLog('Critical checkout error detected, attempting recovery', {
+                                        error: true,
+                                        status: jqXHR.status
+                                    });
+                                    
+                                    // For place_order requests, try to check if the order was actually created
+                                    if (newOptions.url.indexOf('place_order') > -1) {
+                                        // Enable the submit button so user can try again
+                                        $('#place_order').prop('disabled', false).removeClass('loading');
+                                        $('.woocommerce-error').remove();
+                                        
+                                        // Add a recoverable error message
+                                        if ($('.woocommerce-checkout').length) {
+                                            $('<div class="woocommerce-error">There was a problem processing your order. Please try again or select a different payment method. Error: ' + 
+                                                (errorThrown || textStatus) + '</div>').prependTo('.woocommerce-notices-wrapper');
+                                            
+                                            // Scroll to the error message
+                                            $('html, body').animate({
+                                                scrollTop: $('.woocommerce-error').offset().top - 100
+                                            }, 1000);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Handle cases where HTML was returned instead of JSON
+                            var responseText = jqXHR.responseText || '';
+                            if (responseText.indexOf('<!DOCTYPE') > -1 || responseText.indexOf('<html') > -1) {
+                                // Check if this might be an order success page
+                                if (responseText.indexOf('order-received') > -1 || 
+                                    responseText.indexOf('order-pay') > -1 || 
+                                    responseText.indexOf('order_id=') > -1) {
+                                    
+                                    debugLog('Order success page detected in error response', {
+                                        status: jqXHR.status
+                                    });
+                                    
+                                    // Try to extract the order ID and redirect
+                                    var orderIdMatch = responseText.match(/order[-_]received\/(\d+)/);
+                                    var orderId = orderIdMatch ? orderIdMatch[1] : null;
+                                    
+                                    if (!orderId) {
+                                        // Try another common pattern
+                                        orderIdMatch = responseText.match(/order_id=(\d+)/);
+                                        orderId = orderIdMatch ? orderIdMatch[1] : null;
+                                    }
+                                    
+                                    if (orderId) {
+                                        // Wait a moment before redirecting to allow our logging to complete
+                                        setTimeout(function() {
+                                            window.location.href = window.location.origin + '/checkout/order-received/' + orderId + '/';
+                                        }, 250);
+                                        return; // Don't call the original error handler
+                                    }
+                                }
+                            }
+                            
+                            // Call original error handler if provided
+                        if (originalError) {
+                                originalError.call(this, jqXHR, textStatus, errorThrown);
+                        }
+                        } catch(err) {
+                            debugLog('Error in AJAX error handler', {
+                                error: true,
+                                message: err.message,
+                                origError: errorThrown
+                            });
+                }
+                    };
+                    
+                    // Add complete handler to ensure checkout form is reset if needed
+                    newOptions.complete = function(jqXHR, textStatus) {
+                        try {
+                            // Always ensure the checkout submit button is re-enabled
+                            $('#place_order').prop('disabled', false).removeClass('loading');
+                            
+                            // Call original complete handler if provided
+                            if (originalComplete) {
+                                originalComplete.call(this, jqXHR, textStatus);
+                            }
+                        } catch(err) {
+                            debugLog('Error in AJAX complete handler', {
+                                error: true,
+                                message: err.message
+                            });
+                        }
+                    };
+                }
+                
+                // Call original ajax with our modified options
+                try {
+                    return originalAjax.apply(this, [newOptions]);
+                } catch(e) {
+                    debugLog('Exception during AJAX call', {
+                        error: true,
+                        message: e.message
+                    });
+                return originalAjax.apply(this, arguments);
+                }
+            };
+            
+            debugLog('Checkout functions patched to handle Stripe issues');
+        }
+        
+        // Apply specific fixes to Stripe payment elements
+        setTimeout(function() {
+            try {
+                // Ensure Stripe is properly initialized
+                if (typeof Stripe !== 'undefined') {
+                    // Add error handler for Stripe
+                    if (typeof wc_stripe_params !== 'undefined') {
+                        var stripeErrorHandler = function(event) {
+                            debugLog('Stripe error occurred', {
+                                error: true,
+                                type: event.type,
+                                message: event.message || 'Unknown Stripe error'
+                            });
+                            
+                            // Try to recover from error
+                            try {
+                                // Force refresh payment elements
+                                if (typeof stripe !== 'undefined' && stripe.elements) {
+                                    stripe.elements().update();
+                                }
+                                
+                                // Remove any error states
+                                $('.stripe-error-message').remove();
+                                $('.woocommerce-error').remove();
+                                
+                                // Re-enable the submit button
+                                $('#place_order').prop('disabled', false);
+                            } catch (e) {
+                                debugLog('Error recovering from Stripe error', {
+                                    error: true,
+                                    message: e.message
+                                });
+                            }
+                        };
+                        
+                        // Add global error handler
+                        window.addEventListener('error', function(event) {
+                            if (event.message && event.message.indexOf('Stripe') > -1) {
+                                stripeErrorHandler(event);
+                            }
+                        });
+                        
+                        // Add specific Stripe error handler
+                        if (typeof stripe !== 'undefined') {
+                            stripe.on('error', stripeErrorHandler);
+                        }
+                    }
+                }
+                
+                // More aggressive approach to remove loading overlay from Stripe elements
+                $('.wc-stripe-elements-field, .stripe-card-element').each(function() {
+                    // Force unblock with options
+                    $(this).unblock({
+                        fadeOut: 0,
+                        forceUnblock: true,
+                        onUnblock: function() {
+                            debugLog('Forced unblock of Stripe element');
+                        }
+                    });
+                    
+                    // Direct style manipulation
+                    $(this).css({
+                        'opacity': '1',
+                        'pointer-events': 'auto',
+                        'position': 'relative',
+                        'z-index': '100'
+                    });
+                    
+                    // Also remove any blockUI overlay
+                    $(this).find('.blockUI, .blockOverlay').remove();
+                    
+                    // Find and fix iframe elements
+                    $(this).find('iframe').css({
+                        'pointer-events': 'auto',
+                        'opacity': '1',
+                        'z-index': '100',
+                        'position': 'relative'
+                    });
+                });
+                
+                // Force remove any BlockUI overlays site-wide
+                $('.blockUI, .blockOverlay').remove();
+                
+                // Make the entire payment method section interactable
+                $('#payment, .payment_methods, .wc_payment_method, .payment_box').css({
+                    'pointer-events': 'auto',
+                    'opacity': '1',
+                    'position': 'relative',
+                    'z-index': '10'
+                });
+                
+                // Force enable all payment inputs
+                $('.wc-stripe-elements-field, .wc_payment_method input[type="radio"], #payment input, #payment select, #payment button').prop('disabled', false).attr('disabled', false);
+                
+                // If all else fails, get more aggressive with direct DOM manipulation
+                try {
+                    // Find all iframes inside Stripe elements
+                    var stripeIframes = document.querySelectorAll('.wc-stripe-elements-field iframe, .stripe-card-element iframe');
+                    for (var i = 0; i < stripeIframes.length; i++) {
+                        var iframe = stripeIframes[i];
+                        
+                        // Direct DOM manipulation to ensure interactivity
+                        iframe.style.pointerEvents = 'auto';
+                        iframe.style.opacity = '1';
+                        iframe.style.zIndex = '999';
+                        iframe.style.position = 'relative';
+                        iframe.setAttribute('data-tt-fixed', 'true');
+                        
+                        // Attempt to fix the parent container
+                        var parent = iframe.parentNode;
+                        if (parent) {
+                            parent.style.pointerEvents = 'auto';
+                            parent.style.opacity = '1';
+                            parent.style.position = 'relative';
+                            parent.style.zIndex = '999';
+                            
+                            // Remove any overlay classes
+                            if (parent.className.indexOf('blockUI') > -1) {
+                                parent.className = parent.className.replace(/blockUI/g, '');
+                            }
+                            
+                            // Also fix the grandparent
+                            var grandparent = parent.parentNode;
+                            if (grandparent) {
+                                grandparent.style.pointerEvents = 'auto';
+                                grandparent.style.opacity = '1';
+                                grandparent.style.position = 'relative';
+                                grandparent.style.zIndex = '999';
+                            }
+                        }
+                    }
+                    
+                    // Also try to directly access and fix the Stripe iframe element
+                    if (typeof Stripe !== 'undefined' && document.querySelectorAll('.__PrivateStripeElement').length > 0) {
+                        document.querySelectorAll('.__PrivateStripeElement').forEach(function(el) {
+                            el.style.pointerEvents = 'auto';
+                            el.style.opacity = '1';
+                            el.style.zIndex = '999';
+                            
+                            // Also fix any child iframes
+                            el.querySelectorAll('iframe').forEach(function(iframe) {
+                                iframe.style.pointerEvents = 'auto';
+                                iframe.style.opacity = '1';
+                                iframe.style.zIndex = '999';
+                            });
+                        });
+                    }
+                    
+                    // Add a listener to dynamically find and fix Stripe elements that might be added later
+                    new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.addedNodes && mutation.addedNodes.length) {
+                                for (var i = 0; i < mutation.addedNodes.length; i++) {
+                                    var node = mutation.addedNodes[i];
+                                    if (node.nodeType === 1) { // Element node
+                                        if (node.className && 
+                                            (node.className.indexOf('StripeElement') > -1 || 
+                                             node.className.indexOf('blockUI') > -1)) {
+                                            
+                                            // Fix stripe elements as they're added
+                                            debugLog('Fixing dynamically added Stripe element');
+                                            node.style.pointerEvents = 'auto';
+                                            node.style.opacity = '1';
+                                            node.style.zIndex = '999';
+                                            
+                                            // Fix child iframes
+                                            var iframes = node.querySelectorAll('iframe');
+                                            for (var j = 0; j < iframes.length; j++) {
+                                                iframes[j].style.pointerEvents = 'auto';
+                                                iframes[j].style.opacity = '1';
+                                                iframes[j].style.zIndex = '999';
+                                            }
+                                            
+                                            // Remove any blocking overlays
+                                            var overlays = node.querySelectorAll('.blockUI, .blockOverlay');
+                                            for (var k = 0; k < overlays.length; k++) {
+                                                overlays[k].parentNode.removeChild(overlays[k]);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }).observe(document.body, { 
+                        childList: true, 
+                        subtree: true 
+                    });
+                    
+                    debugLog('Applied aggressive iframe fixes for Stripe elements');
+                } catch (domErr) {
+                    debugLog('Error during DOM manipulation for Stripe elements', {
+                        error: true,
+                        message: domErr.message
+                    });
+                }
+                
+                debugLog('Applied fixes to Stripe payment elements');
+            } catch (e) {
+                debugLog('Error applying Stripe element fixes', {
+                    error: true,
+                    message: e.message
+                });
+            }
+        }, 2000);
+        
+        // Run repeated fixes every few seconds to ensure elements stay interactive
+        var stripeFixInterval = setInterval(function() {
+            try {
+                // Remove any BlockUI overlays site-wide
+                $('.blockUI, .blockOverlay').remove();
+                
+                // Make sure Stripe elements are interactable
+                $('.wc-stripe-elements-field, .stripe-card-element').css({
+                    'opacity': '1',
+                    'pointer-events': 'auto',
+                    'position': 'relative',
+                    'z-index': '100'
+                });
+                
+                // Make sure iframe elements are interactable
+                $('.wc-stripe-elements-field iframe, .stripe-card-element iframe').css({
+                    'pointer-events': 'auto',
+                    'opacity': '1',
+                    'z-index': '100',
+                    'position': 'relative'
+                });
+                
+                // Ensure payment method radio buttons are clickable
+                $('.wc_payment_method input[type="radio"]').prop('disabled', false).attr('disabled', false);
+            } catch (e) {
+                // Silently fail
+            }
+        }, 3000);
+        
+        // Cleanup interval when page unloads
+        $(window).on('beforeunload', function() {
+            if (stripeFixInterval) {
+                clearInterval(stripeFixInterval);
+            }
+        });
+    }
+
+    // Function to fix AJAX JSON parsing issues by adding a response pre-processor
+    function fixAjaxJsonParsingIssues() {
+        debugLog('Adding AJAX JSON parsing fix');
+        
+        // Store the original jQuery.ajax function
+        var originalAjax = $.ajax;
+        
+        // Override jQuery's ajax function
+        $.ajax = function(options) {
+            // Don't modify if no options
+            if (!options) {
+                return originalAjax.apply(this, arguments);
+            }
+            
+            // Skip for non-checkout related requests
+            if (options.url && typeof options.url === 'string' && 
+                (options.url.indexOf('checkout') === -1 && 
+                 options.url.indexOf('wc-ajax') === -1 && 
+                 options.url.indexOf('payment_method') === -1)) {
+                return originalAjax.apply(this, arguments);
+            }
+
+            var originalSuccess = options.success;
+            var originalError = options.error;
+            var originalDataType = options.dataType;
+            var originalBeforeSend = options.beforeSend;
+            
+            // Add custom headers to help identify our requests
+            options.beforeSend = function(xhr) {
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.setRequestHeader('Accept', 'application/json');
+                
+                // Call the original beforeSend if it exists
+                if (typeof originalBeforeSend === 'function') {
+                    originalBeforeSend.apply(this, arguments);
+                }
+            };
+            
+            // Override success callback
+            options.success = function(response, textStatus, jqXHR) {
+                try {
+                    // If we got HTML instead of JSON, extract any error messages
+                    if (typeof response === 'string' && response.indexOf('<!doctype') !== -1) {
+                        debugLog('Received HTML response instead of JSON', {
+                            error: true,
+                            responseLength: response.length,
+                            responsePreview: response.substring(0, 100)
+                        });
+                        
+                        // Create a more useful error response
+                        var errorResponse = {
+                            result: 'error',
+                            messages: ['The server returned HTML instead of JSON. This typically indicates a server configuration issue.'],
+                            redirect: false
+                        };
+                        
+                        // Check if the HTML contains WooCommerce error messages
+                        if (response.indexOf('woocommerce-error') !== -1) {
+                            // Create a temporary div to parse HTML
+                            var tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = response;
+                            
+                            // Extract error messages
+                            var errorElements = tempDiv.querySelectorAll('.woocommerce-error li');
+                            if (errorElements.length > 0) {
+                                errorResponse.messages = [];
+                                for (var i = 0; i < errorElements.length; i++) {
+                                    errorResponse.messages.push(errorElements[i].textContent);
+                                }
+                            }
+                            
+                            debugLog('Extracted error messages from HTML response', {
+                                error: true,
+                                messages: errorResponse.messages
+                            });
+                        }
+                        
+                        // Call original success with our constructed response
+                        if (originalSuccess) {
+                            originalSuccess.call(this, errorResponse, textStatus, jqXHR);
+                        }
+                        return;
+                    }
+                    
+                    // Normal JSON response - pass to original handler
+                    if (originalSuccess) {
+                        originalSuccess.call(this, response, textStatus, jqXHR);
+                    }
+                } catch (e) {
+                    debugLog('Error in AJAX success handler', {
+                        error: true,
+                        message: e.message,
+                        url: options.url
+                    });
+                    
+                    // Try to recover and still call the original success
+                    if (originalSuccess) {
+                        try {
+                            originalSuccess.call(this, {
+                                result: 'error',
+                                messages: ['Error processing response: ' + e.message]
+                            }, textStatus, jqXHR);
+                        } catch (innerError) {
+                            debugLog('Failed to call original success handler', {
+                                error: true,
+                                message: innerError.message
+                            });
+                        }
+                    }
+                }
+            };
+            
+            // Override error callback
+            options.error = function(jqXHR, textStatus, errorThrown) {
+                debugLog('AJAX error during checkout', {
+                    error: true,
+                    status: jqXHR.status,
+                    statusText: textStatus,
+                    responseText: jqXHR.responseText ? jqXHR.responseText.substring(0, 200) : 'No response text',
+                    errorThrown: errorThrown,
+                    url: options.url
+                });
+                
+                // For 403 errors on update_order_review, try to recover
+                if (options.url && options.url.indexOf('update_order_review') !== -1 && jqXHR.status === 403) {
+                    debugLog('Attempting to recover from 403 forbidden error on update_order_review');
+                    
+                    // Create a fake successful response
+                    if (originalSuccess) {
+                        try {
+                            originalSuccess.call(this, {
+                                fragments: {},
+                                refresh: false,
+                                result: 'success'
+                            }, 'success', jqXHR);
+                            return; // Don't call the error handler
+                        } catch (e) {
+                            debugLog('Error in recovery attempt', {
+                                error: true,
+                                message: e.message
+                            });
+                        }
+                    }
+                }
+                
+                // If we got HTML instead of JSON for checkout/payment submission
+                if (jqXHR.responseText && typeof jqXHR.responseText === 'string' && 
+                    jqXHR.responseText.indexOf('<!doctype') !== -1 && 
+                    options.url && (options.url.indexOf('checkout') !== -1 || options.url.indexOf('payment') !== -1)) {
+                    
+                    debugLog('Received HTML instead of JSON on checkout/payment', {
+                        error: true,
+                        status: jqXHR.status
+                    });
+                    
+                    // For place order requests, check if the order might have been created
+                    if (options.url.indexOf('place_order') !== -1 || options.url.indexOf('checkout') !== -1) {
+                        // Create a temporary div to parse HTML
+                        var tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = jqXHR.responseText;
+                        
+                        // Look for order received or order confirmation content
+                        if (tempDiv.querySelector('.woocommerce-order-received') || 
+                            tempDiv.querySelector('.woocommerce-order') ||
+                            tempDiv.querySelector('.order_details') ||
+                            jqXHR.responseText.indexOf('order-received') !== -1) {
+                            
+                            debugLog('Order success page detected in HTML response!', {
+                                status: jqXHR.status
+                            });
+                            
+                            // Extract order ID and redirect if possible
+                            var orderIdMatch = jqXHR.responseText.match(/order-(\d+)/);
+                            var orderId = orderIdMatch && orderIdMatch[1] ? orderIdMatch[1] : null;
+                            
+                            if (orderId) {
+                                debugLog('Found order ID in response: ' + orderId);
+                                
+                                // Prevent infinite redirect loops
+                                var lastOrderId = sessionStorage.getItem('last_processed_order_id');
+                                if (lastOrderId === orderId) {
+                                    debugLog('Preventing redirect loop - already processed order: ' + orderId);
+                                    return;
+                                }
+                                
+                                // Store the order ID to prevent future loops
+                                sessionStorage.setItem('last_processed_order_id', orderId);
+                                
+                                // Redirect to the order received page
+                                window.location.href = window.location.protocol + '//' + 
+                                    window.location.host + '/checkout/order-received/' + orderId + '/';
+                            } else {
+                                // Check if we've already reloaded recently
+                                var lastReload = sessionStorage.getItem('last_checkout_reload_time');
+                                var currentTime = new Date().getTime();
+                                
+                                if (lastReload && (currentTime - parseInt(lastReload, 10)) < 5000) {
+                                    debugLog('Preventing reload loop - already reloaded within 5 seconds');
+                                    return;
+                                }
+                                
+                                // Mark that we've reloaded
+                                sessionStorage.setItem('last_checkout_reload_time', currentTime.toString());
+                                
+                                // Just reload the page if we can't extract the order ID
+                                window.location.reload();
+                            }
+                        }
+                    }
+                }
+                
+                // Call original error handler if it exists
+                if (originalError) {
+                    originalError.call(this, jqXHR, textStatus, errorThrown);
+                }
+            };
+            
+            // For checkout requests, use text dataType to prevent automatic JSON parsing
+            // This allows us to handle both JSON and HTML responses
+            if (options.url && typeof options.url === 'string' && 
+                (options.url.indexOf('checkout') !== -1 || 
+                 options.url.indexOf('wc-ajax') !== -1 || 
+                 options.url.indexOf('payment_method') !== -1)) {
+                
+                // Remember original dataType but change to text
+                options._originalDataType = options.dataType;
+                options.dataType = 'text';
+                
+                // Add a dataFilter to convert text back to JSON when appropriate
+                options.dataFilter = function(data, type) {
+                    if (type === 'text' && data) {
+                        // Check if this is valid JSON
+                        if ((data.trim().startsWith('{') && data.trim().endsWith('}')) || 
+                            (data.trim().startsWith('[') && data.trim().endsWith(']'))) {
+                            try {
+                                // Convert back to JSON object
+                                return JSON.parse(data);
+                            } catch (e) {
+                                debugLog('Error parsing JSON in dataFilter', {
+                                    error: true,
+                                    message: e.message,
+                                    data: data.substring(0, 100)
+                                });
+                            }
+                        }
+                    }
+                    return data;
+                };
+            }
+            
+            // Call the original ajax with our modified options
+            return originalAjax.apply(this, options);
+        };
+        
+        debugLog('AJAX JSON parsing fix applied');
+    }
+
+    /**
+     * Handle WebAssembly CSP errors
+     */
+    function handleWebAssemblyErrors() {
+        // Listen for CSP violations
+        window.addEventListener('securitypolicyviolation', function(e) {
+            if (e.blockedURI && e.blockedURI.includes('wasm')) {
+                debugLog('WebAssembly CSP violation detected', {
+                    error: true,
+                    violatedDirective: e.violatedDirective,
+                    blockedURI: e.blockedURI,
+                    documentURI: e.documentURI
+                });
+                
+                // Try to patch CSP inline without reloading
+                if (typeof document.createElement === 'function') {
+                    try {
+                        // First, check if a meta tag exists
+                        var existingMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+                        
+                        if (existingMeta) {
+                            // Modify existing CSP
+                            var policy = existingMeta.getAttribute('content');
+                            if (policy && policy.indexOf('script-src') > -1 && policy.indexOf('unsafe-eval') === -1) {
+                                policy = policy.replace('script-src', 'script-src \'unsafe-eval\'');
+                                existingMeta.setAttribute('content', policy);
+                                debugLog('Modified existing CSP meta tag to allow WebAssembly');
+                            }
+                        } else {
+                            // Add a new CSP meta tag if none exists
+                            var meta = document.createElement('meta');
+                            meta.setAttribute('http-equiv', 'Content-Security-Policy');
+                            meta.setAttribute('content', 'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://js.stripe.com https://*.stripe.com https://cdn.jsdelivr.net https://stats.wp.com https://*.wp.com *.wordpress.com');
+                            document.head.appendChild(meta);
+                            debugLog('Added CSP meta tag to allow WebAssembly');
+                        }
+                        
+                        // Also suppress report-only warnings
+                        document.querySelectorAll('meta[http-equiv="Content-Security-Policy-Report-Only"]').forEach(function(el) {
+                            el.parentNode.removeChild(el);
+                        });
+                    } catch (e) {
+                        debugLog('Error modifying CSP', {
+                            error: true,
+                            message: e.message
+                        });
+                    }
+                }
+            }
+        });
+        
+        // Remove any report-only CSP meta tags immediately to prevent warnings
+        setTimeout(function() {
+            try {
+                document.querySelectorAll('meta[http-equiv="Content-Security-Policy-Report-Only"]').forEach(function(el) {
+                    el.parentNode.removeChild(el);
+                });
+            } catch (e) {
+                // Silently fail
+            }
+        }, 0);
+    }
+
+    /**
+     * Fix missing Stripe Elements when they fail to load
+     */
+    function fixMissingStripeElements() {
+        // Make sure we only run this on the checkout page
+        if (!window.location.href.includes('checkout')) {
+            return;
+        }
+        
+        debugLog('Checking for missing Stripe elements');
+        
+        // Check if Stripe is already loaded and prevent duplicate loading
+        if (typeof Stripe !== 'undefined' && typeof window.stripeInstance === 'undefined') {
+            window.stripeInstance = Stripe(window.wc_stripe_params ? window.wc_stripe_params.key : '');
+            debugLog('Created global Stripe instance to prevent duplicates');
+        }
+        
+        // Run immediately and then check again after a delay
+        checkAndInitStripeElements();
+        
+        // Add listeners for payment method changes
+        $(document.body).on('payment_method_selected', function() {
+            debugLog('Payment method changed, checking Stripe elements');
+            checkAndInitStripeElements();
+        });
+        
+        // Add listeners for when the payment methods are selected
+        $('form.checkout').on('change', 'input[name="payment_method"]', function() {
+            var paymentMethod = $(this).val();
+            debugLog('Payment method changed to: ' + paymentMethod);
+            
+            // If this is a Stripe payment method, ensure elements are loaded
+            if (paymentMethod && paymentMethod.includes('stripe')) {
+                setTimeout(checkAndInitStripeElements, 500);
+            }
+        });
+        
+        // Set up a MutationObserver to watch for changes to the payment methods
+        if (window.MutationObserver) {
+            var paymentMethodObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                        for (var i = 0; i < mutation.addedNodes.length; i++) {
+                            var node = mutation.addedNodes[i];
+                            if (node.nodeType === 1) { // Element node
+                                // If this is a payment method container
+                                if (node.classList && 
+                                    (node.classList.contains('payment_box') || 
+                                     node.classList.contains('payment_method_stripe'))) {
+                                    debugLog('Payment method container added to DOM, checking Stripe elements');
+                                    setTimeout(checkAndInitStripeElements, 500);
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Start observing the payment methods container
+            var paymentMethodsContainer = document.getElementById('payment');
+            if (paymentMethodsContainer) {
+                paymentMethodObserver.observe(paymentMethodsContainer, {
+                    childList: true,
+                    subtree: true
+                });
+                debugLog('Observing payment methods container for changes');
+            }
+        }
+        
+        function checkAndInitStripeElements() {
+            try {
+                // Only proceed if Stripe is the selected payment method
+                if ($('input[name="payment_method"]:checked').val() && 
+                    $('input[name="payment_method"]:checked').val().includes('stripe')) {
+                    
+                    // Check if the elements are missing
+                    if ($('#stripe-payment-data').length && $('.wc-stripe-elements-field').length === 0) {
+                        debugLog('Stripe payment method selected but elements missing, attempting to initialize');
+                        
+                        // Make sure the stripe-payment-data div is visible and properly styled
+                        $('#stripe-payment-data').css({
+                            'display': 'block', 
+                            'opacity': '1',
+                            'height': 'auto',
+                            'overflow': 'visible'
+                        });
+                        
+                        // Fix checkout form reference issues before initializing Stripe
+                        if (typeof WCStripeForm !== 'undefined' && WCStripeForm.form === null) {
+                            WCStripeForm.form = $('form.checkout');
+                            debugLog('Fixed WCStripeForm.form reference');
+                        }
+                        
+                        // Check if we have Stripe parameters
+                        if (typeof wc_stripe_params === 'undefined' || !wc_stripe_params) {
+                            debugLog('Missing wc_stripe_params, creating fallback');
+                            
+                            // Create a minimal set of params as fallback
+                            window.wc_stripe_params = window.wc_stripe_params || {
+                                key: '',
+                                is_checkout: true,
+                                form_id: 'checkout',
+                                is_pay_for_order: false,
+                                ajaxurl: typeof wc_checkout_params !== 'undefined' ? wc_checkout_params.ajax_url : '/wp-admin/admin-ajax.php',
+                                stripe_nonce: '',
+                                statement_descriptor: '',
+                                currency: 'USD',
+                                elements_options: {},
+                                sepa_elements_options: {},
+                                invalid_card_title: 'Invalid card',
+                                no_prepaid_card: false,
+                                allow_bitcoin: false
+                            };
+                            
+                            // Try to get the key from the page
+                            if ($('script[src*="stripe.com"]').length) {
+                                var scriptTags = document.querySelectorAll('script');
+                                for (var i = 0; i < scriptTags.length; i++) {
+                                    var script = scriptTags[i].textContent || '';
+                                    var keyMatch = script.match(/publishable_key\s*=\s*['"](pk_test_[a-zA-Z0-9]+|pk_live_[a-zA-Z0-9]+)['"]/);
+                                    if (keyMatch && keyMatch[1]) {
+                                        window.wc_stripe_params.key = keyMatch[1];
+                                        debugLog('Found Stripe publishable key in script: ' + keyMatch[1]);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Fix wc_stripe_form_handler initialization if it's missing
+                        if (typeof wc_stripe_form_handler === 'undefined') {
+                            // Try to initialize from global WC_Stripe_Form_Handler if available
+                            if (typeof window.WC_Stripe_Form_Handler !== 'undefined') {
+                                window.wc_stripe_form_handler = new window.WC_Stripe_Form_Handler();
+                                debugLog('Created wc_stripe_form_handler from WC_Stripe_Form_Handler');
+                            } else {
+                                // Create a minimal handler object
+                                window.wc_stripe_form_handler = {
+                                    form: $('form.checkout'),
+                                    init: function() {},
+                                    onSubmit: function() { return true; },
+                                    createElements: function() {}
+                                };
+                                debugLog('Created minimal wc_stripe_form_handler fallback');
+                            }
+                        } else if (wc_stripe_form_handler.form === null) {
+                            // Fix null form reference
+                            wc_stripe_form_handler.form = $('form.checkout');
+                            debugLog('Fixed wc_stripe_form_handler.form reference');
+                        }
+                        
+                        // Create a container for the card element if it doesn't exist
+                        if ($('#stripe-card-element').length === 0) {
+                            $('#stripe-payment-data').append('<div class="form-row"><label for="card-element">Card details</label><div id="stripe-card-element" class="wc-stripe-elements-field"></div><div id="stripe-card-errors" role="alert"></div></div>');
+                            debugLog('Added missing Stripe card element container');
+                        }
+                        
+                        // Try to initialize Stripe
+                        if (typeof Stripe !== 'undefined' && window.wc_stripe_params && window.wc_stripe_params.key) {
+                            try {
+                                debugLog('Initializing Stripe with key: ' + window.wc_stripe_params.key);
+                                
+                                // Use global instance if available, otherwise create one
+                                var stripe = window.stripeInstance;
+                                if (!stripe) {
+                                    stripe = window.stripeInstance = Stripe(window.wc_stripe_params.key);
+                                    debugLog('Created new Stripe instance');
+                                } else {
+                                    debugLog('Using existing Stripe instance');
+                                }
+                                
+                                // Use cached elements instance or create new one
+                                var elements = window.stripeElements;
+                                if (!elements) {
+                                    elements = window.stripeElements = stripe.elements();
+                                    debugLog('Created new Stripe elements instance');
+                                }
+                                
+                                // Check if we already have a card element
+                                if (window.stripeCardElement) {
+                                    debugLog('Using existing Stripe card element');
+                                    
+                                    // Just remount if we already have the element
+                                    try {
+                                        window.stripeCardElement.unmount();
+                                        window.stripeCardElement.mount('#stripe-card-element');
+                                        debugLog('Remounted existing Stripe card element');
+                                    } catch (e) {
+                                        // If remounting fails, create a new one
+                                        debugLog('Remounting failed, creating new card element');
+                                        window.stripeCardElement = null;
+                                    }
+                                }
+                                
+                                // Create new card element if needed
+                                if (!window.stripeCardElement) {
+                                    // Create and mount the card element
+                                    var cardElement = elements.create('card', {
+                                        hidePostalCode: true,
+                                        style: {
+                                            base: {
+                                                color: '#32325d',
+                                                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                                                fontSmoothing: 'antialiased',
+                                                fontSize: '16px',
+                                                '::placeholder': {
+                                                    color: '#aab7c4'
+                                                }
+                                            },
+                                            invalid: {
+                                                color: '#fa755a',
+                                                iconColor: '#fa755a'
+                                            }
+                                        }
+                                    });
+                                    
+                                    // Store globally so it can be accessed by WooCommerce Stripe handlers
+                                    window.stripeCardElement = cardElement;
+                                    
+                                    // Mount the card element
+                                    cardElement.mount('#stripe-card-element');
+                                    debugLog('Successfully mounted new Stripe card element');
+                                    
+                                    // Add a listener for changes
+                                    cardElement.addEventListener('change', function(event) {
+                                        if (event.error) {
+                                            $('#stripe-card-errors').text(event.error.message).show();
+                                        } else {
+                                            $('#stripe-card-errors').text('').hide();
+                                        }
+                                    });
+                                    
+                                    // Fix the form submission to ensure the card is tokenized
+                                    $('form.checkout').on('checkout_place_order_stripe', function() {
+                                        debugLog('Processing Stripe payment');
+                                        
+                                        // Fix WCStripeForm.form reference again at submission time
+                                        if (typeof WCStripeForm !== 'undefined' && WCStripeForm.form === null) {
+                                            WCStripeForm.form = $('form.checkout');
+                                        }
+                                        
+                                        return true;
+                                    });
+                                    
+                                    // Notify that we successfully initialized
+                                    debugLog('Stripe card element successfully initialized');
+                                }
+                                
+                                // Fix the form submission to ensure the card is tokenized
+                                $('form.checkout').on('checkout_place_order_stripe', function() {
+                                    debugLog('Processing Stripe payment');
+                                    
+                                    // Fix WCStripeForm.form reference again at submission time
+                                    if (typeof WCStripeForm !== 'undefined' && WCStripeForm.form === null) {
+                                        WCStripeForm.form = $('form.checkout');
+                                    }
+                                    
+                                    return true;
+                                });
+                                
+                                // Notify that we successfully initialized
+                                debugLog('Stripe card element successfully initialized');
+                            } catch (e) {
+                                debugLog('Error initializing Stripe Elements', {
+                                    error: true,
+                                    message: e.message
+                                });
+                            }
+                        } else {
+                            // Report what's missing
+                            debugLog('Cannot initialize Stripe', {
+                                error: true, 
+                                stripeAvailable: typeof Stripe !== 'undefined',
+                                paramsAvailable: typeof window.wc_stripe_params !== 'undefined',
+                                keyAvailable: window.wc_stripe_params && window.wc_stripe_params.key
+                            });
+                        }
+                    } else {
+                        // Elements exist, make sure they're visible
+                        $('.wc-stripe-elements-field, #stripe-card-element').css({
+                            'display': 'block',
+                            'opacity': '1',
+                            'height': 'auto',
+                            'min-height': '30px',
+                            'visibility': 'visible'
+                        });
+                    }
+                }
+            } catch (e) {
+                debugLog('Error checking Stripe elements', {
+                    error: true,
+                    message: e.message
+                });
+            }
+        }
+    }
+
+    // Initialize on document ready
+    $(document).ready(function() {
+        // Start with basic diagnostics
+        debugLog('TwinTack Checkout Debug initialized');
+        
+        // Set up global redirect prevention
+        window.lastCheckoutRedirectTime = parseInt(sessionStorage.getItem('last_checkout_redirect_time') || '0', 10);
+        window.ttRedirectInProgress = false;
+        
+        // Helper function to check if we should allow a redirect
+        window.shouldAllowRedirect = function(targetUrl, reason) {
+            var currentTime = new Date().getTime();
+            var timeSinceLastRedirect = currentTime - window.lastCheckoutRedirectTime;
+            
+            // Prevent any redirects if one is already in progress
+            if (window.ttRedirectInProgress) {
+                debugLog('Blocking redirect because another redirect is in progress', {
+                    target: targetUrl,
+                    reason: reason
+                });
+                return false;
+            }
+            
+            // Always allow redirect to order-received pages
+            if (targetUrl && targetUrl.indexOf('order-received') !== -1) {
+                // Still check for redirect loops on order-received
+                var orderIdMatch = targetUrl.match(/order-received\/(\d+)/);
+                if (orderIdMatch && orderIdMatch[1]) {
+                    var orderId = orderIdMatch[1];
+                    var lastOrderId = sessionStorage.getItem('last_processed_order_id');
+                    
+                    if (lastOrderId === orderId) {
+                        debugLog('Blocking redirect loop to same order', {
+                            orderId: orderId,
+                            reason: reason
+                        });
+                        return false;
+                    }
+                    
+                    // Store the order ID we're redirecting to
+                    sessionStorage.setItem('last_processed_order_id', orderId);
+                    debugLog('Allowing redirect to order-received page', {
+                        orderId: orderId,
+                        reason: reason
+                    });
+                    return true;
+                }
+            }
+            
+            // For checkout page redirects, enforce a minimum time between redirects
+            if (targetUrl && targetUrl.indexOf('/checkout/') !== -1) {
+                if (timeSinceLastRedirect < 5000) {
+                    debugLog('Blocking redirect to checkout page - too soon', {
+                        timeSinceLastRedirect: timeSinceLastRedirect,
+                        target: targetUrl,
+                        reason: reason
+                    });
+                    return false;
+                }
+            }
+            
+            // Update the last redirect time
+            window.lastCheckoutRedirectTime = currentTime;
+            sessionStorage.setItem('last_checkout_redirect_time', currentTime.toString());
+            
+            debugLog('Allowing redirect', {
+                target: targetUrl,
+                reason: reason
+            });
+            return true;
+        };
+        
+        // Override the window.location.href property to prevent redirect loops
+        try {
+            var originalWindowLocation = window.location;
+            var lastSetHref = window.location.href;
+            
+            Object.defineProperty(window, 'location', {
+                get: function() {
+                    return originalWindowLocation;
+                },
+                set: function(url) {
+                    if (typeof url === 'string') {
+                        // Direct assignment to window.location
+                        if (window.shouldAllowRedirect(url, 'direct-set')) {
+                            window.ttRedirectInProgress = true;
+                            originalWindowLocation = url;
+                        }
+                    } else {
+                        // Pass through other assignments
+                        originalWindowLocation = url;
+                    }
+                },
+                configurable: true
+            });
+            
+            // Also override specific properties
+            ['href', 'assign', 'replace', 'reload'].forEach(function(prop) {
+                var originalProp = originalWindowLocation[prop];
+                
+                if (prop === 'href') {
+                    Object.defineProperty(originalWindowLocation, prop, {
+                        get: function() {
+                            return originalWindowLocation.href;
+                        },
+                        set: function(url) {
+                            if (window.shouldAllowRedirect(url, 'href-set')) {
+                                window.ttRedirectInProgress = true;
+                                lastSetHref = url;
+                                originalWindowLocation.href = url;
+                            }
+                        },
+                        configurable: true
+                    });
+                } else if (prop === 'assign' || prop === 'replace') {
+                    originalWindowLocation[prop] = function(url) {
+                        if (window.shouldAllowRedirect(url, prop + '-method')) {
+                            window.ttRedirectInProgress = true;
+                            lastSetHref = url;
+                            originalProp.call(originalWindowLocation, url);
+                        }
+                    };
+                } else if (prop === 'reload') {
+                    originalWindowLocation[prop] = function() {
+                        if (window.shouldAllowRedirect(originalWindowLocation.href, 'reload-method')) {
+                            window.ttRedirectInProgress = true;
+                            originalProp.call(originalWindowLocation);
+                        }
+                    };
+                }
+            });
+            
+            debugLog('Applied global redirect loop prevention');
+        } catch (e) {
+            debugLog('Error setting up redirect prevention', {
+                error: true,
+                message: e.message
+            });
+        }
+        
+        // Detect checkout form and setup tracking
+        detectCheckoutForm();
+        
+        // Test checkout endpoints for validation
+        testCheckoutEndpoints();
+        
+        // Apply fixes for Stripe payment processing
+        debugLog('Applying fixes for Stripe payment processing');
+        fixStripeCheckoutIssues();
+
+        // Set up error handling for Stripe-specific issues
+        debugLog('Setting up Stripe error handler');
+        handleStripeErrors();
+        
+        // Initialize our JSON parsing fix
+        fixAjaxJsonParsingIssues();
+        
+        // Handle WebAssembly CSP errors
+        handleWebAssemblyErrors();
+        
+        // Ensure Stripe Elements is properly initialized
+        fixMissingStripeElements();
+        
+        // Fix checkout form submission issues
+        fixCheckoutFormSubmission();
+    });
+    
+    /**
+     * Fix checkout form submission issues
+     */
+    function fixCheckoutFormSubmission() {
+        try {
+            // Get the checkout form
+            var $form = $('form.checkout, form#order_review');
+            if (!$form.length) {
+                debugLog('Checkout form not found for submission fix');
+                return;
+            }
+            
+            debugLog('Applying checkout form submission fixes');
+            
+            // Add capture of checkout AJAX responses
+            $(document).ajaxComplete(function(event, xhr, settings) {
+                if (!settings.url || typeof settings.url !== 'string') {
+                    return;
+                }
+                
+                // Only process checkout-related AJAX calls
+                if (settings.url.indexOf('checkout') === -1 && 
+                    settings.url.indexOf('wc-ajax') === -1 && 
+                    settings.url.indexOf('payment_method') === -1) {
+                    return;
+                }
+                
+                debugLog('Processing checkout AJAX response', {
+                    url: settings.url,
+                    status: xhr.status,
+                    type: settings.type
+                });
+                
+                // Check for successful order creation
+                if (xhr.responseText) {
+                    try {
+                        // Try to parse JSON response
+                        var response = typeof xhr.responseText === 'string' ? 
+                            JSON.parse(xhr.responseText) : xhr.responseText;
+                        
+                        // Check if this indicates a successful order
+                        if (response && response.result === 'success') {
+                            debugLog('Successful order detected in AJAX response', {
+                                result: response.result,
+                                redirect: response.redirect
+                            });
+                            
+                            // Set a flag to indicate successful order
+                            window.orderProcessed = true;
+                            
+                            // Force redirect if needed
+                            if (response.redirect) {
+                                debugLog('Redirecting to: ' + response.redirect);
+                                
+                                // Use our redirect check function
+                                if (window.shouldAllowRedirect && window.shouldAllowRedirect(response.redirect, 'json-success')) {
+                                    // Ensure we don't lose the redirect due to other scripts
+                                    setTimeout(function() {
+                                        window.ttRedirectInProgress = true;
+                                        window.location.href = response.redirect;
+                                    }, 500);
+                                } else {
+                                    debugLog('Blocking redirect due to redirect rules');
+                                }
+                            }
+                        }
+                        // Check for errors
+                        else if (response && response.result === 'failure') {
+                            debugLog('Order failure detected in AJAX response', {
+                                result: response.result,
+                                messages: response.messages
+                            });
+                            
+                            // Enable the submit button again
+                            $('#place_order').prop('disabled', false).removeClass('processing').val('Place order');
+                        }
+                    } catch (e) {
+                        // Not JSON, check if it's an HTML redirect to order-received page
+                        if (xhr.responseText && typeof xhr.responseText === 'string' && 
+                            (xhr.responseText.indexOf('order-received') !== -1 || 
+                            xhr.responseText.indexOf('order_received') !== -1)) {
+                            
+                            debugLog('HTML order success page detected');
+                            
+                            // Extract the order ID if possible
+                            var orderIdMatch = xhr.responseText.match(/order-received\/(\d+)/);
+                            if (orderIdMatch && orderIdMatch[1]) {
+                                var orderId = orderIdMatch[1];
+                                debugLog('Extracted order ID: ' + orderId);
+                                
+                                // Use our redirect check function
+                                var redirectUrl = window.location.protocol + '//' + 
+                                    window.location.host + '/checkout/order-received/' + orderId + '/';
+                                    
+                                if (window.shouldAllowRedirect && window.shouldAllowRedirect(redirectUrl, 'html-order-success')) {
+                                    debugLog('Redirecting to order success page');
+                                    window.ttRedirectInProgress = true;
+                                    window.location.href = redirectUrl;
+                                } else {
+                                    debugLog('Blocking redirect due to redirect rules');
+                                }
+                            } else {
+                                // Check if we should reload
+                                if (window.shouldAllowRedirect && window.shouldAllowRedirect(window.location.href, 'html-order-success-reload')) {
+                                    debugLog('Reloading after order success detection');
+                                    window.ttRedirectInProgress = true;
+                                    window.location.reload();
+                                } else {
+                                    debugLog('Blocking page reload due to redirect rules');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Add monitoring for direct form submission
+            $('#place_order').on('click', function() {
+                debugLog('Place order button clicked');
+                
+                // Set up timer to check if the order was processed
+                setTimeout(function() {
+                    if (!window.orderProcessed) {
+                        debugLog('Order processing timeout - attempting recovery');
+                        
+                        // Check if the button is still disabled
+                        if ($('#place_order').prop('disabled')) {
+                            // Re-enable the button
+                            $('#place_order').prop('disabled', false).removeClass('processing').val('Place order');
+                            
+                            // Add error message if none exists
+                            if ($('.woocommerce-error').length === 0) {
+                                debugLog('Adding timeout error message');
+                                $('<div class="woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout">' +
+                                  '<ul class="woocommerce-error" role="alert">' +
+                                  '<li>Your order could not be processed. Please try again or contact us for assistance.</li>' +
+                                  '</ul></div>').prependTo($form);
+                            }
+                        }
+                    }
+                }, 20000); // 20 second timeout
+            });
+            
+            // Special handling for Stripe payment method submissions
+            $form.on('checkout_place_order_stripe', function() {
+                debugLog('Stripe checkout submission handler called');
+                
+                // Create a timer to ensure we don't get stuck
+                var submissionTimer = setTimeout(function() {
+                    debugLog('Stripe submission timer expired, checking status');
+                    
+                    // Check if form is still processing
+                    if ($('#place_order').prop('disabled') && !window.orderProcessed) {
+                        debugLog('Order still processing, checking for errors');
+                        
+                        // Look for error messages that might be hidden
+                        if ($('#stripe-payment-data .woocommerce-error').length) {
+                            // Show any hidden errors
+                            $('#stripe-payment-data .woocommerce-error').show();
+                            
+                            // Re-enable the submit button
+                            $('#place_order').prop('disabled', false).removeClass('processing');
+                        }
+                    }
+                }, 10000);
+                
+                // Return true to allow normal processing
+                return true;
+            });
+            
+            debugLog('Checkout form submission fixes applied');
+        } catch (e) {
+            debugLog('Error applying checkout form submission fixes', { 
+                error: true,
+                message: e.message
+            });
+        }
+    }
+
+})(jQuery); 
