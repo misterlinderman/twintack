@@ -255,100 +255,32 @@
 .grip-feedback {
     margin-top: 1rem;
     padding: 1rem;
-    background: #f0f8ff;
-    border-left: 4px solid #0073aa;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-.grip-feedback h3 {
-    margin: 0 0 10px 0;
-    color: #0073aa;
-    font-size: 16px;
-}
-
-.grip-monday-feedback {
+.feedback-content {
     margin-top: 1rem;
-    padding: 1rem;
-    background: #f0fff0;
-    border-left: 4px solid #28a745;
-    border-radius: 4px;
-}
-
-.grip-monday-feedback h3 {
-    margin: 0 0 10px 0;
-    color: #28a745;
-    font-size: 16px;
-}
-
-.feedback-content,
-.monday-feedback-content {
-    margin-top: 1rem;
-    line-height: 1.5;
-}
-
-.artwork-preview.secondary {
-    margin-top: 15px;
-    opacity: 0.8;
-}
-
-.artwork-preview.secondary img {
-    border: 1px solid #ccc;
-}
-
-.button.secondary {
-    background: #6c757d;
-    border-color: #6c757d;
-}
-
-.button.secondary:hover {
-    background: #5a6268;
-    border-color: #545b62;
 }
 
 .status-label {
     display: inline-block;
-    padding: 6px 12px;
-    border-radius: 4px;
+    padding: 4px 8px;
+    border-radius: 3px;
     font-size: 14px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-weight: normal;
+    background: #f0f0f0;
 }
 
 .status-artwork_pending {
     color: #856404;
     background-color: #fff3cd;
-    border: 1px solid #ffeaa7;
-}
-
-.status-pending_review {
-    color: #0c5460;
-    background-color: #d1ecf1;
-    border: 1px solid #bee5eb;
 }
 
 .status-artwork_approved {
     color: #155724;
     background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-}
-
-.status-internal_review {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-}
-
-.status-in_production {
-    color: #004085;
-    background-color: #cce7ff;
-    border: 1px solid #b3d7ff;
-}
-
-.status-shipped {
-    color: #0f5132;
-    background-color: #d1e7dd;
-    border: 1px solid #badbcc;
 }
 
 @media (max-width: 768px) {

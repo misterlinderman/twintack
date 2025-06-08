@@ -13,7 +13,6 @@ class TwinTack_Grip_Post_Type {
         add_action('init', array($this, 'register_post_type'));
         add_action('init', array($this, 'register_statuses'));
         add_action('rest_api_init', array($this, 'register_meta_fields'));
-        add_action('rest_api_init', array($this, 'register_monday_api_endpoint'));
         add_action('init', array($this, 'fix_existing_grip_designs'));
         add_action('init', array($this, 'initialize_artwork_status'));
         add_filter('single_template', array($this, 'load_grip_design_template'));
@@ -95,9 +94,7 @@ class TwinTack_Grip_Post_Type {
             '_grip_monday_feedback',
             '_grip_mockup_url',
             '_grip_mockup_filename',
-            '_grip_artwork_status',
-            '_grip_mockup_asset_id',
-            '_grip_mockup_asset_url'
+            '_grip_artwork_status'
         );
 
         foreach ($meta_fields as $meta_key) {
@@ -138,7 +135,7 @@ class TwinTack_Grip_Post_Type {
                     'description' => 'Artwork status for grip design',
                     'type' => 'string',
                     'context' => array('view', 'edit'),
-                    'enum' => array('artwork_pending', 'pending_review', 'artwork_approved', 'internal_review', 'in_production', 'shipped'),
+                    'enum' => array('artwork_pending', 'pending_review', 'artwork_approved', 'internal_review'),
                     'single' => true,
                     'show_in_rest' => true,
                 )
@@ -160,105 +157,6 @@ class TwinTack_Grip_Post_Type {
                 error_log('Error registering artwork status fields: ' . $e->getMessage());
             }
         }
-    }
-
-    public function register_monday_api_endpoint() {
-        register_rest_route('twintack/v1', '/grip-design/(?P<id>\d+)/monday', array(
-            'methods' => 'POST',
-            'callback' => array($this, 'update_monday_data'),
-            'permission_callback' => array($this, 'check_monday_api_permission'),
-            'args' => array(
-                'id' => array(
-                    'validate_callback' => function($param, $request, $key) {
-                        return is_numeric($param);
-                    }
-                ),
-                'monday_feedback' => array(
-                    'type' => 'string',
-                    'sanitize_callback' => 'sanitize_textarea_field',
-                ),
-                'mockup_asset_id' => array(
-                    'type' => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
-                ),
-                'mockup_asset_url' => array(
-                    'type' => 'string',
-                    'sanitize_callback' => 'esc_url_raw',
-                ),
-                'artwork_status' => array(
-                    'type' => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
-                    'enum' => array('artwork_pending', 'pending_review', 'artwork_approved', 'internal_review', 'in_production', 'shipped'),
-                ),
-            ),
-        ));
-    }
-    
-    public function check_monday_api_permission($request) {
-        // Check for API key in header or parameter
-        $api_key = $request->get_header('X-API-Key') ?: $request->get_param('api_key');
-        
-        // You can set this in wp-config.php: define('TWINTACK_MONDAY_API_KEY', 'your-secret-key');
-        $valid_key = defined('TWINTACK_MONDAY_API_KEY') ? TWINTACK_MONDAY_API_KEY : 'twintack-monday-2024';
-        
-        if ($api_key !== $valid_key) {
-            return new WP_Error('rest_forbidden', 'Invalid API key', array('status' => 401));
-        }
-        
-        return true;
-    }
-    
-    public function update_monday_data($request) {
-        $grip_id = $request->get_param('id');
-        
-        // Verify the grip design exists
-        $post = get_post($grip_id);
-        if (!$post || $post->post_type !== 'grip_design') {
-            return new WP_Error('not_found', 'Grip design not found', array('status' => 404));
-        }
-        
-        $updated_fields = array();
-        
-        // Update Monday.com feedback
-        if ($request->has_param('monday_feedback')) {
-            $feedback = $request->get_param('monday_feedback');
-            update_post_meta($grip_id, '_grip_monday_feedback', $feedback);
-            $updated_fields['monday_feedback'] = $feedback;
-        }
-        
-        // Update mockup asset ID
-        if ($request->has_param('mockup_asset_id')) {
-            $asset_id = $request->get_param('mockup_asset_id');
-            update_post_meta($grip_id, '_grip_mockup_asset_id', $asset_id);
-            $updated_fields['mockup_asset_id'] = $asset_id;
-        }
-        
-        // Update mockup asset URL
-        if ($request->has_param('mockup_asset_url')) {
-            $asset_url = $request->get_param('mockup_asset_url');
-            update_post_meta($grip_id, '_grip_mockup_asset_url', $asset_url);
-            $updated_fields['mockup_asset_url'] = $asset_url;
-        }
-        
-        // Update artwork status
-        if ($request->has_param('artwork_status')) {
-            $artwork_status = $request->get_param('artwork_status');
-            update_post_meta($grip_id, '_grip_artwork_status', $artwork_status);
-            $updated_fields['artwork_status'] = $artwork_status;
-            $updated_fields['artwork_status_label'] = $this->get_artwork_status_label($artwork_status);
-        }
-        
-        // Log the update
-        if (WP_DEBUG) {
-            error_log('TwinTack Monday API: Updated grip design ' . $grip_id . ' with data: ' . json_encode($updated_fields));
-        }
-        
-        return rest_ensure_response(array(
-            'success' => true,
-            'grip_id' => $grip_id,
-            'updated_fields' => $updated_fields,
-            'message' => 'Grip design updated successfully'
-        ));
     }
 
     public function fix_existing_grip_designs() {
@@ -340,9 +238,7 @@ class TwinTack_Grip_Post_Type {
             'artwork_pending'   => 'Artwork Pending',
             'pending_review'    => 'Pending Review', 
             'artwork_approved'  => 'Artwork Approved',
-            'internal_review'   => 'Internal Review',
-            'in_production'     => 'In Production',
-            'shipped'           => 'Shipped'
+            'internal_review'   => 'Internal Review'
         );
         
         return isset($status_map[$artwork_status]) ? $status_map[$artwork_status] : 'Artwork Pending';
@@ -408,48 +304,40 @@ class TwinTack_Grip_Post_Type {
         wp_nonce_field('grip_design_status_nonce', 'grip_design_status_nonce');
         
         $current_post_status = get_post_status($post->ID);
-        $current_artwork_status = get_post_meta($post->ID, '_grip_artwork_status', true) ?: 'artwork_pending';
+        $status_label = function_exists('twintack_get_grip_status_label') 
+            ? twintack_get_grip_status_label($current_post_status)
+            : $current_post_status;
         
-        // Post Status Section
-        echo '<div style="margin-bottom: 20px; padding: 15px; background: #f0f8ff; border-left: 4px solid #0073aa;">';
-        echo '<h4 style="margin: 0 0 10px 0;">Post Status</h4>';
-        echo '<p><strong>Current:</strong> <span style="color: #0073aa;">' . esc_html(ucfirst($current_post_status)) . '</span></p>';
-        echo '<p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">Post status controls WordPress visibility and functions normally. New posts default to Published.</p>';
+        echo '<div style="margin-bottom: 15px;">';
+        echo '<p><strong>Current Status:</strong> <span style="color: #0073aa;">' . esc_html($status_label) . '</span></p>';
         echo '</div>';
         
-        // Artwork Status Section
-        echo '<div style="margin-bottom: 15px;">';
-        echo '<h4 style="margin: 0 0 10px 0;">Artwork Status (Customer Visible)</h4>';
-        echo '<p style="margin-bottom: 10px;"><strong>Current:</strong> <span style="color: #d63638;">' . esc_html($this->get_artwork_status_label($current_artwork_status)) . '</span></p>';
-        echo '<label for="grip_artwork_status"><strong>Change Artwork Status:</strong></label><br>';
-        echo '<select name="grip_artwork_status" id="grip_artwork_status" style="width: 100%; margin-top: 5px;">';
+        echo '<div>';
+        echo '<label for="grip_post_status"><strong>Change Status:</strong></label><br>';
+        echo '<select name="grip_artwork_status" id="grip_post_status" style="width: 100%; margin-top: 5px;">';
         
-        $artwork_statuses = array(
-            'artwork_pending'   => 'Artwork Pending',
-            'pending_review'    => 'Pending Review',
-            'artwork_approved'  => 'Artwork Approved',
-            'internal_review'   => 'Internal Review',
-            'in_production'     => 'In Production',
-            'shipped'           => 'Shipped'
+        $statuses = array(
+            'draft' => 'Artwork Pending',
+            'pending' => 'Pending Review',
+            'publish' => 'Artwork Approved',
+            'private' => 'Internal Review'
         );
         
-        foreach ($artwork_statuses as $status_value => $status_label) {
-            $selected = selected($current_artwork_status, $status_value, false);
+        foreach ($statuses as $status_value => $status_label) {
+            $selected = selected($current_post_status, $status_value, false);
             echo '<option value="' . esc_attr($status_value) . '" ' . $selected . '>' . esc_html($status_label) . '</option>';
         }
         
         echo '</select>';
         echo '</div>';
         
-        echo '<div style="margin-top: 15px; padding: 10px; background: #f9f9f9; border-left: 4px solid #d63638;">';
-        echo '<h4 style="margin: 0 0 10px 0;">Artwork Status Guide:</h4>';
-        echo '<ul style="margin: 0; padding-left: 20px; font-size: 12px;">';
+        echo '<div style="margin-top: 15px; padding: 10px; background: #f9f9f9; border-left: 4px solid #0073aa;">';
+        echo '<h4 style="margin: 0 0 10px 0;">Status Guide:</h4>';
+        echo '<ul style="margin: 0; padding-left: 20px;">';
         echo '<li><strong>Artwork Pending:</strong> Waiting for customer artwork or initial review</li>';
         echo '<li><strong>Pending Review:</strong> Under review by design team</li>';
         echo '<li><strong>Artwork Approved:</strong> Design approved and ready for production</li>';
         echo '<li><strong>Internal Review:</strong> Internal team review (hidden from customer)</li>';
-        echo '<li><strong>In Production:</strong> Currently being manufactured</li>';
-        echo '<li><strong>Shipped:</strong> Order has been shipped to customer</li>';
         echo '</ul>';
         echo '</div>';
     }
@@ -538,43 +426,21 @@ class TwinTack_Grip_Post_Type {
         $monday_feedback = get_post_meta($post->ID, '_grip_monday_feedback', true);
         $mockup_url = get_post_meta($post->ID, '_grip_mockup_url', true);
         $mockup_filename = get_post_meta($post->ID, '_grip_mockup_filename', true);
-        $mockup_asset_id = get_post_meta($post->ID, '_grip_mockup_asset_id', true);
-        $mockup_asset_url = get_post_meta($post->ID, '_grip_mockup_asset_url', true);
         
         echo '<table class="form-table">';
         
         echo '<tr>';
-        echo '<th scope="row"><label for="_grip_monday_feedback">Design Team Message:</label></th>';
-        echo '<td><textarea name="_grip_monday_feedback" id="_grip_monday_feedback" rows="4" style="width: 100%;" placeholder="Message from the design team via Monday.com">' . esc_textarea($monday_feedback) . '</textarea></td>';
+        echo '<th scope="row"><label for="_grip_monday_feedback">Design Team Feedback:</label></th>';
+        echo '<td><textarea name="_grip_monday_feedback" id="_grip_monday_feedback" rows="4" style="width: 100%;" placeholder="Feedback from the design team via Monday.com">' . esc_textarea($monday_feedback) . '</textarea></td>';
         echo '</tr>';
         
         echo '<tr>';
-        echo '<th scope="row"><label for="_grip_mockup_asset_id">Mockup Asset ID:</label></th>';
+        echo '<th scope="row"><label for="_grip_mockup_url">Mockup URL:</label></th>';
         echo '<td>';
-        echo '<input type="text" name="_grip_mockup_asset_id" id="_grip_mockup_asset_id" value="' . esc_attr($mockup_asset_id) . '" style="width: 100%;" placeholder="Monday.com asset ID from Make.com">';
-        echo '<p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">Asset ID retrieved from Monday.com via Make.com automation</p>';
-        echo '</td>';
-        echo '</tr>';
-        
-        echo '<tr>';
-        echo '<th scope="row"><label for="_grip_mockup_asset_url">Mockup Asset URL:</label></th>';
-        echo '<td>';
-        echo '<input type="url" name="_grip_mockup_asset_url" id="_grip_mockup_asset_url" value="' . esc_attr($mockup_asset_url) . '" style="width: 100%;" placeholder="Direct URL to mockup asset">';
-        if ($mockup_asset_url) {
-            echo '<br><a href="' . esc_url($mockup_asset_url) . '" target="_blank" style="margin-top: 5px; display: inline-block;">View Asset</a>';
-        }
-        echo '<p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">Direct asset URL for display purposes</p>';
-        echo '</td>';
-        echo '</tr>';
-        
-        echo '<tr>';
-        echo '<th scope="row"><label for="_grip_mockup_url">Legacy Mockup URL:</label></th>';
-        echo '<td>';
-        echo '<input type="url" name="_grip_mockup_url" id="_grip_mockup_url" value="' . esc_attr($mockup_url) . '" style="width: 100%;" placeholder="Legacy URL to design mockup">';
+        echo '<input type="url" name="_grip_mockup_url" id="_grip_mockup_url" value="' . esc_attr($mockup_url) . '" style="width: 100%;" placeholder="URL to design mockup">';
         if ($mockup_url) {
-            echo '<br><a href="' . esc_url($mockup_url) . '" target="_blank" style="margin-top: 5px; display: inline-block;">View Legacy Mockup</a>';
+            echo '<br><a href="' . esc_url($mockup_url) . '" target="_blank" style="margin-top: 5px; display: inline-block;">View Mockup</a>';
         }
-        echo '<p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">Legacy field - kept for backward compatibility</p>';
         echo '</td>';
         echo '</tr>';
         
@@ -586,7 +452,7 @@ class TwinTack_Grip_Post_Type {
         echo '</table>';
         
         echo '<div style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-left: 4px solid #0073aa;">';
-        echo '<p><strong>Integration Note:</strong> Monday.com fields are automatically updated via Make.com scenarios. The Asset ID and Asset URL fields are populated by your Make.com automation when mockups are available.</p>';
+        echo '<p><strong>Note:</strong> Monday.com integration fields are automatically updated via Make.com scenarios. Manual changes here will be preserved until the next automation update.</p>';
         echo '</div>';
     }
     
@@ -621,21 +487,33 @@ class TwinTack_Grip_Post_Type {
             return;
         }
         
-        // Handle artwork status change (separate from post status)
+        // Handle post status change from Artwork Status meta box
         if (isset($_POST['grip_artwork_status']) && isset($_POST['grip_design_status_nonce'])) {
-            $new_artwork_status = sanitize_text_field($_POST['grip_artwork_status']);
-            $allowed_artwork_statuses = array(
-                'artwork_pending', 'pending_review', 'artwork_approved', 
-                'internal_review', 'in_production', 'shipped'
-            );
+            $new_status = sanitize_text_field($_POST['grip_artwork_status']);
+            $allowed_statuses = array('draft', 'pending', 'publish', 'private');
             
-            if (in_array($new_artwork_status, $allowed_artwork_statuses)) {
-                // Update the artwork status meta field
-                update_post_meta($post_id, '_grip_artwork_status', $new_artwork_status);
+            if (in_array($new_status, $allowed_statuses)) {
+                // Remove the save_post hook temporarily to prevent infinite loop
+                remove_action('save_post', array($this, 'save_meta_boxes'));
+                
+                // Update the post status
+                wp_update_post(array(
+                    'ID' => $post_id,
+                    'post_status' => $new_status
+                ));
                 
                 // Set a transient to show success notice
-                $status_label = $this->get_artwork_status_label($new_artwork_status);
-                set_transient('grip_artwork_status_changed_' . $post_id, $status_label, 30);
+                $status_labels = array(
+                    'draft' => 'Artwork Pending',
+                    'pending' => 'Pending Review',
+                    'publish' => 'Artwork Approved',
+                    'private' => 'Internal Review'
+                );
+                $status_label = isset($status_labels[$new_status]) ? $status_labels[$new_status] : ucfirst($new_status);
+                set_transient('grip_status_changed_' . $post_id, $status_label, 30);
+                
+                // Re-add the hook
+                add_action('save_post', array($this, 'save_meta_boxes'));
             }
         }
         
@@ -656,9 +534,7 @@ class TwinTack_Grip_Post_Type {
             '_grip_artwork_url',
             '_grip_monday_feedback',
             '_grip_mockup_url',
-            '_grip_mockup_filename',
-            '_grip_mockup_asset_id',
-            '_grip_mockup_asset_url'
+            '_grip_mockup_filename'
         );
         
         foreach ($meta_fields as $meta_key) {
@@ -685,10 +561,11 @@ class TwinTack_Grip_Post_Type {
             return $post_states;
         }
         
-        $artwork_status = get_post_meta($post->ID, '_grip_artwork_status', true) ?: 'artwork_pending';
-        $artwork_status_label = $this->get_artwork_status_label($artwork_status);
+        $status_label = function_exists('twintack_get_grip_status_label') 
+            ? twintack_get_grip_status_label(get_post_status($post->ID))
+            : get_post_status($post->ID);
         
-        $post_states['artwork_status'] = $artwork_status_label;
+        $post_states['artwork_status'] = $status_label;
         
         return $post_states;
     }
@@ -707,14 +584,14 @@ class TwinTack_Grip_Post_Type {
             return;
         }
         
-        $artwork_status_changed = get_transient('grip_artwork_status_changed_' . $post->ID);
-        if ($artwork_status_changed) {
+        $status_changed = get_transient('grip_status_changed_' . $post->ID);
+        if ($status_changed) {
             echo '<div class="notice notice-success is-dismissible">';
-            echo '<p><strong>Artwork Status Updated:</strong> Status changed to "' . esc_html($artwork_status_changed) . '"</p>';
+            echo '<p><strong>Artwork Status Updated:</strong> Status changed to "' . esc_html($status_changed) . '"</p>';
             echo '</div>';
             
             // Delete the transient so it only shows once
-            delete_transient('grip_artwork_status_changed_' . $post->ID);
+            delete_transient('grip_status_changed_' . $post->ID);
         }
     }
 }
