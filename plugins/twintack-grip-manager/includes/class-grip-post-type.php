@@ -185,6 +185,10 @@ class TwinTack_Grip_Post_Type {
                     'type' => 'string',
                     'sanitize_callback' => 'esc_url_raw',
                 ),
+                'wordpress_media_id' => array(
+                    'type' => 'integer',
+                    'sanitize_callback' => 'absint',
+                ),
                 'artwork_status' => array(
                     'type' => 'string',
                     'sanitize_callback' => 'sanitize_text_field',
@@ -211,10 +215,27 @@ class TwinTack_Grip_Post_Type {
     public function update_monday_data($request) {
         $grip_id = $request->get_param('id');
         
+        // Debug logging
+        if (WP_DEBUG) {
+            error_log('TwinTack Monday API: Attempting to update grip design ID: ' . $grip_id);
+        }
+        
         // Verify the grip design exists
         $post = get_post($grip_id);
+        
+        // Enhanced debugging
+        if (WP_DEBUG) {
+            if (!$post) {
+                error_log('TwinTack Monday API: No post found with ID: ' . $grip_id);
+            } elseif ($post->post_type !== 'grip_design') {
+                error_log('TwinTack Monday API: Post ' . $grip_id . ' exists but is type "' . $post->post_type . '", not "grip_design"');
+            } else {
+                error_log('TwinTack Monday API: Found grip design post: ' . $post->post_title);
+            }
+        }
+        
         if (!$post || $post->post_type !== 'grip_design') {
-            return new WP_Error('not_found', 'Grip design not found', array('status' => 404));
+            return new WP_Error('not_found', 'Grip design not found (ID: ' . $grip_id . ')', array('status' => 404));
         }
         
         $updated_fields = array();
@@ -238,6 +259,15 @@ class TwinTack_Grip_Post_Type {
             $asset_url = $request->get_param('mockup_asset_url');
             update_post_meta($grip_id, '_grip_mockup_asset_url', $asset_url);
             $updated_fields['mockup_asset_url'] = $asset_url;
+            
+            // If a WordPress media ID is provided, set it as featured image
+            if ($request->has_param('wordpress_media_id')) {
+                $media_id = intval($request->get_param('wordpress_media_id'));
+                if ($media_id > 0) {
+                    set_post_thumbnail($grip_id, $media_id);
+                    $updated_fields['featured_image_set'] = $media_id;
+                }
+            }
         }
         
         // Update artwork status

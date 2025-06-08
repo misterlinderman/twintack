@@ -86,9 +86,18 @@ class TwinTack_Grip_Account {
                 $artwork_status = get_post_meta(get_the_ID(), '_grip_artwork_status', true) ?: 'artwork_pending';
                 $artwork_url = get_post_meta(get_the_ID(), '_grip_artwork_url', true);
                 
-                // Check for Monday.com mockup (priority over artwork)
+                // Check for Monday.com mockup (priority: featured image > mockup asset URL > artwork)
+                $featured_image_url = get_the_post_thumbnail_url(get_the_ID(), 'large');
                 $mockup_asset_url = get_post_meta(get_the_ID(), '_grip_mockup_asset_url', true);
-                $display_url = !empty($mockup_asset_url) ? $mockup_asset_url : $artwork_url;
+                
+                if ($featured_image_url) {
+                    $display_url = $featured_image_url;
+                } elseif (!empty($mockup_asset_url) && filter_var($mockup_asset_url, FILTER_VALIDATE_URL)) {
+                    $display_url = $mockup_asset_url;
+                } else {
+                    $display_url = $artwork_url;
+                }
+                
                 $has_image = !empty($display_url) && filter_var($display_url, FILTER_VALIDATE_URL);
                 $card_class = $has_image ? 'has-artwork' : 'no-artwork';
                 $background_style = $has_image ? 'style="background-image: url(' . esc_url($display_url) . ')"' : '';
@@ -294,12 +303,36 @@ class TwinTack_Grip_Account {
 
                 <div class="grip-design-artwork">
                     <?php 
+                    $featured_image_url = get_the_post_thumbnail_url($grip_id, 'large');
                     $mockup_asset_url = get_post_meta($grip_id, '_grip_mockup_asset_url', true);
                     $artwork_url = get_post_meta($grip_id, '_grip_artwork_url', true);
                     $filename = get_post_meta($grip_id, '_grip_artwork_filename', true);
                     
-                    // Show Monday.com mockup if available
-                    if (!empty($mockup_asset_url) && filter_var($mockup_asset_url, FILTER_VALIDATE_URL)): ?>
+                    // Show mockup (priority: featured image > asset URL)
+                    if ($featured_image_url): ?>
+                        <h2>Design Mockup</h2>
+                        <div class="artwork-preview">
+                            <img src="<?php echo esc_url($featured_image_url); ?>" alt="Design Mockup">
+                        </div>
+                        <p class="artwork-actions">
+                            <strong>Status:</strong> Mockup from design team<br>
+                            <a href="<?php echo esc_url($featured_image_url); ?>" class="button" target="_blank">View Full Size</a>
+                        </p>
+                        
+                        <?php if (!empty($artwork_url) && filter_var($artwork_url, FILTER_VALIDATE_URL)): ?>
+                            <div style="margin-top: 30px;">
+                                <h3>Your Original Artwork</h3>
+                                <div class="artwork-preview secondary">
+                                    <img src="<?php echo esc_url($artwork_url); ?>" alt="Original Submitted Artwork">
+                                </div>
+                                <p class="artwork-actions">
+                                    <strong>File:</strong> <?php echo esc_html($filename); ?><br>
+                                    <a href="<?php echo esc_url($artwork_url); ?>" class="button secondary" target="_blank">View Original</a>
+                                </p>
+                            </div>
+                        <?php endif; ?>
+                        
+                    <?php elseif (!empty($mockup_asset_url) && filter_var($mockup_asset_url, FILTER_VALIDATE_URL)): ?>
                         <h2>Design Mockup</h2>
                         <div class="artwork-preview">
                             <img src="<?php echo esc_url($mockup_asset_url); ?>" alt="Design Mockup">
