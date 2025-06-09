@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Grip Manager
  * Description: Manages custom grip orders with Gravity Forms and WooCommerce integration. Features separate post/artwork status, Monday.com integration, and customer dashboard display.
- * Version: 1.5.19
+ * Version: 1.5.01
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -69,11 +69,10 @@ class TwinTack_Grip_Manager {
             TwinTack_Grip_Admin::get_instance();
         }
 
-        // Initialize account features (always load for AJAX support)
-        TwinTack_Grip_Account::get_instance();
-        
-        // Only add template hijacking prevention for frontend
+        // Initialize account features
         if (!is_admin()) {
+            TwinTack_Grip_Account::get_instance();
+            
             // Prevent theme template from hijacking our endpoint
             add_action('template_redirect', array($this, 'prevent_theme_template_hijacking'));
         }
@@ -88,7 +87,7 @@ class TwinTack_Grip_Manager {
     private function maybe_flush_rules() {
         $version_option = 'twintack_grip_manager_version';
         $current_version = get_option($version_option);
-        $plugin_version = '1.5.1';
+        $plugin_version = '1.3.6';
         
         if ($current_version !== $plugin_version) {
             // Force flush rewrite rules
@@ -163,8 +162,26 @@ class TwinTack_Grip_Manager {
             'grip-designs',
             plugins_url('assets/css/grip-designs.css', __FILE__),
             array(),
-            '1.5.1'
+            '1.5.0'
         );
+        
+        // Enqueue customer feedback JavaScript on account pages
+        if (is_account_page()) {
+            wp_enqueue_script(
+                'grip-feedback',
+                plugins_url('assets/grip-feedback.js', __FILE__),
+                array('jquery'),
+                '1.5.0',
+                true
+            );
+            
+            // Localize script with nonce for AJAX requests
+            wp_localize_script('grip-feedback', 'twintack_feedback', array(
+                'nonce' => wp_create_nonce('wp_rest'),
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'rest_url' => rest_url('twintack/v1/')
+            ));
+        }
     }
 }
 

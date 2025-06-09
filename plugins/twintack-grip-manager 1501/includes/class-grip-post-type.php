@@ -93,12 +93,6 @@ class TwinTack_Grip_Post_Type {
             '_grip_artwork_filename',
             '_grip_feedback',
             '_grip_monday_feedback',
-            '_grip_monday_item_id',
-            '_grip_customer_feedback',
-            '_grip_latest_customer_feedback',
-            '_grip_latest_customer_action',
-            '_grip_final_order_id',
-            '_grip_production_started',
             '_grip_mockup_url',
             '_grip_mockup_filename',
             '_grip_artwork_status',
@@ -161,80 +155,6 @@ class TwinTack_Grip_Post_Type {
                     'context' => array('view', 'edit'),
                 )
             ));
-
-            // Monday.com Item ID field for easier Make.com access
-            register_rest_field('grip_design', 'monday_item_id', array(
-                'get_callback' => function($post) {
-                    return get_post_meta($post['id'], '_grip_monday_item_id', true);
-                },
-                'update_callback' => function($value, $post) {
-                    return update_post_meta($post->ID, '_grip_monday_item_id', $value);
-                },
-                'schema' => array(
-                    'description' => 'Monday.com item ID for this grip design',
-                    'type' => 'string',
-                    'context' => array('view', 'edit'),
-                    'single' => true,
-                    'show_in_rest' => true,
-                )
-            ));
-
-            // Customer feedback fields for easier Make.com access
-            register_rest_field('grip_design', 'customer_feedback_history', array(
-                'get_callback' => function($post) {
-                    return get_post_meta($post['id'], '_grip_customer_feedback', true) ?: array();
-                },
-                'schema' => array(
-                    'description' => 'Complete customer feedback history array',
-                    'type' => 'array',
-                    'context' => array('view', 'edit'),
-                )
-            ));
-
-            register_rest_field('grip_design', 'latest_customer_feedback', array(
-                'get_callback' => function($post) {
-                    return get_post_meta($post['id'], '_grip_latest_customer_feedback', true);
-                },
-                'schema' => array(
-                    'description' => 'Most recent customer feedback text',
-                    'type' => 'string',
-                    'context' => array('view', 'edit'),
-                )
-            ));
-
-            register_rest_field('grip_design', 'latest_customer_action', array(
-                'get_callback' => function($post) {
-                    return get_post_meta($post['id'], '_grip_latest_customer_action', true);
-                },
-                'schema' => array(
-                    'description' => 'Most recent customer action (approve or request_changes)',
-                    'type' => 'string',
-                    'context' => array('view', 'edit'),
-                    'enum' => array('approve', 'request_changes'),
-                )
-            ));
-
-            register_rest_field('grip_design', 'final_order_id', array(
-                'get_callback' => function($post) {
-                    return get_post_meta($post['id'], '_grip_final_order_id', true);
-                },
-                'schema' => array(
-                    'description' => 'WooCommerce order ID after final purchase',
-                    'type' => 'string',
-                    'context' => array('view', 'edit'),
-                )
-            ));
-
-            register_rest_field('grip_design', 'production_started', array(
-                'get_callback' => function($post) {
-                    return get_post_meta($post['id'], '_grip_production_started', true);
-                },
-                'schema' => array(
-                    'description' => 'Production start timestamp',
-                    'type' => 'string',
-                    'context' => array('view', 'edit'),
-                )
-            ));
         } catch (Exception $e) {
             if (WP_DEBUG) {
                 error_log('Error registering artwork status fields: ' . $e->getMessage());
@@ -243,7 +163,6 @@ class TwinTack_Grip_Post_Type {
     }
 
     public function register_monday_api_endpoint() {
-        // Existing Monday.com API endpoint
         register_rest_route('twintack/v1', '/grip-design/(?P<id>\d+)/monday', array(
             'methods' => 'POST',
             'callback' => array($this, 'update_monday_data'),
@@ -257,10 +176,6 @@ class TwinTack_Grip_Post_Type {
                 'monday_feedback' => array(
                     'type' => 'string',
                     'sanitize_callback' => 'sanitize_textarea_field',
-                ),
-                'monday_item_id' => array(
-                    'type' => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
                 ),
                 'mockup_asset_id' => array(
                     'type' => 'string',
@@ -278,34 +193,6 @@ class TwinTack_Grip_Post_Type {
                     'type' => 'string',
                     'sanitize_callback' => 'sanitize_text_field',
                     'enum' => array('artwork_pending', 'pending_review', 'artwork_approved', 'internal_review', 'in_production', 'shipped'),
-                ),
-            ),
-        ));
-
-        // Customer feedback API endpoint
-        register_rest_route('twintack/v1', '/grip-design/(?P<id>\d+)/customer-feedback', array(
-            'methods' => 'POST',
-            'callback' => array($this, 'handle_customer_feedback'),
-            'permission_callback' => array($this, 'check_customer_feedback_permission'),
-            'args' => array(
-                'id' => array(
-                    'validate_callback' => function($param, $request, $key) {
-                        return is_numeric($param);
-                    }
-                ),
-            ),
-        ));
-
-        // Customer purchase completion webhook
-        register_rest_route('twintack/v1', '/grip-design/(?P<id>\d+)/purchase-complete', array(
-            'methods' => 'POST',
-            'callback' => array($this, 'handle_purchase_completion'),
-            'permission_callback' => array($this, 'check_monday_api_permission'), // Use same API key
-            'args' => array(
-                'id' => array(
-                    'validate_callback' => function($param, $request, $key) {
-                        return is_numeric($param);
-                    }
                 ),
             ),
         ));
@@ -328,27 +215,10 @@ class TwinTack_Grip_Post_Type {
     public function update_monday_data($request) {
         $grip_id = $request->get_param('id');
         
-        // Debug logging
-        if (WP_DEBUG) {
-            error_log('TwinTack Monday API: Attempting to update grip design ID: ' . $grip_id);
-        }
-        
         // Verify the grip design exists
         $post = get_post($grip_id);
-        
-        // Enhanced debugging
-        if (WP_DEBUG) {
-            if (!$post) {
-                error_log('TwinTack Monday API: No post found with ID: ' . $grip_id);
-            } elseif ($post->post_type !== 'grip_design') {
-                error_log('TwinTack Monday API: Post ' . $grip_id . ' exists but is type "' . $post->post_type . '", not "grip_design"');
-            } else {
-                error_log('TwinTack Monday API: Found grip design post: ' . $post->post_title);
-            }
-        }
-        
         if (!$post || $post->post_type !== 'grip_design') {
-            return new WP_Error('not_found', 'Grip design not found (ID: ' . $grip_id . ')', array('status' => 404));
+            return new WP_Error('not_found', 'Grip design not found', array('status' => 404));
         }
         
         $updated_fields = array();
@@ -358,13 +228,6 @@ class TwinTack_Grip_Post_Type {
             $feedback = $request->get_param('monday_feedback');
             update_post_meta($grip_id, '_grip_monday_feedback', $feedback);
             $updated_fields['monday_feedback'] = $feedback;
-        }
-        
-        // Update Monday.com item ID
-        if ($request->has_param('monday_item_id')) {
-            $item_id = $request->get_param('monday_item_id');
-            update_post_meta($grip_id, '_grip_monday_item_id', $item_id);
-            $updated_fields['monday_item_id'] = $item_id;
         }
         
         // Update mockup asset ID
@@ -487,15 +350,12 @@ class TwinTack_Grip_Post_Type {
     
     private function get_artwork_status_label($artwork_status) {
         $status_map = array(
-            'artwork_pending'            => 'Artwork Pending',
-            'pending_review'             => 'Pending Review', 
-            'customer_requested_changes' => 'Customer Requested Changes',
-            'customer_approved'          => 'Customer Approved',
-            'artwork_approved'           => 'Artwork Approved',
-            'approved_for_production'    => 'Approved for Production',
-            'internal_review'            => 'Internal Review',
-            'in_production'              => 'In Production',
-            'shipped'                    => 'Shipped'
+            'artwork_pending'   => 'Artwork Pending',
+            'pending_review'    => 'Pending Review', 
+            'artwork_approved'  => 'Artwork Approved',
+            'internal_review'   => 'Internal Review',
+            'in_production'     => 'In Production',
+            'shipped'           => 'Shipped'
         );
         
         return isset($status_map[$artwork_status]) ? $status_map[$artwork_status] : 'Artwork Pending';
@@ -545,15 +405,6 @@ class TwinTack_Grip_Post_Type {
         );
         
         add_meta_box(
-            'grip_design_customer_feedback',
-            'Customer Feedback',
-            array($this, 'render_customer_feedback_meta_box'),
-            'grip_design',
-            'normal',
-            'default'
-        );
-        
-        add_meta_box(
             'grip_design_monday',
             'Monday.com Integration',
             array($this, 'render_monday_meta_box'),
@@ -587,15 +438,12 @@ class TwinTack_Grip_Post_Type {
         echo '<select name="grip_artwork_status" id="grip_artwork_status" style="width: 100%; margin-top: 5px;">';
         
         $artwork_statuses = array(
-            'artwork_pending'            => 'Artwork Pending',
-            'pending_review'             => 'Pending Review',
-            'customer_requested_changes' => 'Customer Requested Changes',
-            'customer_approved'          => 'Customer Approved',
-            'artwork_approved'           => 'Artwork Approved',
-            'approved_for_production'    => 'Approved for Production',
-            'internal_review'            => 'Internal Review',
-            'in_production'              => 'In Production',
-            'shipped'                    => 'Shipped'
+            'artwork_pending'   => 'Artwork Pending',
+            'pending_review'    => 'Pending Review',
+            'artwork_approved'  => 'Artwork Approved',
+            'internal_review'   => 'Internal Review',
+            'in_production'     => 'In Production',
+            'shipped'           => 'Shipped'
         );
         
         foreach ($artwork_statuses as $status_value => $status_label) {
@@ -701,19 +549,12 @@ class TwinTack_Grip_Post_Type {
         wp_nonce_field('grip_design_monday_nonce', 'grip_design_monday_nonce');
         
         $monday_feedback = get_post_meta($post->ID, '_grip_monday_feedback', true);
-        $monday_item_id = get_post_meta($post->ID, '_grip_monday_item_id', true);
+        $mockup_url = get_post_meta($post->ID, '_grip_mockup_url', true);
+        $mockup_filename = get_post_meta($post->ID, '_grip_mockup_filename', true);
         $mockup_asset_id = get_post_meta($post->ID, '_grip_mockup_asset_id', true);
         $mockup_asset_url = get_post_meta($post->ID, '_grip_mockup_asset_url', true);
         
         echo '<table class="form-table">';
-        
-        echo '<tr>';
-        echo '<th scope="row"><label for="_grip_monday_item_id">Monday.com Item ID:</label></th>';
-        echo '<td>';
-        echo '<input type="text" name="_grip_monday_item_id" id="_grip_monday_item_id" value="' . esc_attr($monday_item_id) . '" style="width: 100%;" placeholder="Monday.com item ID for this grip design">';
-        echo '<p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">Used for referencing this grip design in Monday.com updates and automation</p>';
-        echo '</td>';
-        echo '</tr>';
         
         echo '<tr>';
         echo '<th scope="row"><label for="_grip_monday_feedback">Design Team Message:</label></th>';
@@ -739,91 +580,27 @@ class TwinTack_Grip_Post_Type {
         echo '</td>';
         echo '</tr>';
         
-
+        echo '<tr>';
+        echo '<th scope="row"><label for="_grip_mockup_url">Legacy Mockup URL:</label></th>';
+        echo '<td>';
+        echo '<input type="url" name="_grip_mockup_url" id="_grip_mockup_url" value="' . esc_attr($mockup_url) . '" style="width: 100%;" placeholder="Legacy URL to design mockup">';
+        if ($mockup_url) {
+            echo '<br><a href="' . esc_url($mockup_url) . '" target="_blank" style="margin-top: 5px; display: inline-block;">View Legacy Mockup</a>';
+        }
+        echo '<p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">Legacy field - kept for backward compatibility</p>';
+        echo '</td>';
+        echo '</tr>';
+        
+        echo '<tr>';
+        echo '<th scope="row"><label for="_grip_mockup_filename">Mockup Filename:</label></th>';
+        echo '<td><input type="text" name="_grip_mockup_filename" id="_grip_mockup_filename" value="' . esc_attr($mockup_filename) . '" style="width: 100%;" placeholder="Design mockup filename"></td>';
+        echo '</tr>';
         
         echo '</table>';
         
         echo '<div style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-left: 4px solid #0073aa;">';
         echo '<p><strong>Integration Note:</strong> Monday.com fields are automatically updated via Make.com scenarios. The Asset ID and Asset URL fields are populated by your Make.com automation when mockups are available.</p>';
         echo '</div>';
-    }
-    
-    /**
-     * Render customer feedback meta box
-     */
-    public function render_customer_feedback_meta_box($post) {
-        $customer_feedback = get_post_meta($post->ID, '_grip_customer_feedback', true);
-        $latest_feedback = get_post_meta($post->ID, '_grip_latest_customer_feedback', true);
-        $latest_action = get_post_meta($post->ID, '_grip_latest_customer_action', true);
-        
-        echo '<div style="margin-bottom: 20px;">';
-        
-        // Latest Customer Action
-        if ($latest_action) {
-            $action_label = ($latest_action === 'approve') ? 'Approved' : 'Requested Changes';
-            $action_color = ($latest_action === 'approve') ? '#4CAF50' : '#FF9800';
-            
-            echo '<div style="padding: 10px; background: #f9f9f9; border-left: 4px solid ' . $action_color . '; margin-bottom: 15px;">';
-            echo '<h4 style="margin: 0 0 5px 0; color: ' . $action_color . ';">Latest Customer Action: ' . $action_label . '</h4>';
-            if ($latest_feedback) {
-                echo '<p style="margin: 0; font-style: italic;">"' . esc_html($latest_feedback) . '"</p>';
-            }
-            echo '</div>';
-        }
-        
-        // Feedback History
-        echo '<h4>Customer Feedback History:</h4>';
-        
-        if ($customer_feedback && is_array($customer_feedback)) {
-            echo '<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fdfdfd;">';
-            
-            // Sort feedback by timestamp (newest first)
-            $sorted_feedback = $customer_feedback;
-            usort($sorted_feedback, function($a, $b) {
-                return strtotime($b['timestamp']) - strtotime($a['timestamp']);
-            });
-            
-            foreach ($sorted_feedback as $feedback_item) {
-                $action_label = ($feedback_item['action'] === 'approve') ? 'Approved' : 'Requested Changes';
-                $action_color = ($feedback_item['action'] === 'approve') ? '#4CAF50' : '#FF9800';
-                $timestamp = date('M j, Y g:i A', strtotime($feedback_item['timestamp']));
-                
-                echo '<div style="margin-bottom: 15px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff;">';
-                echo '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">';
-                echo '<strong style="color: ' . $action_color . ';">' . $action_label . '</strong>';
-                echo '<small style="color: #666;">' . $timestamp . '</small>';
-                echo '</div>';
-                
-                if (!empty($feedback_item['feedback'])) {
-                    echo '<p style="margin: 5px 0 0 0; padding: 8px; background: #f8f8f8; border-radius: 3px; font-style: italic;">';
-                    echo '"' . esc_html($feedback_item['feedback']) . '"';
-                    echo '</p>';
-                }
-                echo '</div>';
-            }
-            
-            echo '</div>';
-        } else {
-            echo '<p style="color: #666; font-style: italic;">No customer feedback yet.</p>';
-        }
-        
-        echo '</div>';
-        
-        // Customer Information
-        $customer_name = get_post_meta($post->ID, '_grip_customer_name', true);
-        $customer_email = get_post_meta($post->ID, '_grip_customer_email', true);
-        
-        if ($customer_name || $customer_email) {
-            echo '<div style="margin-top: 20px; padding: 10px; background: #f0f8ff; border-left: 4px solid #0073aa;">';
-            echo '<h4 style="margin: 0 0 10px 0;">Customer Information:</h4>';
-            if ($customer_name) {
-                echo '<p style="margin: 0;"><strong>Name:</strong> ' . esc_html($customer_name) . '</p>';
-            }
-            if ($customer_email) {
-                echo '<p style="margin: 5px 0 0 0;"><strong>Email:</strong> ' . esc_html($customer_email) . '</p>';
-            }
-            echo '</div>';
-        }
     }
     
     /**
@@ -862,7 +639,6 @@ class TwinTack_Grip_Post_Type {
             $new_artwork_status = sanitize_text_field($_POST['grip_artwork_status']);
             $allowed_artwork_statuses = array(
                 'artwork_pending', 'pending_review', 'artwork_approved', 
-                'customer_requested_changes', 'customer_approved', 'approved_for_production',
                 'internal_review', 'in_production', 'shipped'
             );
             
@@ -892,7 +668,8 @@ class TwinTack_Grip_Post_Type {
             '_grip_feedback',
             '_grip_artwork_url',
             '_grip_monday_feedback',
-            '_grip_monday_item_id',
+            '_grip_mockup_url',
+            '_grip_mockup_filename',
             '_grip_mockup_asset_id',
             '_grip_mockup_asset_url'
         );
@@ -952,169 +729,5 @@ class TwinTack_Grip_Post_Type {
             // Delete the transient so it only shows once
             delete_transient('grip_artwork_status_changed_' . $post->ID);
         }
-    }
-
-    /**
-     * Check permissions for customer feedback API
-     */  
-    public function check_customer_feedback_permission($request) {
-        // For customer feedback, we need to verify the customer owns this grip design
-        $grip_id = $request->get_param('id'); 
-        
-        if (!is_user_logged_in()) {
-            return new WP_Error('rest_forbidden', __('You must be logged in to provide feedback'), array('status' => 401));
-        }
-        
-        $post = get_post($grip_id);
-        if (!$post || $post->post_type !== 'grip_design') {
-            return new WP_Error('grip_not_found', __('Grip design not found'), array('status' => 404));
-        }
-        
-        // Check if current user is the customer (by email)
-        $current_user = wp_get_current_user();
-        $customer_email = get_post_meta($grip_id, '_grip_customer_email', true);
-        
-        if ($current_user->user_email !== $customer_email) {
-            return new WP_Error('rest_forbidden', __('You can only provide feedback on your own designs'), array('status' => 403));
-        }
-        
-        return true;
-    }
-
-    /**
-     * Handle customer feedback submission
-     */
-    public function handle_customer_feedback($request) {
-        $grip_id = $request->get_param('id');
-        $action = $request->get_param('action'); // 'approve' or 'request_changes'
-        $feedback = sanitize_textarea_field($request->get_param('feedback') ?: '');
-        
-        // Validate action
-        if (!in_array($action, array('approve', 'request_changes'))) {
-            return new WP_Error('invalid_action', __('Invalid action specified'), array('status' => 400));
-        }
-        
-        // Get current status
-        $current_status = get_post_meta($grip_id, '_grip_artwork_status', true);
-        if ($current_status !== 'pending_review') {
-            return new WP_Error('invalid_status', __('Design is not available for review'), array('status' => 400));
-        }
-        
-        // Update status based on action
-        $new_status = ($action === 'approve') ? 'customer_approved' : 'customer_requested_changes';
-        update_post_meta($grip_id, '_grip_artwork_status', $new_status);
-        
-        // Store customer feedback with timestamp in array format
-        $timestamp = current_time('mysql');
-        $feedback_entry = array(
-            'action' => $action,
-            'feedback' => $feedback,
-            'timestamp' => $timestamp
-        );
-        
-        // Get existing feedback history
-        $existing_feedback = get_post_meta($grip_id, '_grip_customer_feedback', true);
-        if (!is_array($existing_feedback)) {
-            $existing_feedback = array();
-        }
-        
-        // Add new feedback entry
-        $existing_feedback[] = $feedback_entry;
-        
-        update_post_meta($grip_id, '_grip_customer_feedback', $existing_feedback);
-        
-        // Store the latest feedback separately for easy access
-        update_post_meta($grip_id, '_grip_latest_customer_feedback', $feedback);
-        update_post_meta($grip_id, '_grip_latest_customer_action', $action);
-        
-        // Trigger webhook for Make.com integration
-        $this->trigger_customer_feedback_webhook($grip_id, $action, $feedback, $new_status);
-        
-        return array(
-            'success' => true,
-            'action' => $action,
-            'new_status' => $new_status,
-            'message' => ($action === 'approve') ? 
-                'Design approved! You can now purchase your custom grips.' : 
-                'Feedback submitted. Our design team will review your changes.',
-            'redirect_url' => get_permalink($grip_id)
-        );
-    }
-
-    /**
-     * Handle purchase completion webhook
-     */
-    public function handle_purchase_completion($request) {
-        $grip_id = $request->get_param('id');
-        $order_id = $request->get_param('order_id');
-        $payment_status = $request->get_param('payment_status');
-        
-        if ($payment_status === 'completed') {
-            // Update status to approved for production
-            update_post_meta($grip_id, '_grip_artwork_status', 'approved_for_production');
-            update_post_meta($grip_id, '_grip_final_order_id', $order_id);
-            
-            // Add timestamp for production tracking
-            update_post_meta($grip_id, '_grip_production_started', current_time('mysql'));
-            
-            return array(
-                'success' => true,
-                'status' => 'approved_for_production',
-                'message' => 'Order completed, design approved for production'
-            );
-        }
-        
-        return new WP_Error('invalid_payment', __('Payment not completed'), array('status' => 400));
-    }
-
-    /**
-     * Trigger webhook for Make.com when customer provides feedback
-     */
-    private function trigger_customer_feedback_webhook($grip_id, $action, $feedback, $new_status) {
-        // Get grip design details for webhook
-        $post = get_post($grip_id);
-        $customer_name = get_post_meta($grip_id, '_grip_customer_name', true);
-        $customer_email = get_post_meta($grip_id, '_grip_customer_email', true);
-        $team_name = get_post_meta($grip_id, '_grip_team_name', true);
-        $quantity = get_post_meta($grip_id, '_grip_quantity', true);
-        $monday_item_id = get_post_meta($grip_id, '_grip_monday_item_id', true);
-        
-        // Prepare webhook data
-        $webhook_data = array(
-            'grip_design_id' => $grip_id,
-            'grip_design_title' => $post->post_title,
-            'customer_action' => $action,
-            'customer_feedback' => $feedback,
-            'artwork_status' => $new_status,
-            'customer_name' => $customer_name,
-            'customer_email' => $customer_email,
-            'team_name' => $team_name,
-            'quantity' => $quantity,
-            'monday_item_id' => $monday_item_id,
-            'timestamp' => current_time('c'), // ISO 8601 format
-            'webhook_type' => 'customer_feedback'
-        );
-        
-        // Allow filtering of webhook data
-        $webhook_data = apply_filters('grip_customer_feedback_webhook_data', $webhook_data, $grip_id);
-        
-        // Allow custom webhook URLs
-        $webhook_url = apply_filters('grip_customer_feedback_webhook_url', '');
-        
-        if (!empty($webhook_url)) {
-            // Send webhook
-            wp_remote_post($webhook_url, array(
-                'headers' => array(
-                    'Content-Type' => 'application/json',
-                    'User-Agent' => 'TwinTack-Grip-Manager/1.5.0'
-                ),
-                'body' => wp_json_encode($webhook_data),
-                'timeout' => 15,
-                'blocking' => false // Don't wait for response
-            ));
-        }
-        
-        // WordPress action for custom integrations
-        do_action('grip_customer_feedback_submitted', $grip_id, $action, $feedback, $new_status, $webhook_data);
     }
 }
