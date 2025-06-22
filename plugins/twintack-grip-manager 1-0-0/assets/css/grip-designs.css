@@ -1,0 +1,55 @@
+.grip-designs-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem 0;
+}
+
+.grip-design-item {
+    border: 1px solid #ddd;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.grip-design-preview {
+    margin: 1rem 0;
+}
+
+.grip-artwork-thumbnail {
+    max-width: 100%;
+    height: auto;
+}
+
+.grip-design-status {
+    font-weight: bold;
+    color: #666;
+}
+
+.view-grip-design {
+    display: inline-block;
+    margin-top: 1rem;
+}
+
+/* Single grip design page */
+.grip-design-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.grip-design-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 1rem;
+}
+
+.grip-design-details {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+}
+
+.grip-design-artwork img {
+    max-width: 100%;
+    height: auto;
+} 

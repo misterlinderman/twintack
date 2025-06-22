@@ -7,7 +7,7 @@
 
 @media (max-width: 1450px) {
     .site-marquee {
-        min-height: 800px;
+        min-height: 93vh;
     }
 
     .corporate-nav, 
@@ -22,7 +22,7 @@
 
 @media (max-width: 1100px) {
     .site-marquee {
-        min-height: 620px;
+        min-height: 93vh;
     }
 }
 
@@ -74,10 +74,221 @@
     .site-marquee {
         min-height: 440px;
     }
+
+    .marquee-product-image {
+        max-width: 100%;
+    }
+
+    .marquee-embed {
+        position: relative;
+        height: 300px;
+    }
+
+    /* TwinTack Info Block */
+    .twintack-info-block {
+        padding: 3rem 0;
+    }
+
+    .info-block-content {
+        gap: 1.5rem;
+    }
+
+    /* TwinTack Callouts */
+    .twintack-callouts {
+        padding: 3rem 0;
+    }
+
+    .callouts-grid {
+        gap: 1.5rem;
+    }
+
+    .callout-card {
+        margin: 0 1rem;
+    }
 }
 
 @media (max-width: 600px) {
     .admin-bar .site-header.scrolled {
         top: 0;
     }
+
+    .marquee-product-image {
+        max-width: 150px;
+    }
+
+    .marquee-embed {
+        height: 200px;
+    }
+
+    /* TwinTack Info Block */
+    .twintack-info-block {
+        padding: 2rem 0;
+    }
+
+    .info-block-hero {
+        min-height: 200px;
+    }
+
+    /* TwinTack Callouts */
+    .twintack-callouts {
+        padding: 2rem 0;
+    }
+
+    .callout-card {
+        margin: 0 0.5rem;
+    }
+
+    .callout-description {
+        font-size: 1rem;
+    }
+}
+
+
+
+
+
+/* Header Responsive - iphone 14 Pro Max */
+
+@media (max-width: 430px) {
+    .site-marquee {
+        min-height: 100vh;
+    }
+
+    .marquee-slides {
+        /* position: relative; */
+        width: 100%;
+        height: 100%;
+    }
+
+    .marquee-slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        justify-content: center;
+        min-height: 550px;
+    }
+
+    .marquee-callout {
+        text-shadow: none;
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+    }
+
+    .marquee-callout h2 {
+        font-style: italic;
+        text-transform: uppercase;
+        font-size: 4rem;
+        /* top: 20%; */
+        position: relative;
+        margin: 0 auto;
+        color: white;
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        text-shadow: 4px 5px 5px black;
+    }
+
+    .marquee-product-image {
+        max-width: 100%;
+        rotate: -90deg;
+        margin: 8em 0;
+    }
+
+    .marquee-callout .callout-content {
+        font-size: 2rem;
+        font-style: normal;
+        color: black;
+        letter-spacing: -0.02em;
+        font-weight: 500;
+        background-color: rgba(255, 255, 255, .3);
+        width: fit-content;
+        margin: 0 auto;
+        padding: 1rem 1em 0;
+        transform: skew(-13deg, 0deg);
+        line-height: 2.5rem;
+        margin-bottom: .5rem;
+    }
+
+    .marquee-links {
+        transform: skew(-13deg, 0);
+    }
+
+    a.marquee-link {
+        background-color: black;
+        padding: 0px 25px;
+        border-radius: 0;
+        border: none;
+        color: white;
+        text-decoration: none;
+        box-shadow: none;
+        font-weight: 900;
+        font-size: 2em;
+        text-transform: uppercase;
+        /* font-style: italic; */
+        /* transform: skew(13deg, 0); */
+    }
+
+    .marquee-navigation {
+        position: absolute;
+        top: 90%;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2;
+        display: flex;
+        gap: 10px;
+    }
+
+
+
+    section h2 {
+        font-size: 2.5rem;
+        font-weight: 900;
+        font-style: italic;
+        text-transform: uppercase;
+        letter-spacing: -1px;
+        text-align: center;
+    }
+
+
+
+    .footer-column.footer-brand {
+        width: 100%;
+    }
+
+    .footer-about {
+        color: #aaa;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+
+    .footer-column {
+        margin-bottom: 50px;
+    }
+
+    .info-block-title {
+        font-size: 2rem;
+        font-weight: 900;
+        margin-bottom: 0.5em;
+        text-align: left;
+        color: black;
+        /* border-bottom: 2px solid; */
+        background: white;
+        transform: skew(-13deg, 0);
+        font-style: normal;
+        padding: 0 0 0 1.5rem;
+    }
+
 }

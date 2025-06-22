@@ -22,11 +22,23 @@ require_once get_template_directory() . '/inc/template-functions.php';
 require_once get_template_directory() . '/inc/customizer.php';
 require_once get_template_directory() . '/inc/class-twintack-role-pricing.php';
 require_once get_template_directory() . '/inc/class-twintack-custom-products.php';
-require_once get_template_directory() . '/inc/class-twintack-product-forms.php';
 require_once get_template_directory() . '/inc/class-category-customizer.php';
 require_once get_template_directory() . '/inc/header/class-header-configuration.php';//remove once marquee is working
 require_once get_template_directory() . '/inc/marquee/class-marquee-configuration.php';
 require_once get_template_directory() . '/inc/team/class-team-member.php';
+
+/**
+ * Custom debug logging function
+ */
+function twintack_log($message) {
+    if (WP_DEBUG === true) {
+        if (is_array($message) || is_object($message)) {
+            error_log(print_r($message, true));
+        } else {
+            error_log($message);
+        }
+    }
+}
 
 /**
  * Sets up theme defaults and registers support for various WordPress features.
@@ -136,6 +148,16 @@ function twintack2025_scripts() {
 		null
 	);
 
+	// Enqueue company page styles if using the company page template
+	if (is_page_template('page-company.php')) {
+		wp_enqueue_style(
+			'company-page-styles',
+			get_template_directory_uri() . '/css/company-page.css',
+			array(),
+			_S_VERSION
+		);
+	}
+
 	// Bootstrap
 	wp_enqueue_style(
 		'bootstrap',
@@ -172,12 +194,97 @@ function twintack2025_scripts() {
 		filemtime(get_template_directory() . '/js/header.js'),
 		true
 	);
+	
+	// Cart update script
+	if (class_exists('WooCommerce')) {
+		wp_enqueue_script(
+			'twintack2025-cart-update',
+			get_template_directory_uri() . '/js/cart-update.js',
+			array('jquery'),
+			filemtime(get_template_directory() . '/js/cart-update.js'),
+                true
+            );
+	}
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
 	}
 }
 add_action( 'wp_enqueue_scripts', 'twintack2025_scripts' );
+
+/**
+ * Add a simple admin notice if Klaviyo list ID is not set
+ */
+function twintack_check_klaviyo_credentials() {
+	// Only show to administrators
+	if (!current_user_can('manage_options')) {
+		return;
+	}
+	
+	// Get the values
+	$klaviyo_data = twintack_get_klaviyo_data();
+	$list_id = $klaviyo_data['listId'];
+	
+	// Check if list ID is missing or empty
+	if (empty($list_id)) {
+		?>
+		<div class="notice notice-warning is-dismissible">
+			<p><strong>TwinTack Klaviyo Integration:</strong> Please set your Klaviyo List ID to enable newsletter signups. <a href="<?php echo admin_url('options-general.php?page=twintack-klaviyo-settings'); ?>">Configure settings</a></p>
+		</div>
+		<?php
+	}
+}
+add_action('admin_notices', 'twintack_check_klaviyo_credentials');
+
+/**
+ * Update the Klaviyo enqueue function to use the constants
+ */
+function twintack_enqueue_klaviyo_script() {
+	// Check if required files exist before trying to get filemtime
+	$css_file = get_template_directory() . '/css/klaviyo-form.css';
+	$js_file = get_template_directory() . '/js/klaviyo-newsletter.js';
+	
+	if (!file_exists($css_file)) {
+		error_log('Klaviyo CSS file not found: ' . $css_file);
+	}
+	
+	if (!file_exists($js_file)) {
+		error_log('Klaviyo JS file not found: ' . $js_file);
+	}
+	
+	// Enqueue the CSS file
+	wp_enqueue_style(
+		'twintack-klaviyo-styles',
+		get_template_directory_uri() . '/css/klaviyo-form.css',
+		array(),
+		file_exists($css_file) ? filemtime($css_file) : _S_VERSION
+	);
+	
+	// Enqueue the JS file with jQuery dependency
+	wp_enqueue_script(
+		'twintack-klaviyo-newsletter',
+		get_template_directory_uri() . '/js/klaviyo-newsletter.js',
+		array('jquery'),
+		file_exists($js_file) ? filemtime($js_file) : _S_VERSION,
+		true
+	);
+	
+	// Get Klaviyo data from the function that checks for constants
+	$klaviyo_data = twintack_get_klaviyo_data();
+	
+	// Add AJAX URL and nonce for security
+	$klaviyo_data['ajaxUrl'] = admin_url('admin-ajax.php');
+	$klaviyo_data['nonce'] = wp_create_nonce('klaviyo_subscribe_nonce');
+	
+	// Debug output
+	if (WP_DEBUG) {
+		error_log('Klaviyo data for JS: ' . print_r($klaviyo_data, true));
+	}
+	
+	// Pass data to the script
+	wp_localize_script('twintack-klaviyo-newsletter', 'klaviyoData', $klaviyo_data);
+}
+add_action('wp_enqueue_scripts', 'twintack_enqueue_klaviyo_script');
 
 /**
  * Load Jetpack compatibility file
@@ -187,171 +294,19 @@ if ( defined( 'JETPACK__VERSION' ) ) {
 }
 
 /**
- * Add category template support
+ * Load Klaviyo integration settings
  */
-function twintack_category_template_loader($template) {
-    if (is_product_category()) {
-        $category = get_queried_object();
-        $template_name = '';
-        
-        // Check category and all parent categories for baseball/fishing
-        $term_list = get_term_parents_list($category->term_id, 'product_cat', array('format' => 'slug'));
-        
-        if (strpos($term_list, 'baseball') !== false) {
-            $template_name = 'category-baseball.php';
-        } elseif (strpos($term_list, 'fishing') !== false) {
-            $template_name = 'category-fishing.php';
-        }
-        
-        if ($template_name) {
-            $new_template = locate_template(array(
-                'templates/' . $template_name,
-                $template_name
-            ));
-            
-            if (!empty($new_template)) {
-                return $new_template;
-            }
-        }
-    }
-    return $template;
-}
-
-// Remove any existing template filters
-remove_filter('template_include', 'twintack_template_hierarchy');
-remove_filter('template_include', 'twintack_category_template');
-
-// Add our new template loader
-add_filter('template_include', 'twintack_category_template_loader', 99);
+require_once get_template_directory() . '/inc/klaviyo-settings.php';
 
 /**
- * Load header classes
+ * Load Klaviyo proxy for handling API requests
  */
-function twintack_load_header_classes() {
-    require_once get_template_directory() . '/inc/header/class-header-configuration.php';
-    require_once get_template_directory() . '/inc/header/class-header-render.php';
-    
-    // Initialize header configuration
-    Header_Configuration::get_instance();
-}
-add_action('after_setup_theme', 'twintack_load_header_classes');
-
-function twintack_category_body_class($classes) {
-    if (is_product_category() || is_product()) {
-        $term = null;
-        
-        if (is_product_category()) {
-            $term = get_queried_object();
-        } elseif (is_product()) {
-            $terms = get_the_terms(get_the_ID(), 'product_cat');
-            if ($terms) {
-                $term = reset($terms); // Get first category
-            }
-        }
-        
-        if ($term) {
-            if (strpos(strtolower($term->name), 'baseball') !== false) {
-                $classes[] = 'baseball';
-            } elseif (strpos(strtolower($term->name), 'fishing') !== false) {
-                $classes[] = 'fishing';
-            }
-        }
-    }
-    return $classes;
-}
-add_filter('body_class', 'twintack_category_body_class');
-
-/**
- * Load menu configuration
- */
-function twintack_load_menu_classes() {
-    require_once get_template_directory() . '/inc/class-menu-configuration.php';
-    
-    class TwinTack_Menu_Configuration {
-        private static $instance = null;
-        
-        public static function get_instance() {
-            if (null === self::$instance) {
-                self::$instance = new self();
-            }
-            return self::$instance;
-        }
-        
-        private function __construct() {
-            add_filter('nav_menu_css_class', array($this, 'add_menu_item_classes'), 10, 4);
-            add_filter('nav_menu_link_attributes', array($this, 'add_menu_link_attributes'), 10, 4);
-        }
-        
-        public function add_menu_item_classes($classes, $item, $args, $depth) {
-            if ('sport' === $args->theme_location) {
-                $classes[] = 'sport-menu-item';
-            }
-            return $classes;
-        }
-        
-        public function add_menu_link_attributes($atts, $item, $args, $depth) {
-            if ('sport' === $args->theme_location) {
-                $atts['class'] = isset($atts['class']) ? $atts['class'] . ' sport-menu-link' : 'sport-menu-link';
-            }
-            return $atts;
-        }
-    }
-    
-    TwinTack_Menu_Configuration::get_instance();
-}
-add_action('after_setup_theme', 'twintack_load_menu_classes');
-
-function twintack_get_category_menu($category_type) {
-    if (is_product_category() || is_shop()) {
-        $current_term = get_queried_object();
-        $category_base = '';
-        
-        // Check if current category or its ancestors are baseball/fishing
-        if ($current_term && isset($current_term->term_id)) {
-            $ancestors = get_ancestors($current_term->term_id, 'product_cat');
-            $all_terms = array_merge([$current_term->term_id], $ancestors);
-            
-            foreach ($all_terms as $term_id) {
-                $term = get_term($term_id, 'product_cat');
-                if (strpos(strtolower($term->name), $category_type) !== false) {
-                    $category_base = $category_type;
-                    break;
-                }
-            }
-        }
-        
-        if ($category_base) {
-            get_template_part('template-parts/navigation/category', $category_base);
-        }
-    }
-}
-
-function twintack_body_classes($classes) {
-    // Add admin-bar class if admin bar is showing
-    if (is_admin_bar_showing()) {
-        $classes[] = 'has-admin-bar';
-    }
-    
-    return $classes;
-}
-add_filter('body_class', 'twintack_body_classes');
+require_once get_template_directory() . '/inc/klaviyo-proxy.php';
 
 function twintack2025_enqueue_fonts() {
-    wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap', array(), null);
+    wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@100;200;300;400;500;600;700;800;900&display=swap', array(), null);
 }
 add_action('wp_enqueue_scripts', 'twintack2025_enqueue_fonts');
-
-function twintack_load_variation_display() {
-    require_once get_template_directory() . '/inc/class-variation-display.php';
-    TwinTack_Variation_Display::get_instance();
-}
-add_action('after_setup_theme', 'twintack_load_variation_display');
-
-// Add the image size to the existing function
-add_action('after_setup_theme', function() {
-    // Add variation image size
-    add_image_size('variation-thumbnail', 300, 300, true);
-});
 
 function twintack_locate_variation_template($template, $template_name, $template_path) {
     if ($template_name === 'content-product-variation.php') {
@@ -394,7 +349,7 @@ class TwinTack_Category_Display {
         
         echo '<div class="product-variation">';
         echo '<a class="product-variation-link" href="' . esc_url(add_query_arg('variation_id', $variation['variation_id'], get_permalink($product->get_id()))) . '">';
-        echo wp_get_attachment_image($variation['image_id'], 'woocommerce_thumbnail');
+        echo wp_get_attachment_image($variation['image_id'], 'woocommerce_thumbnail', false, array('class' => 'attachment-woocommerce_thumbnail size-woocommerce_thumbnail'));
         echo '<h2 class="woocommerce-loop-product__title">';
         echo esc_html($product->get_title());
         if (!empty($variation['attributes'])) {
@@ -612,11 +567,21 @@ add_filter( 'login_headerurl', 'twintack_login_logo_url' );
 
 // Handle role-based login redirects
 function twintack_login_redirect( $redirect, $user ) {
+    // Debug information
+    if (WP_DEBUG === true) {
+        error_log('Login redirect triggered for user: ' . $user->user_login);
+        error_log('Default redirect: ' . $redirect);
+        error_log('REQUEST redirect_to: ' . (isset($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : 'Not set'));
+    }
+    
     // If there's a specific redirect_to parameter and it's a valid URL, use it
     if ( isset( $_REQUEST['redirect_to'] ) && ! empty( $_REQUEST['redirect_to'] ) ) {
         $redirect_to = $_REQUEST['redirect_to'];
         // Make sure it's a safe URL (on the same domain)
         if ( wp_validate_redirect( $redirect_to ) ) {
+            if (WP_DEBUG === true) {
+                error_log('Using redirect_to parameter: ' . $redirect_to);
+            }
             return $redirect_to;
         }
     }
@@ -626,14 +591,30 @@ function twintack_login_redirect( $redirect, $user ) {
     
     // Redirect based on user role
     if ( in_array( 'wholesale_customer', $user_roles ) ) {
-        return apply_filters( 'twintack_wholesale_dashboard_url', site_url( '/wholesale-dashboard/' ) );
+        $wholesale_url = apply_filters( 'twintack_wholesale_dashboard_url', site_url( '/wholesale-dashboard/' ) );
+        if (WP_DEBUG === true) {
+            error_log('Redirecting wholesale user to: ' . $wholesale_url);
+        }
+        return $wholesale_url;
     } elseif ( in_array( 'affiliate', $user_roles ) ) {
-        return apply_filters( 'twintack_affiliate_dashboard_url', site_url( '/affiliate-dashboard/' ) );
+        $affiliate_url = apply_filters( 'twintack_affiliate_dashboard_url', site_url( '/affiliate-dashboard/' ) );
+        if (WP_DEBUG === true) {
+            error_log('Redirecting affiliate user to: ' . $affiliate_url);
+        }
+        return $affiliate_url;
     } elseif ( in_array( 'administrator', $user_roles ) ) {
-        return admin_url();
+        $admin_url = admin_url();
+        if (WP_DEBUG === true) {
+            error_log('Redirecting admin user to: ' . $admin_url);
+        }
+        return $admin_url;
     } else {
         // Regular customers go to the WooCommerce my account page
-        return wc_get_page_permalink( 'myaccount' );
+        $account_url = wc_get_page_permalink( 'myaccount' );
+        if (WP_DEBUG === true) {
+            error_log('Redirecting customer user to: ' . $account_url);
+        }
+        return $account_url;
     }
 }
 add_filter( 'login_redirect', 'twintack_login_redirect', 10, 2 );
@@ -667,11 +648,23 @@ function twintack_process_registration( $customer_id, $new_customer_data, $passw
                 // Keep the default customer role
                 break;
         }
+        
+        // Force password generation if it wasn't generated
+        if ( !$password_generated ) {
+            // Generate a password
+            $password = wp_generate_password();
+            
+            // Set the user's password
+            wp_set_password( $password, $customer_id );
+            
+            // Trigger the new user notification manually
+            wp_new_user_notification( $customer_id, null, 'user' );
+        }
     }
 }
 add_action( 'woocommerce_created_customer', 'twintack_process_registration', 10, 3 );
 
-// Add custom styles for the login page
+// Update login styles to include the password reset forms
 function twintack_login_styles() {
     if ( is_page( 'login' ) ) {
         ?>
@@ -706,6 +699,56 @@ function twintack_login_styles() {
             }
             .nav-tabs {
                 margin-bottom: 20px;
+            }
+            .woocommerce-message, 
+            .woocommerce-error, 
+            .woocommerce-info {
+                padding: 1em 1.5em;
+                margin: 0 0 2em;
+                position: relative;
+                background-color: #f7f6f7;
+                color: #515151;
+                border-top: 3px solid #a46497;
+                list-style: none outside;
+                width: auto;
+                word-wrap: break-word;
+                border-radius: 4px;
+            }
+            .woocommerce-message {
+                border-top-color: #8fae1b;
+            }
+            .woocommerce-error {
+                border-top-color: #b81c23;
+            }
+            .return-to-login {
+                text-align: center;
+                margin-top: 20px;
+            }
+            .password-info-message {
+                background-color: #f8f8f8;
+                padding: 10px 15px;
+                border-left: 3px solid #2271b1;
+                margin: 15px 0;
+                border-radius: 3px;
+            }
+            /* Password reset form specific styles */
+            .password-strength,
+            .password-match {
+                margin-top: 5px;
+                font-size: 0.9em;
+            }
+            .twintack-reset-password-form input[type="password"] {
+                border: 1px solid #ddd;
+                padding: 10px;
+                border-radius: 4px;
+                width: 100%;
+            }
+            .twintack-reset-password-form .woocommerce-Button {
+                margin-top: 15px;
+            }
+            /* Fix for console errors with missing resources */
+            .woocommerce-error {
+                list-style-type: none !important;
             }
         </style>
         <?php
@@ -776,34 +819,6 @@ function twintack_product_display_scripts() {
 add_action('wp_enqueue_scripts', 'twintack_product_display_scripts');
 
 /**
- * Add Display Type custom field to WooCommerce products
- */
-function twintack_add_display_type_field() {
-    woocommerce_wp_select(
-        array(
-            'id'          => 'display_type',
-            'label'       => __('Display Type', 'twintack2025'),
-            'description' => __('Choose how this product should be displayed in the shop', 'twintack2025'),
-            'desc_tip'    => true,
-            'options'     => array(
-                ''              => __('Standard Grid (Default)', 'twintack2025'),
-                'grip_carousel' => __('Grip Carousel', 'twintack2025')
-            )
-        )
-    );
-}
-add_action('woocommerce_product_options_general_product_data', 'twintack_add_display_type_field');
-
-/**
- * Save Display Type custom field
- */
-function twintack_save_display_type_field($post_id) {
-    $display_type = isset($_POST['display_type']) ? $_POST['display_type'] : '';
-    update_post_meta($post_id, 'display_type', $display_type);
-}
-add_action('woocommerce_process_product_meta', 'twintack_save_display_type_field');
-
-/**
  * Modify WooCommerce query to show all products without pagination
  */
 function twintack_show_all_products($query) {
@@ -829,79 +844,6 @@ function twintack_remove_pagination() {
     }
 }
 add_action('woocommerce_before_shop_loop', 'twintack_remove_pagination', 5);
-
-/**
- * Add custom image sizes for different product displays
- */
-function twintack_add_custom_image_sizes() {
-    // Add image size specifically for grip products in the carousel
-    // Taller, narrower image optimized for the vertical bat-rack style display
-    add_image_size('grip-carousel', 200, 600, false); // Width: 200px, Height: 600px, Soft crop
-    
-    // Standard product grid image (square format)
-    add_image_size('product-grid', 400, 400, true); // Width: 400px, Height: 400px, Hard crop
-}
-add_action('after_setup_theme', 'twintack_add_custom_image_sizes');
-
-/**
- * Add the custom image sizes to the media library dropdown
- */
-function twintack_custom_image_sizes_names($sizes) {
-    return array_merge($sizes, array(
-        'grip-carousel' => __('Grip Carousel Image', 'twintack2025'),
-        'product-grid' => __('Product Grid Image', 'twintack2025')
-    ));
-}
-add_filter('image_size_names_choose', 'twintack_custom_image_sizes_names');
-
-/**
- * Add admin notice to regenerate thumbnails after adding new image sizes
- */
-function twintack_thumbnail_notice() {
-    // Only show to administrators
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-    
-    // Check if we've already dismissed this notice
-    if (get_option('twintack_thumbnail_notice_dismissed')) {
-        return;
-    }
-    
-    ?>
-    <div class="notice notice-warning is-dismissible" id="twintack-thumbnail-notice">
-        <p>
-            <strong>TwinTack:</strong> New product image sizes have been added. 
-            <a href="<?php echo esc_url(admin_url('admin.php?page=wc-status&tab=tools')); ?>">
-                Please regenerate your thumbnails
-            </a> 
-            to ensure all products display correctly.
-        </p>
-    </div>
-    <script>
-        jQuery(document).ready(function($) {
-            $(document).on('click', '#twintack-thumbnail-notice .notice-dismiss', function() {
-                $.ajax({
-                    url: ajaxurl,
-                    data: {
-                        action: 'dismiss_thumbnail_notice'
-                    }
-                });
-            });
-        });
-    </script>
-    <?php
-}
-add_action('admin_notices', 'twintack_thumbnail_notice');
-
-/**
- * AJAX handler to dismiss the thumbnail notice
- */
-function twintack_dismiss_thumbnail_notice() {
-    update_option('twintack_thumbnail_notice_dismissed', true);
-    wp_die();
-}
-add_action('wp_ajax_dismiss_thumbnail_notice', 'twintack_dismiss_thumbnail_notice');
 
 /**
  * Handle product filtering based on attributes
@@ -1018,3 +960,706 @@ function twintack_flush_rules() {
     }
 }
 add_action('init', 'twintack_flush_rules', 20);
+
+/**
+ * Display a single product variation in the product loop
+ * 
+ * @param array $variation The variation data
+ * @param WC_Product $product The parent product
+ */
+function twintack_display_single_variation($variation, $product) {
+    $variation_obj = wc_get_product($variation['variation_id']);
+    if (!$variation_obj) return;
+    
+    echo '<li class="product product-variation type-product">';
+    echo '<a class="product-variation-link woocommerce-LoopProduct-link" href="' . esc_url(add_query_arg('variation_id', $variation['variation_id'], get_permalink($product->get_id()))) . '">';
+    
+    // Display sale flash if on sale
+    if ($variation_obj->is_on_sale()) {
+        echo '<span class="onsale">' . esc_html__('Sale!', 'woocommerce') . '</span>';
+    }
+    
+    // Display variation image
+    echo wp_get_attachment_image($variation['image_id'], 'woocommerce_thumbnail', false, array('class' => 'attachment-woocommerce_thumbnail size-woocommerce_thumbnail'));
+    
+    // Display product title with variation attributes
+    echo '<h2 class="woocommerce-loop-product__title">';
+    echo esc_html($product->get_title());
+    if (!empty($variation['attributes'])) {
+        echo ' - ' . implode(', ', array_values($variation['attributes']));
+    }
+    echo '</h2>';
+    
+    // Display price
+    echo '<span class="price">' . $variation_obj->get_price_html() . '</span>';
+    
+    echo '</a>';
+    echo '</li>';
+}
+
+/**
+ * Redirect product category pages to shop page with category filter
+ * This ensures category pages use the same layout as the shop page
+ */
+function twintack_redirect_product_categories_to_shop() {
+    // Only run on product category pages and not on the shop page
+    if (is_product_category() && !is_shop()) {
+        // Check if we're already on a redirected URL to prevent loops
+        if (isset($_GET['redirected_from_category'])) {
+            return;
+        }
+        
+        // Get current category
+        $category = get_queried_object();
+        
+        // Build the redirect URL
+        $redirect_url = add_query_arg(
+            array(
+                'product_cat' => $category->slug,
+                'redirected_from_category' => '1' // Add a flag to prevent redirect loops
+            ),
+            get_permalink(wc_get_page_id('shop'))
+        );
+        
+        // Preserve any existing query parameters
+        foreach ($_GET as $key => $value) {
+            if ($key !== 'product_cat' && $key !== 'redirected_from_category') {
+                $redirect_url = add_query_arg($key, $value, $redirect_url);
+            }
+        }
+        
+        // Redirect
+        wp_safe_redirect($redirect_url);
+        exit;
+    }
+}
+add_action('template_redirect', 'twintack_redirect_product_categories_to_shop', 5); // Lower priority to run early
+
+require get_template_directory() . '/inc/how-to-videos.php';
+
+function twintack_enqueue_video_modal_styles() {
+    if (is_product()) {
+        wp_enqueue_style(
+            'twintack-video-modal',
+            get_template_directory_uri() . '/css/components/_how-to-videos.css',
+            array(),
+            '1.0.0'
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'twintack_enqueue_video_modal_styles');
+
+// Add this to your theme's functions.php or a debugging plugin
+add_action('gform_after_submission', function($entry, $form) {
+    error_log('Form submitted: ' . print_r($entry, true));
+}, 10, 2);
+
+// Fix password reset URL to use our custom login page
+function twintack_custom_reset_password_url( $default_url, $user_id = null ) {
+    // Get our custom login page URL
+    $login_url = site_url( '/login/' );
+    
+    // Ensure we're only modifying the reset password URL
+    if ( strpos( $default_url, 'action=rp' ) !== false ) {
+        // Extract the key and login from the default URL
+        $parts = parse_url( $default_url );
+        parse_str( $parts['query'], $query );
+        
+        if ( isset( $query['key'] ) && isset( $query['login'] ) ) {
+            // Reconstruct the URL with our login page
+            $login_url = add_query_arg( array(
+                'action' => 'rp',
+                'key'    => $query['key'],
+                'login'  => $query['login'],
+            ), $login_url );
+            
+            return $login_url;
+        }
+    }
+    
+    return $default_url;
+}
+add_filter( 'lostpassword_url', 'twintack_custom_reset_password_url', 20, 1 );
+add_filter( 'woocommerce_get_endpoint_url', 'twintack_fix_password_reset_endpoint', 10, 4 );
+
+function twintack_fix_password_reset_endpoint( $url, $endpoint, $value, $permalink ) {
+    if ( $endpoint === 'lost-password' ) {
+        return site_url( '/login/?action=lostpassword' );
+    }
+    
+    return $url;
+}
+
+// Redirect WooCommerce account page to custom login for non-logged in users
+function twintack_redirect_account_page() {
+    // Only apply on the my-account page
+    if ( ! is_user_logged_in() && is_account_page() && ! is_wc_endpoint_url() ) {
+        // Redirect to our custom login page
+        wp_redirect( site_url( '/login/' ) );
+        exit;
+    }
+}
+add_action( 'template_redirect', 'twintack_redirect_account_page' );
+
+// Add registration success redirection
+function twintack_registration_redirect( $redirect_to ) {
+    // Modify only if this is a registration
+    if ( isset( $_POST['register'] ) ) {
+        return add_query_arg( 'registered', 'success', site_url( '/login/' ) );
+    }
+    
+    return $redirect_to;
+}
+add_filter( 'woocommerce_registration_redirect', 'twintack_registration_redirect', 10, 1 );
+
+/**
+ * Fix the user notification email to use our custom password reset URL format
+ */
+function twintack_custom_password_reset_email( $message, $key, $user_login, $user_data ) {
+    // Build the reset URL to point to our custom login page
+    $reset_url = add_query_arg(
+        array(
+            'action' => 'resetpass',
+            'key'    => $key,
+            'login'  => rawurlencode( $user_login ),
+        ),
+        site_url( '/login/' )
+    );
+    
+    // Replace the default URL in the email with our custom URL
+    $message = str_replace(
+        network_site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user_login ), 'login' ),
+        esc_url_raw( $reset_url ),
+        $message
+    );
+    
+    // Additional replacement to catch other URL formats
+    $message = str_replace(
+        site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user_login ) ),
+        esc_url_raw( $reset_url ),
+        $message
+    );
+    
+    // Log for debugging
+    if (WP_DEBUG === true) {
+        error_log('Password reset email URL: ' . $reset_url);
+    }
+    
+    return $message;
+}
+add_filter( 'retrieve_password_message', 'twintack_custom_password_reset_email', 10, 4 );
+
+// Also fix the wp_new_user_notification_email filter
+function twintack_custom_new_user_notification_email( $wp_new_user_notification_email, $user, $blogname ) {
+    // Get the key
+    $key = get_password_reset_key( $user );
+    
+    if ( is_wp_error( $key ) ) {
+        return $wp_new_user_notification_email;
+    }
+    
+    // Build the reset URL to point to our custom login page with a clearer action
+    $reset_url = add_query_arg(
+        array(
+            'action' => 'setup_password', // Using a more distinctive action name
+            'key'    => $key,
+            'login'  => rawurlencode( $user->user_login ),
+        ),
+        site_url( '/login/' )
+    );
+    
+    // Replace the default URL in the email with our custom URL
+    $wp_new_user_notification_email['message'] = str_replace(
+        network_site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user->user_login ), 'login' ), 
+        esc_url_raw( $reset_url ),
+        $wp_new_user_notification_email['message']
+    );
+    
+    // Additional replacement to catch other URL formats
+    $wp_new_user_notification_email['message'] = str_replace(
+        site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user->user_login ) ),
+        esc_url_raw( $reset_url ),
+        $wp_new_user_notification_email['message']
+    );
+    
+    // Log the email message for debugging
+    if (WP_DEBUG === true) {
+        error_log('New user reset URL in email: ' . $reset_url);
+        error_log('Email message contains reset URL: ' . (strpos($wp_new_user_notification_email['message'], $reset_url) !== false ? 'Yes' : 'No'));
+    }
+    
+    return $wp_new_user_notification_email;
+}
+add_filter( 'wp_new_user_notification_email', 'twintack_custom_new_user_notification_email', 10, 3 );
+
+// Hook into password reset to debug the process
+function twintack_debug_password_reset($user_login) {
+    twintack_log('Password reset requested for: ' . $user_login);
+    
+    $user = get_user_by('login', $user_login);
+    if ($user) {
+        // Get the key that was generated
+        $key = get_transient('retrieve_key_for_' . $user->ID);
+        if ($key) {
+            twintack_log('Generated reset key: ' . $key);
+        }
+    }
+}
+add_action('retrieve_password', 'twintack_debug_password_reset');
+
+// Include the password reset helper functions
+require_once get_template_directory() . '/inc/password-reset-helper.php';
+
+/**
+ * Enqueue password reset script
+ */
+function twintack_enqueue_password_reset_script() {
+    if (is_page('login') && isset($_GET['action']) && ($_GET['action'] === 'rp' || $_GET['action'] === 'resetpass')) {
+        wp_enqueue_script(
+            'twintack-password-reset',
+            get_template_directory_uri() . '/js/password-reset.js',
+            array('jquery'),
+            filemtime(get_template_directory() . '/js/password-reset.js'),
+            true
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'twintack_enqueue_password_reset_script');
+
+/**
+ * Force redirect after WooCommerce login
+ * This ensures our custom login form always redirects correctly
+ */
+function twintack_force_login_redirect($user_login, $user) {
+    // Don't redirect during AJAX requests
+    if (defined('DOING_AJAX') && DOING_AJAX) {
+        return;
+    }
+    
+    if (WP_DEBUG === true) {
+        error_log('User logged in: ' . $user_login);
+    }
+    
+    // Get the appropriate redirect URL based on user role
+    $redirect_url = twintack_login_redirect('', $user);
+    
+    // Only redirect if we have a valid URL
+    if (!empty($redirect_url)) {
+        if (WP_DEBUG === true) {
+            error_log('Forcing redirect to: ' . $redirect_url);
+        }
+        wp_safe_redirect($redirect_url);
+        exit;
+    }
+}
+add_action('wp_login', 'twintack_force_login_redirect', 10, 2);
+
+/**
+ * Register WooCommerce account endpoints
+ */
+function twintack_register_woocommerce_endpoints() {
+    // Register standard WooCommerce endpoints
+    add_rewrite_endpoint('orders', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('view-order', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('downloads', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('edit-account', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('edit-address', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('payment-methods', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('customer-logout', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('add-payment-method', EP_ROOT | EP_PAGES);
+    
+    // This is important - you'll need to flush rewrite rules once
+    // But don't do this on every page load as it's expensive
+    // Uncomment this only when you're making changes to endpoints
+    // flush_rewrite_rules();
+}
+add_action('init', 'twintack_register_woocommerce_endpoints');
+
+/**
+ * Fix WooCommerce endpoint URLs
+ * This ensures account endpoint URLs are properly constructed
+ */
+function twintack_fix_account_endpoints($url, $endpoint, $value, $permalink) {
+    // Check if the URL incorrectly contains /login/ for account endpoints
+    if (strpos($url, '/login/') !== false && 
+        in_array($endpoint, ['orders', 'view-order', 'downloads', 'edit-account', 'edit-address', 
+                             'payment-methods', 'customer-logout', 'add-payment-method', 'grip-designs'])) {
+        
+        // Get the my account page URL
+        $my_account_url = wc_get_page_permalink('myaccount');
+        
+        // Reconstruct the URL properly
+        if ($value) {
+            $url = trailingslashit($my_account_url) . trailingslashit($endpoint) . $value;
+        } else {
+            $url = trailingslashit($my_account_url) . $endpoint;
+        }
+    }
+    
+    return $url;
+}
+add_filter('woocommerce_get_endpoint_url', 'twintack_fix_account_endpoints', 20, 4);
+
+/**
+ * Advanced override of WooCommerce endpoint URLs
+ * Use this if the regular approach doesn't work
+ */
+function twintack_force_correct_account_urls() {
+    // Only run this on front-end requests
+    if (is_admin()) {
+        return;
+    }
+    
+    // Get the Account page ID and URL
+    $account_page_id = wc_get_page_id('myaccount');
+    if ($account_page_id <= 0) {
+        return;
+    }
+    
+    // Get the account page URL
+    $account_page_url = get_permalink($account_page_id);
+    if (!$account_page_url) {
+        return;
+    }
+    
+    // Make sure it's using the correct URL structure
+    global $woocommerce;
+    
+    // Force the account page URL to be the correct one
+    add_filter('woocommerce_get_myaccount_page_permalink', function() use ($account_page_url) {
+        return $account_page_url;
+    }, 999);
+    
+    // Override all endpoint URLs with high priority
+    add_filter('woocommerce_get_endpoint_url', function($url, $endpoint, $value, $permalink) use ($account_page_url) {
+        // Don't modify lost-password endpoint as that's handled by custom login
+        if ($endpoint === 'lost-password') {
+            return $url;
+        }
+        
+        // Rebuild the endpoint URL using the correct account page
+        if ($value) {
+            return trailingslashit($account_page_url) . trailingslashit($endpoint) . $value;
+        } else {
+            return trailingslashit($account_page_url) . $endpoint;
+        }
+    }, 999, 4);
+}
+add_action('init', 'twintack_force_correct_account_urls', 5);
+
+/**
+ * Debug WooCommerce account URLs
+ * Add ?debug_account=1 to any page to see the current endpoints and URLs
+ */
+function twintack_debug_account_urls() {
+    if (!isset($_GET['debug_account']) || $_GET['debug_account'] != 1) {
+        return;
+    }
+    
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    
+    // Get account page info
+    $account_page_id = wc_get_page_id('myaccount');
+    $account_page_url = get_permalink($account_page_id);
+    
+    echo '<div style="background:#fff; padding:20px; margin:20px; border:1px solid #ccc;">';
+    echo '<h2>WooCommerce Account Debug</h2>';
+    echo '<p>Account Page ID: ' . $account_page_id . '</p>';
+    echo '<p>Account Page URL: ' . $account_page_url . '</p>';
+    
+    // Check if this page exists
+    $account_page = get_post($account_page_id);
+    echo '<p>Account Page Status: ' . ($account_page ? $account_page->post_status : 'Not found') . '</p>';
+    
+    // Get all endpoints
+    $endpoints = array(
+        'orders',
+        'view-order',
+        'downloads',
+        'edit-account',
+        'edit-address',
+        'payment-methods',
+        'customer-logout',
+        'add-payment-method',
+        'grip-designs'
+    );
+    
+    echo '<h3>Endpoint URLs:</h3>';
+    echo '<ul>';
+    foreach ($endpoints as $endpoint) {
+        $url = wc_get_account_endpoint_url($endpoint);
+        echo '<li><strong>' . $endpoint . ':</strong> ' . $url . '</li>';
+    }
+    echo '</ul>';
+    
+    echo '<h3>Is WC Endpoint:</h3>';
+    foreach ($endpoints as $endpoint) {
+        echo '<li><strong>' . $endpoint . ':</strong> ' . (WC()->query->get_current_endpoint() === $endpoint ? 'Yes' : 'No') . '</li>';
+    }
+    
+    echo '<h3>Permalink Structure:</h3>';
+    echo '<p>' . get_option('permalink_structure') . '</p>';
+    
+    echo '</div>';
+    exit;
+}
+add_action('wp_loaded', 'twintack_debug_account_urls', 999);
+
+/**
+ * Check if WooCommerce pages exist and create them if not
+ */
+function twintack_check_woocommerce_pages() {
+    // Add ?create_wc_pages=1 to any admin URL to force checking and creating pages
+    if (is_admin() && isset($_GET['create_wc_pages']) && $_GET['create_wc_pages'] == 1 && current_user_can('manage_options')) {
+        // This will install all WooCommerce pages, including My Account
+        WC_Install::create_pages();
+        
+        // Redirect to admin with success message
+        wp_redirect(admin_url('admin.php?page=wc-settings&tab=advanced&section=page_setup&wc_pages_created=1'));
+        exit;
+    }
+    
+    // Add admin notice if My Account page doesn't exist or is in trash
+    if (is_admin() && current_user_can('manage_options')) {
+        $account_page_id = wc_get_page_id('myaccount');
+        $account_page = get_post($account_page_id);
+        
+        if (!$account_page || $account_page->post_status !== 'publish') {
+            add_action('admin_notices', function() {
+                ?>
+                <div class="notice notice-error">
+                    <p>The WooCommerce My Account page doesn't exist or is not published. <a href="<?php echo admin_url('?create_wc_pages=1'); ?>">Click here to create WooCommerce pages</a></p>
+                </div>
+                <?php
+            });
+        }
+    }
+}
+add_action('init', 'twintack_check_woocommerce_pages');
+
+/**
+ * Add JavaScript to fix account links on the frontend
+ * This is a client-side solution that will correct all links regardless of how they're generated
+ */
+function twintack_fix_account_links_js() {
+    // Only add on the frontend
+    if (is_admin()) {
+        return;
+    }
+    
+    // Only add on account pages or pages that might contain account links
+    if (!is_account_page() && !is_front_page() && !is_page()) {
+        return;
+    }
+    
+    // Get the correct account page URL
+    $account_url = wc_get_page_permalink('myaccount');
+    if (!$account_url) {
+        return;
+    }
+    
+    // Make sure it ends with a slash
+    $account_url = trailingslashit($account_url);
+    
+    // Add JavaScript to fix all account links
+    ?>
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all links in the navigation
+        var accountLinks = document.querySelectorAll('.woocommerce-MyAccount-navigation a');
+        var correctAccountBaseUrl = '<?php echo esc_js($account_url); ?>';
+        
+        // Process each link
+        accountLinks.forEach(function(link) {
+            var href = link.getAttribute('href');
+            
+            // If the link contains /login/ and is an account endpoint, fix it
+            if (href && href.indexOf('/login/') !== -1) {
+                // Extract the endpoint from the URL
+                var urlParts = href.split('/');
+                var endpoint = '';
+                
+                // Find the endpoint part (usually after "login")
+                for (var i = 0; i < urlParts.length; i++) {
+                    if (urlParts[i] === 'login' && i + 1 < urlParts.length) {
+                        endpoint = urlParts[i + 1];
+                        break;
+                    }
+                }
+                
+                // If we found an endpoint, rebuild the URL
+                if (endpoint) {
+                    if (endpoint === 'customer-logout') {
+                        // Special case for logout - keep WC nonce
+                        var logoutUrl = href;
+                        if (logoutUrl.indexOf('?') !== -1) {
+                            // Keep the query string (contains the nonce)
+                            var queryString = logoutUrl.split('?')[1];
+                            link.setAttribute('href', correctAccountBaseUrl + 'customer-logout/?' + queryString);
+                        } else {
+                            link.setAttribute('href', correctAccountBaseUrl + 'customer-logout/');
+                        }
+                    } else {
+                        // Regular endpoints
+                        link.setAttribute('href', correctAccountBaseUrl + endpoint + '/');
+                    }
+                } else if (href.indexOf('login/?action=lostpassword') !== -1) {
+                    // Lost password link - keep it as is
+                } else {
+                    // Fix dashboard link
+                    link.setAttribute('href', correctAccountBaseUrl);
+                }
+            }
+        });
+    });
+    </script>
+    <?php
+}
+add_action('wp_footer', 'twintack_fix_account_links_js');
+
+/**
+ * Function to flush rewrite rules when needed
+ * This should only be run once after changing endpoints
+ */
+function twintack_flush_rewrite_rules() {
+    // Call the function that registers endpoints
+    twintack_register_woocommerce_endpoints();
+    
+    // Flush the rules
+    flush_rewrite_rules();
+}
+// Run this once, then comment it out again to avoid performance issues
+add_action('init', 'twintack_flush_rewrite_rules', 20);
+
+/**
+ * Include Carousel functionality files
+ */
+require get_template_directory() . '/inc/carousel-post-type.php';
+require get_template_directory() . '/inc/carousel-admin.php';
+require get_template_directory() . '/inc/carousel-integration.php';
+
+/**
+ * Customize My Account menu items
+ */
+function twintack_customize_account_menu_items($items) {
+    $new_items = array();
+    
+    // Copy existing items
+    foreach ($items as $key => $value) {
+        $new_items[$key] = $value;
+    }
+    
+    // Add wholesale-specific menu items for wholesale users
+    if (current_user_can('wholesale_customer')) {
+        $new_items['wholesale-orderforms'] = __('Order Forms', 'twintack2025');
+    }
+    
+    return $new_items;
+}
+add_filter('woocommerce_account_menu_items', 'twintack_customize_account_menu_items');
+
+/**
+ * Add custom endpoint for wholesale order forms
+ */
+function twintack_add_wholesale_endpoint() {
+    add_rewrite_endpoint('wholesale-orderforms', EP_ROOT | EP_PAGES);
+}
+add_action('init', 'twintack_add_wholesale_endpoint');
+
+/**
+ * Add wholesale orderforms content
+ */
+function twintack_wholesale_orderforms_content() {
+    ?>
+    <div class="wholesale-orderforms-wrapper">
+        <h2><?php _e('Order Forms', 'twintack2025'); ?></h2>
+        <div class="orderforms-grid">
+            <?php
+            // Get your order form links/content here
+            $orderforms = array(
+                array(
+                    'title' => 'Baseball Order Form',
+                    'description' => 'Order baseball grips and accessories',
+                    'link' => home_url('/wholesale-ordering/'),
+                ),
+                array(
+                    'title' => 'Fishing Order Form',
+                    'description' => 'Order fishing grips and accessories',
+                    'link' => home_url('/wholesale-fishing-ordering/'),
+                ),
+                // Add more order forms as needed
+            );
+
+            foreach ($orderforms as $form) : ?>
+                <div class="orderform-card">
+                    <h3><?php echo esc_html($form['title']); ?></h3>
+                    <p><?php echo esc_html($form['description']); ?></p>
+                    <a href="<?php echo esc_url($form['link']); ?>" class="button"><?php _e('View Form', 'twintack2025'); ?></a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php
+}
+add_action('woocommerce_account_wholesale-orderforms_endpoint', 'twintack_wholesale_orderforms_content');
+
+/**
+ * Add grip designs endpoint
+ * NOTE: Re-enabled for endpoint registration, but content is handled by plugin
+ */
+function twintack_add_grip_designs_endpoint() {
+    add_rewrite_endpoint('grip-designs', EP_ROOT | EP_PAGES);
+}
+add_action('init', 'twintack_add_grip_designs_endpoint');
+
+/**
+ * Add grip designs to account menu items
+ * NOTE: Re-enabled for menu item, but content is handled by plugin
+ */
+function twintack_add_grip_designs_menu_item($items) {
+    $new_items = array();
+    
+    foreach ($items as $key => $value) {
+        $new_items[$key] = $value;
+        if ($key === 'dashboard') {
+            $new_items['grip-designs'] = __('My Grip Designs', 'twintack2025');
+        }
+    }
+    
+    return $new_items;
+}
+add_filter('woocommerce_account_menu_items', 'twintack_add_grip_designs_menu_item', 20);
+
+/**
+ * Get grip design status label based on WordPress status
+ * This function is used by the My Account template
+ */
+function twintack_get_grip_status_label($status) {
+    $status_map = array(
+        'draft'     => 'Artwork Pending',
+        'pending'   => 'Pending Review', 
+        'publish'   => 'Artwork Approved',
+        'private'   => 'Internal Review',
+        'future'    => 'Scheduled'
+    );
+    
+    return isset($status_map[$status]) ? $status_map[$status] : ucfirst($status);
+}
+
+
+
+/**
+ * Register grip designs endpoint content
+ * NOTE: Only runs if plugin hasn't already loaded content
+ */
+function twintack_grip_designs_endpoint_content() {
+    // Only load if plugin hasn't already provided content
+    if (!defined('TWINTACK_GRIP_CONTENT_LOADED')) {
+        wc_get_template('myaccount/grip-designs.php');
+    }
+}
+add_action('woocommerce_account_grip-designs_endpoint', 'twintack_grip_designs_endpoint_content', 10);
+
+// Note: Grip design post type is registered by the TwinTack Grip Manager plugin

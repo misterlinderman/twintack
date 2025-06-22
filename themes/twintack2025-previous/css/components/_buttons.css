@@ -1,0 +1,67 @@
+/* Base Button Styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 2rem;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+/* Primary Button */
+.btn-primary {
+    background: var(--primary);
+    color: var(--light);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background: var(--secondary);
+    color: var(--light);
+}
+
+.btn-secondary:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+/* Outline Button */
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline:hover {
+    background: var(--primary);
+    color: var(--light);
+}
+
+/* Callout/Marquee Button Links */
+.marquee-link {
+    background-color: black;
+    padding: 5px 10px;
+    border-radius: 3px;
+    border: solid 1px white;
+    color: white;
+    text-decoration: none;
+    box-shadow: 2px 2px 2px black;
+}
+
+section.full-width-callout a.button {
+    background-color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    color: black;
+    text-decoration: none;
+}

@@ -147,10 +147,15 @@ a.sport-icon {
 /* Navigation Sections */
 .nav-section a {
     display: block;
-    color: var(--color-white);
+    /*color: var(--color-white);*/
+    color: rgba(255, 255, 255, 1);
     text-decoration: none;
     font-size: 1.25rem;
     padding: 0 0 0.5rem 0;
+}
+
+.nav-section a:hover {
+    color: rgba(255, 255, 255, 1);
 }
 
 /* Navigation Panels */
@@ -171,6 +176,13 @@ a.sport-icon {
 
 .main-nav {
     padding: 1rem 2rem;
+}
+
+/* Custom Grips Link */
+a.custom-grips-link {
+    font-size: inherit;
+    padding: 1rem 0 0.5rem;
+    margin: inherit;
 }
 
 /* Responsive Navigation */

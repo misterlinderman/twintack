@@ -1,0 +1,121 @@
+/* Base Callout Styles */
+.full-width-callout {
+    position: relative;
+    padding: 4rem 0;
+}
+
+/* Full Layout Styles */
+.layout-full {
+    min-height: 600px;
+    display: flex;
+    align-items: center;
+    color: white;
+    position: relative;
+}
+
+/* Overlay Effect */
+.layout-full::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+/* Media Handling */
+.layout-full .callout-media {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.layout-full .callout-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+}
+
+/* Content Wrapper */
+.layout-full .callout-wrapper {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.callout-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.callout-wrapper .callout-content {
+    color: white;
+    text-align: center;
+    width: 40%;
+}
+
+/* Section-specific styles */
+section#homecallout,
+section#homepartners,
+section#hometeam,
+section#homestory,
+section#htptech {
+    background-color: black;
+}
+
+/* Layout Variations */
+section.layout-left,
+section.layout-right {
+    padding: 60px 0;
+}
+
+section.full-width-content.layout-full {
+    background-color: black;
+    color: white;
+    padding: 3em 2em 2em;
+}
+
+/* Media Content */
+.callout-media {
+    width: 50%;
+}
+
+img.callout-image {
+    width: 100%;
+}
+
+/* Container width control */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Responsive layouts */
+@media (max-width: 768px) {
+    .layout-left .callout-wrapper,
+    .layout-right .callout-wrapper {
+        flex-direction: column;
+    }
+
+    .layout-right .callout-media {
+        order: -1;
+    }
+
+    .callout-media,
+    .callout-content {
+        width: 100%;
+    }
+} 

@@ -1,0 +1,308 @@
+/* Carousel Styles for TwinTack
+ * 
+ * This file contains the styles for the product carousel
+ * used in sport category pages.
+ */
+
+/* Sport Product Carousel Styles */
+.sport-product-carousel {
+    padding: 40px 0;
+    overflow: hidden;
+}
+
+.section-title {
+    font-size: 28px;
+    margin-bottom: 24px;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.twintack-carousel {
+    position: relative;
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: 0 40px;
+}
+
+.swiper {
+    width: 100%;
+    overflow: hidden;
+}
+
+.swiper-slide {
+    height: auto;
+}
+
+.product-card {
+    background-color: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.product-image {
+    position: relative;
+    padding-top: 100%; /* 1:1 Aspect Ratio */
+    overflow: hidden;
+}
+
+.product-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.product-details {
+    padding: 20px;
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-title {
+    font-size: 18px;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.product-price {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.product-actions {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.button {
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    border: 2px solid;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.view-details {
+    color: #3498db;
+    border-color: #3498db;
+    background: transparent;
+}
+
+.view-details:hover {
+    background-color: #3498db;
+    color: white;
+}
+
+.add-to-cart {
+    background-color: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+.add-to-cart:hover {
+    background-color: #333;
+    border-color: #333;
+}
+
+.add-to-cart:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+/* Swiper Navigation */
+.swiper-button-prev,
+.swiper-button-next {
+    color: #000;
+    width: 40px;
+    height: 40px;
+}
+
+.swiper-button-prev:after,
+.swiper-button-next:after {
+    font-size: 24px;
+}
+
+/* Lightbox */
+.twintack-lightbox {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 9999;
+}
+
+.twintack-lightbox.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.twintack-lightbox-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90vh;
+}
+
+.twintack-lightbox-image {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+.twintack-lightbox-close {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    color: #fff;
+    font-size: 32px;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+}
+
+/* Notifications */
+.twintack-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: 600;
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+}
+
+.twintack-notification.success {
+    background-color: #2ecc71;
+}
+
+.twintack-notification.error {
+    background-color: #e74c3c;
+}
+
+.twintack-notification.fade-out {
+    animation: fadeOut 0.3s ease forwards;
+}
+
+/* Empty State */
+.twintack-carousel.empty {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.no-items {
+    font-size: 18px;
+    color: #666;
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Responsive Styles */
+@media (max-width: 992px) {
+    .twintack-carousel {
+        padding: 0 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 24px;
+    }
+    
+    .product-title {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .twintack-carousel {
+        padding: 0 20px;
+    }
+}
+
+/* Loading State */
+.twintack-carousel.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.twintack-carousel.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.twintack-carousel.error {
+    padding: 20px;
+    text-align: center;
+    color: #dc3545;
+}
+
+.twintack-carousel.error::before {
+    content: '⚠️';
+    display: block;
+    font-size: 24px;
+    margin-bottom: 10px;
+} 

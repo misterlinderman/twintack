@@ -1,0 +1,68 @@
+/* Fixed Navigation Icons */
+.fixed-nav-icons {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    gap: 15px;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 10px;
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    transition: background-color 0.3s ease;
+}
+
+.fixed-nav-icons:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.fixed-nav-icons a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    position: relative;
+}
+
+.fixed-nav-icons .icon-svg {
+    width: 24px;
+    height: 24px;
+    fill: white;
+}
+
+.fixed-nav-icons .icon-path {
+    fill: white;
+}
+
+/* Cart Count Indicator */
+.fixed-nav-icons .cart-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ff3b30;
+    color: white;
+    font-size: 11px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    font-weight: bold;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Adjust for WordPress admin bar */
+.admin-bar .fixed-nav-icons {
+    top: 52px; /* 32px for admin bar + 20px padding */
+}
+
+@media screen and (max-width: 782px) {
+    .admin-bar .fixed-nav-icons {
+        top: 66px; /* 46px for admin bar on mobile + 20px padding */
+    }
+} 
