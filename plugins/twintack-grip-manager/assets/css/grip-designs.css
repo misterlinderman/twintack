@@ -286,6 +286,29 @@
     line-height: 1.5;
 }
 
+.feedback-entry {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.feedback-entry:last-child {
+    border-bottom: none;
+}
+
+.feedback-timestamp {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.feedback-message {
+    margin-top: 5px;
+}
+
+.feedback-message p:last-child {
+    margin-bottom: 0;
+}
+
 .artwork-preview.secondary {
     margin-top: 15px;
     opacity: 0.8;
@@ -622,4 +645,111 @@
         padding: 12px;
         margin: 12px 0;
     }
+}
+
+/* Monday.com Integration Meta Box Styles */
+.grip-monday-integration {
+    margin: -6px -12px -12px -12px;
+    padding: 12px;
+}
+
+.monday-item-details h3,
+.monday-communication h3 {
+    padding: 8px 12px;
+    margin: -12px -12px 12px -12px;
+    border-bottom: 1px solid #e2e4e7;
+    background: #f8f9fa;
+    font-size: 14px;
+}
+
+.mockup-asset-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mockup-preview {
+    margin-top: 10px;
+}
+
+.mockup-preview .button {
+    text-decoration: none;
+}
+
+.monday-communication {
+    border-top: 1px solid #e2e4e7;
+    margin-top: 20px;
+    padding-top: 20px;
+}
+
+.message-history h4 {
+    color: #1e1e1e;
+    font-size: 13px;
+    margin: 0 0 10px 0;
+}
+
+.history-entries {
+    border: 1px solid #e2e4e7;
+    border-radius: 4px;
+    background: #f8f9fa;
+}
+
+.history-entry {
+    padding: 12px;
+    border-bottom: 1px solid #e2e4e7;
+}
+
+.history-entry:last-child {
+    border-bottom: none;
+}
+
+.entry-timestamp {
+    color: #757575;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.entry-message p {
+    margin: 0 0 10px 0;
+}
+
+.entry-message p:last-child {
+    margin-bottom: 0;
+}
+
+.integration-note {
+    margin-top: 20px;
+    padding: 12px;
+    background: #f0f8ff;
+    border-left: 4px solid #0073aa;
+    color: #1e1e1e;
+}
+
+.integration-note p {
+    margin: 0;
+    font-size: 13px;
+}
+
+/* Description text styling */
+.description {
+    color: #757575;
+    font-size: 12px;
+    margin: 5px 0 0 0;
+}
+
+/* Form field improvements */
+.grip-monday-integration input[type="text"],
+.grip-monday-integration input[type="url"],
+.grip-monday-integration textarea {
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    padding: 6px 8px;
+}
+
+.grip-monday-integration input[type="text"]:focus,
+.grip-monday-integration input[type="url"]:focus,
+.grip-monday-integration textarea:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: 2px solid transparent;
 } 

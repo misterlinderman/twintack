@@ -1663,3 +1663,64 @@ function twintack_grip_designs_endpoint_content() {
 add_action('woocommerce_account_grip-designs_endpoint', 'twintack_grip_designs_endpoint_content', 10);
 
 // Note: Grip design post type is registered by the TwinTack Grip Manager plugin
+
+/**
+ * TwinTack Make.com Integration Configuration
+ * 
+ * These hooks configure the webhook URLs for Make.com integration.
+ * The TwinTack Grip Manager plugin will use these URLs to send data to Make.com scenarios.
+ */
+
+// Configure webhook URL for customer feedback events
+// Replace 'your-webhook-id-here' with your actual Make.com webhook ID
+add_filter('grip_customer_feedback_webhook_url', function() {
+	// TODO: Replace with your actual Make.com webhook URL
+	// Get this from Make.com: Scenarios > Add webhook trigger > Copy URL
+	return 'https://hook.us2.make.com/lmac9y2igw43gy8flqsois16lmy92o9p';
+});
+
+// Optional: Add webhook for grip design updates (when admin updates via Monday.com API)
+add_action('grip_design_updated', function($grip_id, $updated_fields) {
+    	$webhook_url = 'https://hook.us2.make.com/lmac9y2igw43gy8flqsois16lmy92o9p';
+    
+    	if (!empty($webhook_url)) {
+        $webhook_data = array(
+            'grip_id' => $grip_id,
+            'updated_fields' => $updated_fields,
+            'site_url' => get_site_url(),
+            'timestamp' => current_time('c'),
+            'event_type' => 'grip_design_updated'
+        );
+        
+        // Send webhook
+        wp_remote_post($webhook_url, array(
+            'method' => 'POST',
+            'headers' => array(
+                'Content-Type' => 'application/json',
+            ),
+            'body' => json_encode($webhook_data),
+            'timeout' => 15,
+        ));
+        
+        // Debug logging
+        if (WP_DEBUG) {
+            error_log('Sent grip design update webhook: ' . json_encode($webhook_data));
+        }
+    }
+}, 10, 2);
+
+// Admin notice to remind about webhook configuration
+add_action('admin_notices', function() {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    
+    $webhook_url = apply_filters('grip_customer_feedback_webhook_url', '');
+    	if (empty($webhook_url)) {
+        ?>
+        <div class="notice notice-warning is-dismissible">
+            <p><strong>TwinTack Make.com Integration:</strong> Please configure your Make.com webhook URL in the theme's functions.php file to enable grip design notifications.</p>
+        </div>
+        <?php
+    }
+});

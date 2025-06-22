@@ -321,8 +321,141 @@ class TwinTack_Grip_Form_Handler {
                 sprintf('Grip design post created: %s (ID: %d)', $post_title, $grip_id)
             );
             
+            // Trigger webhook for Make.com integration
+            $this->trigger_new_grip_design_webhook($grip_id, $order_id, array(
+                'customer_name' => $customer_name,
+                'customer_email' => $customer_email,
+                'team_name' => $team_name,
+                'design_type' => $design_type,
+                'quantity' => $quantity,
+                'artwork_filename' => $artwork_filename,
+                'feedback' => $feedback
+            ));
+            
             error_log('TwinTack Grip Manager: Successfully created grip design post ID ' . $grip_id . ' for order ' . $order_id);
         }
+    }
+    
+    /**
+     * Trigger webhook for Make.com when a new grip design is created from purchase
+     */
+    private function trigger_new_grip_design_webhook($grip_id, $order_id, $grip_data) {
+        // Get the webhook URL from the theme configuration
+        $webhook_url = apply_filters('grip_customer_feedback_webhook_url', '');
+        
+        if (empty($webhook_url)) {
+            error_log('TwinTack Grip Manager: No webhook URL configured for new grip design notifications');
+            return;
+        }
+        
+        // Get additional order data
+        $order = wc_get_order($order_id);
+        $order_item = null;
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+            if ($product && $product->get_sku() === 'grip-design-deposit') {
+                $order_item = $item;
+                break;
+            }
+        }
+        
+        // Prepare comprehensive webhook data with all form fields
+        $webhook_data = array(
+            // Core grip design info
+            'grip_design_id' => $grip_id,
+            'grip_design_title' => get_the_title($grip_id),
+            'order_id' => $order_id,
+            'entry_id' => $grip_data['form_entry_id'] ?? '',
+            'entry_date' => current_time('c'),
+            'date_updated' => current_time('c'),
+            
+            // Design specifications
+            'design_layout' => $grip_data['design_layout'] ?? '',
+            'product_color' => $grip_data['primary_color'] ?? '',
+            'second_color' => $grip_data['secondary_color'] ?? '',
+            'third_color' => $grip_data['tertiary_color'] ?? '',
+            'design_type_full' => $grip_data['design_type'] ?? '',
+            
+            // Team/Logo information
+            'team_name' => $grip_data['team_name'] ?? '',
+            'logo_upload' => $grip_data['artwork_url'] ?? '',
+            'logo_filename' => $grip_data['artwork_filename'] ?? '',
+            'design_instructions' => $grip_data['feedback'] ?? '',
+            
+            // Quantity and pricing
+            'quantity' => intval($grip_data['quantity'] ?? 0),
+            'custom_grips_name' => $order_item ? $order_item->get_name() : 'Custom Grip Design Deposit',
+            'custom_grips_price' => $order_item ? $order_item->get_total() : 50.00,
+            'custom_grips_quantity' => intval($grip_data['quantity'] ?? 0),
+            'custom_grips_75_plus_name' => intval($grip_data['quantity'] ?? 0) >= 75 ? 'Custom Grips (75+)' : '',
+            'custom_grips_75_plus_price' => intval($grip_data['quantity'] ?? 0) >= 75 ? ($order_item ? $order_item->get_total() : 0) : '',
+            'custom_grips_75_plus_quantity' => intval($grip_data['quantity'] ?? 0) >= 75 ? intval($grip_data['quantity'] ?? 0) : '',
+            
+            // Customer information
+            'name_first' => $order ? $order->get_billing_first_name() : '',
+            'name_last' => $order ? $order->get_billing_last_name() : '',
+            'customer_name' => $grip_data['customer_name'] ?? '',
+            'email' => $grip_data['customer_email'] ?? '',
+            'phone' => $order ? $order->get_billing_phone() : '',
+            
+            // Billing address
+            'billing_address_street' => $order ? $order->get_billing_address_1() : '',
+            'billing_address_line_2' => $order ? $order->get_billing_address_2() : '',
+            'billing_address_city' => $order ? $order->get_billing_city() : '',
+            'billing_address_state' => $order ? $order->get_billing_state() : '',
+            'billing_address_zip' => $order ? $order->get_billing_postcode() : '',
+            'billing_address_country' => $order ? $order->get_billing_country() : '',
+            
+            // Shipping address
+            'shipping_address_street' => $order ? $order->get_shipping_address_1() : '',
+            'shipping_address_line_2' => $order ? $order->get_shipping_address_2() : '',
+            'shipping_address_city' => $order ? $order->get_shipping_city() : '',
+            'shipping_address_state' => $order ? $order->get_shipping_state() : '',
+            'shipping_address_zip' => $order ? $order->get_shipping_postcode() : '',
+            'shipping_address_country' => $order ? $order->get_shipping_country() : '',
+            
+            // Order details
+            'created_by_user_id' => $order ? $order->get_user_id() : 0,
+            'source_url' => get_site_url(),
+            'transaction_id' => $order ? $order->get_transaction_id() : '',
+            'payment_amount' => $order ? $order->get_total() : 0,
+            'payment_date' => $order ? $order->get_date_created()->format('c') : current_time('c'),
+            'payment_status' => $order ? $order->get_status() : 'processing',
+            'post_id' => $grip_id,
+            
+            // System fields
+            'artwork_status' => 'artwork_pending',
+            'timestamp' => current_time('c'),
+            'webhook_type' => 'new_grip_design',
+            'site_url' => get_site_url()
+        );
+        
+        // Allow filtering of webhook data
+        $webhook_data = apply_filters('grip_new_design_webhook_data', $webhook_data, $grip_id, $order_id);
+        
+        // Send webhook
+        $response = wp_remote_post($webhook_url, array(
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'User-Agent' => 'TwinTack-Grip-Manager/1.5.19'
+            ),
+            'body' => wp_json_encode($webhook_data),
+            'timeout' => 15,
+            'blocking' => false // Don't wait for response
+        ));
+        
+        // Log the webhook attempt
+        if (WP_DEBUG) {
+            error_log('TwinTack Grip Manager: Sent new grip design webhook for ID ' . $grip_id . ' to ' . $webhook_url);
+            error_log('Webhook data: ' . wp_json_encode($webhook_data));
+            
+            if (is_wp_error($response)) {
+                error_log('Webhook error: ' . $response->get_error_message());
+            }
+        }
+        
+        // WordPress action for custom integrations
+        do_action('grip_new_design_created', $grip_id, $order_id, $webhook_data);
     }
     
     private function get_deposit_product_id() {

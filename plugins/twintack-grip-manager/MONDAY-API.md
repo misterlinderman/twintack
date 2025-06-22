@@ -33,7 +33,35 @@ api_key=your-secret-key
 | `monday_feedback` | string | No | Message from design team |
 | `mockup_asset_id` | string | No | Monday.com asset ID |
 | `mockup_asset_url` | string | No | Direct URL to mockup asset |
-| `artwork_status` | string | No | Status: `artwork_pending`, `pending_review`, `artwork_approved`, `internal_review`, `in_production`, `shipped` |
+| `artwork_status` | string | No | Status code (see status guide below) |
+
+## Artwork Status Guide
+
+### Customer-Facing Statuses
+| Status Code | Label | Description |
+|------------|-------|-------------|
+| `artwork_pending` | Artwork Pending | Initial status, waiting for customer artwork or initial review |
+| `pending_review` | Pending Review | Design team is reviewing the artwork |
+| `customer_requested_changes` | Requested Changes | Customer has requested modifications |
+| `customer_approved` | Customer Approved | Customer has approved the design |
+| `artwork_approved` | Artwork Approved | Design approved and ready for production |
+| `approved_for_production` | Approved for Production | Final approval after purchase completion |
+| `in_production` | In Production | Currently being manufactured |
+| `shipped` | Shipped | Order has been shipped to customer |
+
+### Internal Statuses
+| Status Code | Label | Description |
+|------------|-------|-------------|
+| `internal_review` | Internal Review | Under internal team review (hidden from customer) |
+
+### Status Workflow
+1. `artwork_pending` → Initial state
+2. `pending_review` → After initial artwork submission
+3. `customer_requested_changes` ↔ `pending_review` → Customer feedback loop
+4. `customer_approved` → Customer approves design
+5. `approved_for_production` → After purchase completion
+6. `in_production` → Manufacturing started
+7. `shipped` → Final state
 
 ## Example Request
 

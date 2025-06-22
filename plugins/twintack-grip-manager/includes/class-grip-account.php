@@ -10,20 +10,32 @@ class TwinTack_Grip_Account {
     }
     
     private function __construct() {
+        // Add grip designs endpoint to My Account
         add_action('init', array($this, 'register_endpoints'));
         add_filter('woocommerce_account_menu_items', array($this, 'add_grip_designs_endpoint'));
         add_action('woocommerce_account_grip-designs_endpoint', array($this, 'grip_designs_content'));
         
-        // Add AJAX handlers for customer feedback
-        add_action('wp_ajax_grip_customer_feedback', array($this, 'handle_ajax_customer_feedback'));
-        add_action('wp_ajax_nopriv_grip_customer_feedback', array($this, 'handle_ajax_customer_feedback'));
+        // Handle grip design add to cart
+        add_filter('woocommerce_add_cart_item_data', array($this, 'handle_grip_add_to_cart'), 10, 3);
         
-        // Enqueue scripts and styles for grip designs pages
+        // Update cart item quantity after add to cart
+        add_action('woocommerce_add_to_cart', array($this, 'update_cart_item_quantity'), 10, 6);
+        
+        // Display grip design data in cart
+        add_filter('woocommerce_get_item_data', array($this, 'display_cart_item_data'), 10, 2);
+        
+        // Save cart item data to order
+        add_action('woocommerce_checkout_create_order_line_item', array($this, 'save_cart_item_data_to_order'), 10, 4);
+        
+        // Handle order status changes
+        add_action('woocommerce_order_status_completed', array($this, 'handle_grip_order_complete'));
+        add_action('woocommerce_order_status_processing', array($this, 'handle_grip_order_complete'));
+        
+        // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_grip_scripts'));
         
-        // Add WooCommerce hooks for final purchase
-        add_action('woocommerce_add_to_cart', array($this, 'handle_grip_add_to_cart'), 10, 6);
-        add_action('woocommerce_checkout_order_processed', array($this, 'handle_grip_order_complete'), 10, 3);
+        // Handle AJAX customer feedback
+        add_action('wp_ajax_grip_customer_feedback', array($this, 'handle_ajax_customer_feedback'));
     }
     
     public function register_endpoints() {
@@ -308,7 +320,50 @@ class TwinTack_Grip_Account {
 
                     <?php 
                     $monday_feedback = get_post_meta($grip_id, '_grip_monday_feedback', true);
-                    if (!empty($monday_feedback)): ?>
+                    $monday_feedback_history = get_post_meta($grip_id, '_grip_monday_feedback_history', true);
+                    
+                    if (WP_DEBUG) {
+                        error_log('TwinTack Display: Grip ID: ' . $grip_id);
+                        error_log('TwinTack Display: Current feedback: ' . print_r($monday_feedback, true));
+                        error_log('TwinTack Display: Feedback history: ' . print_r($monday_feedback_history, true));
+                    }
+                    
+                    if (!empty($monday_feedback_history) && is_array($monday_feedback_history)): ?>
+                        <div class="grip-monday-feedback">
+                            <h3>Messages from Design Team</h3>
+                            <div class="monday-feedback-content">
+                                <?php 
+                                // Display feedback history in reverse chronological order
+                                $feedback_entries = array_reverse($monday_feedback_history);
+                                
+                                if (WP_DEBUG) {
+                                    error_log('TwinTack Display: Processing ' . count($feedback_entries) . ' feedback entries');
+                                }
+                                
+                                foreach ($feedback_entries as $index => $entry): 
+                                    // Ensure we're accessing the message correctly whether it's a string or array
+                                    $message = is_array($entry) ? $entry['message'] : $entry;
+                                    $timestamp = is_array($entry) ? $entry['timestamp'] : current_time('c');
+                                    
+                                    if (WP_DEBUG) {
+                                        error_log('TwinTack Display: Processing entry ' . $index);
+                                        error_log('TwinTack Display: Entry data - ' . print_r($entry, true));
+                                        error_log('TwinTack Display: Extracted message - ' . print_r($message, true));
+                                        error_log('TwinTack Display: Extracted timestamp - ' . $timestamp);
+                                    }
+                                ?>
+                                    <div class="feedback-entry">
+                                        <div class="feedback-timestamp">
+                                            <?php echo esc_html(date('F j, Y g:i a', strtotime($timestamp))); ?>
+                                        </div>
+                                        <div class="feedback-message">
+                                            <?php echo wpautop(esc_html($message)); ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php elseif (!empty($monday_feedback)): ?>
                         <div class="grip-monday-feedback">
                             <h3>Message from Design Team</h3>
                             <div class="monday-feedback-content">
@@ -771,7 +826,12 @@ class TwinTack_Grip_Account {
     /**
      * Handle WooCommerce add to cart for grip designs
      */
-    public function handle_grip_add_to_cart($cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data) {
+    public function handle_grip_add_to_cart($cart_item_data, $product_id, $variation_id) {
+        if (WP_DEBUG) {
+            error_log('TwinTack: Adding to cart - Product ID: ' . $product_id);
+            error_log('TwinTack: Grip Design ID from URL: ' . (isset($_GET['grip_design_id']) ? $_GET['grip_design_id'] : 'not set'));
+        }
+        
         // Check if this is the custom grip product with grip design meta
         if ($product_id == 1196 && isset($_GET['grip_design_id'])) {
             $grip_id = intval($_GET['grip_design_id']);
@@ -780,19 +840,48 @@ class TwinTack_Grip_Account {
             $artwork_status = get_post_meta($grip_id, '_grip_artwork_status', true);
             if ($artwork_status !== 'customer_approved') {
                 wc_add_notice('This design must be approved before purchasing.', 'error');
-                return;
+                return $cart_item_data;
+            }
+            
+            if (WP_DEBUG) {
+                error_log('TwinTack: Adding grip design ' . $grip_id . ' to cart');
             }
             
             // Add grip design meta to cart item
-            WC()->cart->cart_contents[$cart_item_key]['grip_design_id'] = $grip_id;
-            WC()->cart->cart_contents[$cart_item_key]['grip_team_name'] = get_post_meta($grip_id, '_grip_team_name', true);
-            WC()->cart->cart_contents[$cart_item_key]['grip_customer_name'] = get_post_meta($grip_id, '_grip_customer_name', true);
-            WC()->cart->cart_contents[$cart_item_key]['grip_design_type'] = get_post_meta($grip_id, '_grip_design_type', true);
+            $cart_item_data['grip_design_id'] = $grip_id;
+            $cart_item_data['grip_team_name'] = get_post_meta($grip_id, '_grip_team_name', true);
+            $cart_item_data['grip_customer_name'] = get_post_meta($grip_id, '_grip_customer_name', true);
+            $cart_item_data['grip_design_type'] = get_post_meta($grip_id, '_grip_design_type', true);
             
-            // Update quantity to match grip design quantity
+            // Store quantity in cart item data for later use
             $grip_quantity = intval(get_post_meta($grip_id, '_grip_quantity', true));
             if ($grip_quantity > 0) {
-                WC()->cart->cart_contents[$cart_item_key]['quantity'] = $grip_quantity;
+                $cart_item_data['grip_quantity'] = $grip_quantity;
+            }
+            
+            // Ensure unique cart item
+            $cart_item_data['unique_key'] = md5($grip_id . time());
+            
+            if (WP_DEBUG) {
+                error_log('TwinTack: Cart item data: ' . print_r($cart_item_data, true));
+                error_log('TwinTack: Stored quantity: ' . $grip_quantity);
+            }
+        }
+        
+        return $cart_item_data;
+    }
+
+    /**
+     * Update cart item quantity after add to cart
+     */
+    public function update_cart_item_quantity($cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data) {
+        if (isset($cart_item_data['grip_quantity'])) {
+            $grip_quantity = intval($cart_item_data['grip_quantity']);
+            if ($grip_quantity > 0) {
+                if (WP_DEBUG) {
+                    error_log('TwinTack: Updating cart item quantity to ' . $grip_quantity);
+                }
+                WC()->cart->set_quantity($cart_item_key, $grip_quantity);
             }
         }
     }
@@ -800,22 +889,117 @@ class TwinTack_Grip_Account {
     /**
      * Handle order completion for grip designs
      */
-    public function handle_grip_order_complete($order_id, $posted_data, $order) {
+    public function handle_grip_order_complete($order_id) {
+        if (WP_DEBUG) {
+            error_log('TwinTack: Processing order #' . $order_id . ' for grip designs');
+        }
+
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            if (WP_DEBUG) {
+                error_log('TwinTack: Could not find order #' . $order_id);
+            }
+            return;
+        }
+
         // Check if any order items are grip designs
         foreach ($order->get_items() as $item_id => $item) {
+            if (WP_DEBUG) {
+                error_log('TwinTack: Checking order item #' . $item_id);
+                error_log('TwinTack: Item data: ' . print_r($item->get_data(), true));
+            }
+
+            // Try to get grip design ID from item meta
             $grip_design_id = $item->get_meta('grip_design_id');
             
+            // If not found in meta, check cart item data
+            if (!$grip_design_id) {
+                if (WP_DEBUG) {
+                    error_log('TwinTack: No grip_design_id in meta, checking cart item data');
+                }
+                
+                // Get all meta data for debugging
+                $all_meta = $item->get_meta_data();
+                if (WP_DEBUG) {
+                    error_log('TwinTack: All meta data: ' . print_r($all_meta, true));
+                }
+
+                // Check cart item data
+                $cart_item_data = $item->get_meta('_cart_item_data');
+                if (WP_DEBUG) {
+                    error_log('TwinTack: Cart item data: ' . print_r($cart_item_data, true));
+                }
+
+                if (is_array($cart_item_data) && isset($cart_item_data['grip_design_id'])) {
+                    $grip_design_id = $cart_item_data['grip_design_id'];
+                }
+            }
+            
             if ($grip_design_id) {
-                // Update grip design status to approved for production
+                if (WP_DEBUG) {
+                    error_log('TwinTack: Found grip design #' . $grip_design_id);
+                    error_log('TwinTack: Current status: ' . get_post_meta($grip_design_id, '_grip_artwork_status', true));
+                }
+
+                // Update grip design status - Make.com will detect this via Watch Posts
                 update_post_meta($grip_design_id, '_grip_artwork_status', 'approved_for_production');
                 update_post_meta($grip_design_id, '_grip_final_order_id', $order_id);
                 update_post_meta($grip_design_id, '_grip_production_started', current_time('mysql'));
-                
-                // Trigger webhook for Make.com if needed
-                do_action('grip_design_production_approved', $grip_design_id, $order_id);
+
+                if (WP_DEBUG) {
+                    error_log('TwinTack: Updated grip design #' . $grip_design_id . ' status to approved_for_production');
+                    error_log('TwinTack: New status: ' . get_post_meta($grip_design_id, '_grip_artwork_status', true));
+                }
+            } else {
+                if (WP_DEBUG) {
+                    error_log('TwinTack: No grip design ID found in order item');
+                }
             }
         }
     }
 
+    /**
+     * Display cart item data
+     */
+    public function display_cart_item_data($item_data, $cart_item) {
+        if (isset($cart_item['grip_design_id'])) {
+            $grip_id = $cart_item['grip_design_id'];
+            
+            $item_data[] = array(
+                'key' => 'Team Name',
+                'value' => get_post_meta($grip_id, '_grip_team_name', true)
+            );
+            
+            $item_data[] = array(
+                'key' => 'Design Type',
+                'value' => get_post_meta($grip_id, '_grip_design_type', true)
+            );
+        }
+        
+        return $item_data;
+    }
+
+    /**
+     * Save cart item data to order line item
+     */
+    public function save_cart_item_data_to_order($item, $cart_item_key, $values, $order) {
+        if (isset($values['grip_design_id'])) {
+            if (WP_DEBUG) {
+                error_log('TwinTack: Saving grip design #' . $values['grip_design_id'] . ' to order item');
+            }
+            
+            // Save grip design ID directly to order item meta
+            $item->add_meta_data('grip_design_id', $values['grip_design_id']);
+            
+            // Save other grip design data
+            $item->add_meta_data('grip_team_name', $values['grip_team_name']);
+            $item->add_meta_data('grip_customer_name', $values['grip_customer_name']);
+            $item->add_meta_data('grip_design_type', $values['grip_design_type']);
+            
+            if (WP_DEBUG) {
+                error_log('TwinTack: Saved grip design data to order item');
+            }
+        }
+    }
 
 }
