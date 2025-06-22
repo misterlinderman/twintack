@@ -1,0 +1,143 @@
+/* Account Dashboard Component Styles */
+.tt-account {
+  --account-sidebar-width: 250px;
+  --account-gap: var(--spacing-xl);
+
+  display: grid;
+  grid-template-columns: var(--account-sidebar-width) 1fr;
+  gap: var(--account-gap);
+  padding: var(--spacing-xl) 0;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  /* Navigation */
+  &-nav {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    height: fit-content;
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    li {
+      a {
+        display: block;
+        padding: var(--spacing-sm) var(--spacing-md);
+        color: var(--color-text-muted);
+        text-decoration: none;
+        border-radius: var(--radius-md);
+        transition: all var(--transition-base);
+
+        &:hover {
+          background: var(--color-accent);
+          color: var(--color-text);
+        }
+
+        &.active {
+          background: var(--color-highlight);
+          color: var(--color-button-text);
+        }
+      }
+    }
+  }
+
+  /* Content Area */
+  &-content {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+
+    h2 {
+      font-size: var(--font-size-3xl);
+      margin-bottom: var(--spacing-lg);
+      color: var(--color-text);
+    }
+  }
+
+  /* Orders Table */
+  &-orders {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--spacing-md);
+
+    th, td {
+      padding: var(--spacing-sm);
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    th {
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-muted);
+    }
+
+    td {
+      color: var(--color-text);
+    }
+
+    tr:hover {
+      background: var(--color-accent);
+    }
+  }
+
+  /* Grip Designs Grid */
+  &-grips {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+
+    .grip-card {
+      background: var(--color-accent);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: transform var(--transition-base);
+
+      &:hover {
+        transform: translateY(-4px);
+      }
+
+      img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+      }
+
+      .grip-content {
+        padding: var(--spacing-md);
+
+        h3 {
+          margin: 0 0 var(--spacing-xs);
+          color: var(--color-text);
+        }
+
+        .grip-meta {
+          font-size: var(--font-size-sm);
+          color: var(--color-text-muted);
+        }
+
+        .grip-status {
+          display: inline-block;
+          padding: var(--spacing-xs) var(--spacing-sm);
+          border-radius: var(--radius-full);
+          font-size: var(--font-size-xs);
+          font-weight: var(--font-weight-medium);
+          margin-top: var(--spacing-sm);
+
+          &.draft { background: var(--color-warning); }
+          &.pending { background: var(--color-sport); }
+          &.approved { background: var(--color-success); }
+        }
+      }
+    }
+  }
+} 

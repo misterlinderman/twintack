@@ -1,0 +1,443 @@
+/* Login Component Styles */
+.twintack-login-page {
+  padding: var(--spacing-xl) 0;
+  min-height: calc(100vh - var(--header-height) - var(--footer-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 1);
+}
+
+.tt-login,
+.woocommerce-form-login,
+.twintack-login-form {
+  --login-width: min(450px, 100%);
+  --input-height: 48px;
+}
+
+/* Container */
+.tt-login-container,
+.woocommerce .tt-login-container {
+  width: var(--login-width);
+  margin: var(--spacing-xl) auto;
+  padding: var(--spacing-xl);
+  background: #222;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Header */
+.tt-login-container h2,
+.woocommerce .tt-login-container h2,
+.woocommerce-form-register h3 {
+  font-family: var(--font-primary);
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Form Elements */
+.form-row {
+  margin-bottom: var(--spacing-md);
+}
+
+.woocommerce-Input,
+.input-text {
+  width: 100%;
+  height: var(--input-height);
+  padding: 0 var(--spacing-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  transition: border-color 0.2s ease;
+}
+
+.woocommerce-Input:focus,
+.input-text:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+  outline: none;
+}
+
+.woocommerce-Input::placeholder,
+.input-text::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Buttons */
+.woocommerce-button,
+.woocommerce-Button,
+.button,
+button[type="submit"] {
+  width: 100%;
+  height: var(--input-height);
+  background: #5fff04;
+  color: #111;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.woocommerce-button:hover,
+.woocommerce-Button:hover,
+.button:hover,
+button[type="submit"]:hover {
+  opacity: 0.9;
+}
+
+/* Form Footer */
+.form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-md);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Remember Me Checkbox */
+.woocommerce-form__label-for-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  color: white;
+}
+
+.woocommerce-form__input-checkbox {
+  width: 16px;
+  height: 16px;
+}
+
+/* Links */
+.lost-password-link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.lost-password-link:hover {
+  color: white;
+}
+
+/* Create Account Section */
+.create-account-link {
+  margin-top: var(--spacing-xl);
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.toggle-register-form {
+  background: none;
+  border: none;
+  color: #5fff04;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.toggle-register-form:hover,
+.toggle-register-form.active {
+  opacity: 0.9;
+  color: #5fff04;
+}
+
+/* Registration Form */
+.woocommerce-form-register {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.woocommerce-form-register.hidden {
+  display: none;
+}
+
+.woocommerce-form-register.show {
+  display: block;
+}
+
+/* Registration Form Elements */
+.woocommerce-form-register .form-row {
+  display: block;
+  margin-bottom: var(--spacing-md);
+}
+
+.woocommerce-form-register button[type="submit"] {
+  display: block;
+  width: 100%;
+  height: var(--input-height);
+  background: #5fff04;
+  color: #111;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  margin-top: var(--spacing-lg);
+}
+
+.woocommerce-form-register h3 {
+  font-size: 1.5rem;
+}
+
+.registration-note {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: var(--spacing-md);
+  font-size: 0.9rem;
+}
+
+/* Error Messages */
+.woocommerce-error {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.2);
+  color: white;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  list-style: none;
+}
+
+/* Success Messages */
+.woocommerce-message {
+  background: rgba(95, 255, 4, 0.1);
+  border: 1px solid rgba(95, 255, 4, 0.2);
+  color: white;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Message Styles */
+.tt-login-container .woocommerce-message,
+.woocommerce .tt-login-container .woocommerce-message {
+  background: rgba(95, 255, 4, 0.1);
+  border-left: 4px solid rgba(95, 255, 4, 1);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  color: white;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+  .tt-login-modal {
+    padding: 1rem;
+  }
+  
+  .tt-login-container {
+    padding: 1.5rem;
+  }
+  
+  .tt-login-container .form-footer {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+}
+
+/* Login Form Styles */
+.tt-login-modal {
+    width: 100%;
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.tt-login-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+.tt-login-container h2,
+.tt-login-container h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.tt-login-container h3 {
+    font-size: 1.25rem;
+    margin-top: 1rem;
+}
+
+.tt-login-container .form-row {
+    margin-bottom: 1rem;
+}
+
+.tt-login-container input[type="text"],
+.tt-login-container input[type="password"],
+.tt-login-container input[type="email"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.tt-login-container input[type="text"]:focus,
+.tt-login-container input[type="password"]:focus,
+.tt-login-container input[type="email"]:focus {
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.tt-login-container input::placeholder {
+    color: #999;
+}
+
+.tt-login-container .woocommerce-form-login__submit,
+.tt-login-container .woocommerce-Button.button {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.tt-login-container .woocommerce-form-login__submit:hover,
+.tt-login-container .woocommerce-Button.button:hover {
+    background: var(--color-accent);
+}
+
+.tt-login-container .form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+}
+
+.tt-login-container .woocommerce-form__label-for-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+}
+
+.tt-login-container .woocommerce-form__input-checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    margin: 0;
+}
+
+.tt-login-container .lost-password-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.tt-login-container .lost-password-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+.tt-login-container .create-account-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+.tt-login-container .create-account-link p {
+    color: #666;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.tt-login-container .toggle-register-form {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.25rem;
+    transition: color 0.2s ease;
+}
+
+.tt-login-container .toggle-register-form:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+.tt-login-container .toggle-register-form.active {
+    color: var(--color-primary-dark);
+}
+
+.tt-login-container .woocommerce-form-register {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+.tt-login-container .registration-note {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background: #f7f7f7;
+    border-radius: 4px;
+}
+
+/* Message Styles */
+.tt-login-container .woocommerce-message {
+    background: #f7f7f7;
+    border-left: 4px solid var(--color-success);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+}
+
+/* Animation */
+.tt-login-container .woocommerce-form-register {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tt-login-container .woocommerce-form-register.show {
+    display: block;
+    opacity: 1;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+    .tt-login-modal {
+        padding: 1rem;
+    }
+    
+    .tt-login-container {
+        padding: 1.5rem;
+    }
+    
+    .tt-login-container .form-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}
+
+/* Container Styles */
+.twintack-login-container {
+  width: var(--login-width);
+  padding: var(--spacing-xl);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+}
+
+

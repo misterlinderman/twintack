@@ -1,0 +1,228 @@
+/* Gravity Forms Component Styles */
+.tt-gravity-form {
+  --gf-spacing: var(--spacing-md);
+  
+  /* Form Container */
+  .gform_wrapper {
+    margin: 0;
+    padding: 0;
+    
+    form {
+      margin: 0;
+      padding: 0;
+    }
+  }
+
+  /* Form Header */
+  .gform_heading {
+    margin-bottom: var(--spacing-lg);
+
+    .gform_title {
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text);
+      margin: 0 0 var(--spacing-xs);
+    }
+
+    .gform_description {
+      font-size: var(--font-size-base);
+      color: var(--color-text-muted);
+    }
+  }
+
+  /* Form Fields */
+  .gform_fields {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--gf-spacing);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .gfield {
+    grid-column: span 12;
+    margin: 0;
+
+    &.gfield--width-half {
+      grid-column: span 6;
+      
+      @media (max-width: 768px) {
+        grid-column: span 12;
+      }
+    }
+
+    &.gfield--width-third {
+      grid-column: span 4;
+      
+      @media (max-width: 768px) {
+        grid-column: span 12;
+      }
+    }
+  }
+
+  /* Field Labels */
+  .gfield_label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+  }
+
+  /* Required Field Indicator */
+  .gfield_required {
+    color: var(--color-error);
+    margin-left: var(--spacing-xs);
+  }
+
+  /* Input Fields */
+  .ginput_container {
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    textarea,
+    select {
+      @extend .tt-reset-forms;
+      margin-bottom: var(--spacing-xs);
+
+      &:focus {
+        border-color: var(--color-highlight);
+        box-shadow: 0 0 0 2px rgba(132, 204, 22, 0.1);
+      }
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+  }
+
+  /* Radio & Checkbox Fields */
+  .gfield_radio,
+  .gfield_checkbox {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    input[type="radio"],
+    input[type="checkbox"] {
+      margin: 0;
+    }
+
+    label {
+      color: var(--color-text);
+      cursor: pointer;
+    }
+  }
+
+  /* Color Selector */
+  .color-selector {
+    .gfield_radio {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: var(--spacing-sm);
+
+      li {
+        position: relative;
+        margin: 0;
+        padding: 0;
+
+        input {
+          position: absolute;
+          opacity: 0;
+          width: 100%;
+          height: 100%;
+          cursor: pointer;
+          z-index: 1;
+
+          &:checked + label {
+            border-color: var(--color-highlight);
+            transform: translateY(-2px);
+          }
+        }
+
+        label {
+          display: block;
+          padding: var(--spacing-sm);
+          background: var(--color-surface);
+          border: 2px solid var(--color-border);
+          border-radius: var(--radius-md);
+          text-align: center;
+          transition: all var(--transition-base);
+          cursor: pointer;
+
+          img {
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--spacing-xs);
+          }
+
+          span {
+            display: block;
+            font-size: var(--font-size-sm);
+            color: var(--color-text);
+          }
+        }
+      }
+    }
+  }
+
+  /* Submit Button */
+  .gform_footer {
+    margin-top: var(--spacing-lg);
+    padding: 0;
+
+    input[type="submit"] {
+      @extend .tt-reset-buttons;
+      width: 100%;
+      
+      &:hover {
+        background: var(--color-sport);
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  /* Validation Messages */
+  .validation_message {
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+  }
+
+  .gform_validation_errors {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+
+    h2 {
+      color: var(--color-error);
+      font-size: var(--font-size-base);
+      margin: 0;
+    }
+  }
+
+  /* Success Message */
+  .gform_confirmation_message {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid var(--color-success);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    color: var(--color-success);
+    font-size: var(--font-size-base);
+  }
+} 
