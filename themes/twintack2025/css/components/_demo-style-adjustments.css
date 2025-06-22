@@ -291,7 +291,7 @@ span.wc-block-formatted-money-amount.wc-block-components-formatted-money-amount.
 
 /* My Account Styles */
 nav.woocommerce-MyAccount-navigation a {
-    color: rgba(0, 0, 0, .3);
+    color: var(--color-text);
     font-size: 1.5rem;
     font-weight: 600;
     font-style: italic;
@@ -300,7 +300,7 @@ nav.woocommerce-MyAccount-navigation a {
 }
 
 nav.woocommerce-MyAccount-navigation li.is-active a {
-    color: rgba(0, 0, 0, 1);
+    color: var(--color-highlight);
     font-size: 1.5rem;
     font-weight: 600;
     font-style: italic;

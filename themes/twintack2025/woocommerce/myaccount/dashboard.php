@@ -22,22 +22,22 @@ defined( 'ABSPATH' ) || exit;
 
 <style>
 .dashboard-welcome {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: var(--color-accent);
     padding: 2rem;
     border-radius: 12px;
     margin-bottom: 2rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: none;
 }
 
 .dashboard-welcome h1 {
     margin: 0;
     font-size: 1.8rem;
-    color: #333;
+    color: var(--color-text);
 }
 
 .dashboard-welcome p {
     margin: 0.5rem 0 0;
-    color: #666;
+    color: var(--color-text);
 }
 
 .dashboard-grid {
@@ -45,15 +45,16 @@ defined( 'ABSPATH' ) || exit;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     margin-top: 2rem;
+    margin-bottom: 3rem;
 }
 
 .dashboard-card {
-    background: white;
+    background: var(--color-accent);
+    border: 1px solid var(--color-accent);
     border-radius: 12px;
     padding: 1.5rem;
     transition: all 0.3s ease;
-    border: 1px solid #eee;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     text-decoration: none !important;
@@ -61,14 +62,13 @@ defined( 'ABSPATH' ) || exit;
 
 .dashboard-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     border-color: #ddd;
 }
 
 .dashboard-card-icon {
     width: 48px;
     height: 48px;
-    background: #f8f9fa;
+    background: var(--color-text);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -79,13 +79,13 @@ defined( 'ABSPATH' ) || exit;
 .dashboard-card-icon svg {
     width: 24px;
     height: 24px;
-    fill: #0073aa;
+    fill: var(--color-accent);
 }
 
 .dashboard-card h2 {
     margin: 0 0 0.5rem;
-    font-size: 1.2rem;
-    color: #333;
+    font-size: 1.5rem;
+    color: var(--color-text);
 }
 
 .dashboard-card p {
@@ -100,7 +100,7 @@ defined( 'ABSPATH' ) || exit;
     padding-top: 1rem;
     border-top: 1px solid #eee;
     font-size: 0.9rem;
-    color: #0073aa;
+    color: var(--color-text);
 }
 
 /* Responsive adjustments */
@@ -113,6 +113,7 @@ defined( 'ABSPATH' ) || exit;
         padding: 1.5rem;
     }
 }
+</style>
 </style>
 
 <div class="dashboard-welcome">
