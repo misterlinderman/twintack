@@ -13,7 +13,7 @@
 .grip-design-item {
     border: 1px solid #ddd;
     border-radius: 4px;
-    background: #fff;
+    background: var(--color-accent);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     display: flex;
@@ -89,7 +89,6 @@
     max-height: 150px;
     display: block;
 }
-
 /* Color info styles */
 .color-info {
     margin-top: 5px;
@@ -107,7 +106,7 @@
     display: flex;
     align-items: center;
     padding: 3px 8px;
-    background: #f5f5f5;
+    background: var(--color-primary);
     border-radius: 20px;
     font-size: 12px;
 }
@@ -131,32 +130,31 @@
     display: inline-block;
     margin-top: auto;
     padding: 8px 15px;
-    background: #2271b1;
-    color: #fff;
+    background-color: var(--color-highlight) !important;
+    color: var(--color-primary) !important;
     text-decoration: none;
     border-radius: 3px;
     text-align: center;
 }
 
 .view-grip-design:hover {
-    background: #135e96;
-    color: #fff;
+    background-color: var(--color-text) !important;
+    color: var(--color-primary) !important;
 }
 
 /* Single Grip Design page */
 .grip-design-container {
     max-width: 960px;
     margin: 20px 0;
-    background: #fff;
+    background: var(--color-accent) !important;
     border-radius: 4px;
     border: 1px solid #ddd;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .grip-design-header {
     padding: 15px 20px;
     border-bottom: 1px solid #eee;
-    background: #f9f9f9;
+    background: var(--color-primary) !important;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -194,13 +192,12 @@
 
 .grip-design-artwork {
     border-top: 1px solid #eee;
-    background: #f9f9f9;
+    background: var(--color-primary);
 }
 
 @media (min-width: 768px) {
     .grip-design-artwork {
         border-top: none;
-        border-left: 1px solid #eee;
     }
 }
 
@@ -220,7 +217,7 @@
 .grip-details-table th {
     width: 30%;
     font-weight: 600;
-    color: #444;
+    color: var(--color-text);
 }
 
 .artwork-preview {
@@ -240,22 +237,10 @@
     text-align: center;
 }
 
-.notice {
-    padding: 1rem;
-    margin: 1rem 0;
-    border-left: 4px solid #00a0d2;
-    background: #fff;
-}
-
-.notice-info {
-    border-color: #00a0d2;
-    background-color: #f0f9ff;
-}
-
 .grip-feedback {
     margin-top: 1rem;
     padding: 1rem;
-    background: #f0f8ff;
+    background: var(--color-primary);
     border-left: 4px solid #0073aa;
     border-radius: 4px;
 }
@@ -269,7 +254,7 @@
 .grip-monday-feedback {
     margin-top: 1rem;
     padding: 1rem;
-    background: #f0fff0;
+    background: var(--color-primary);
     border-left: 4px solid #28a745;
     border-radius: 4px;
 }
@@ -284,48 +269,6 @@
 .monday-feedback-content {
     margin-top: 1rem;
     line-height: 1.5;
-}
-
-.feedback-entry {
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(40, 167, 69, 0.2);
-}
-
-.feedback-entry:last-child {
-    border-bottom: none;
-}
-
-.feedback-timestamp {
-    font-size: 0.9em;
-    color: #666;
-    margin-bottom: 5px;
-}
-
-.feedback-message {
-    margin-top: 5px;
-}
-
-.feedback-message p:last-child {
-    margin-bottom: 0;
-}
-
-.artwork-preview.secondary {
-    margin-top: 15px;
-    opacity: 0.8;
-}
-
-.artwork-preview.secondary img {
-    border: 1px solid #ccc;
-}
-
-.button.secondary {
-    background: #6c757d;
-    border-color: #6c757d;
-}
-
-.button.secondary:hover {
-    background: #5a6268;
-    border-color: #545b62;
 }
 
 .status-label {
@@ -374,6 +317,13 @@
     border: 1px solid #badbcc;
 }
 
+.production-status {
+    background: var(--color-primary);
+    border: 2px solid var(--color-highlight);
+    border-radius: 5px;
+    padding: 1em;
+}
+
 @media (max-width: 768px) {
     .grip-designs-list {
         grid-template-columns: 1fr;
@@ -396,6 +346,46 @@
         border-top: 1px solid #eee;
         border-left: none;
     }
+}
+
+/* Back button styling */
+.back-to-designs {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.back-to-designs:hover {
+    color: var(--color-highlight);
+}
+
+/* No artwork placeholder */
+.no-artwork-placeholder {
+    color: var(--color-text-muted);
+    background: var(--color-primary);
+    padding: 40px 20px;
+    text-align: center;
+    border-radius: 4px;
+}
+
+/* Button styling */
+.button {
+    background: var(--color-highlight);
+    color: var(--color-primary);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.button:hover {
+    background: var(--color-text);
+    color: var(--color-primary);
 }
 
 /* Customer Feedback Form Styles */
@@ -520,20 +510,20 @@
 
 /* Customer Feedback History */
 .customer-feedback-history {
-    background: #fff3cd;
+    background: var(--color-primary);
     padding: 15px;
     margin: 20px 0;
     border-radius: 4px;
-    border: 1px solid #ffeaa7;
+    border: 1px solid var(--color-text);
 }
 
 .customer-feedback-history h3 {
     margin-top: 0;
-    color: #856404;
+    color: var(--color-text);
 }
 
 .feedback-history-content {
-    color: #856404;
+    color: var(--color-text);
     font-size: 14px;
     line-height: 1.5;
 }
@@ -587,64 +577,6 @@
     color: white;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-/* Production and Shipping Status */
-.production-status,
-.shipped-status {
-    background: #e3f2fd;
-    padding: 20px;
-    margin: 20px 0;
-    border-radius: 8px;
-    border: 2px solid #2196f3;
-    text-align: center;
-}
-
-.production-status h3,
-.shipped-status h3 {
-    margin-top: 0;
-    color: #1565c0;
-}
-
-/* Enhanced Status Labels */
-.status-label.status-customer_requested_changes {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
-}
-
-.status-label.status-customer_approved {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.status-label.status-approved_for_production {
-    background-color: #cce5ff;
-    color: #004085;
-    border: 1px solid #99ccff;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .feedback-buttons {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .feedback-btn {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-    
-    .purchase-section {
-        padding: 20px 15px;
-    }
-    
-    .purchase-details {
-        padding: 12px;
-        margin: 12px 0;
-    }
 }
 
 /* Monday.com Integration Meta Box Styles */

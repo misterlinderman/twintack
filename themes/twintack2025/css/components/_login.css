@@ -195,9 +195,10 @@ button[type="submit"]:hover {
   background: rgba(255, 0, 0, 0.1);
   border: 1px solid rgba(255, 0, 0, 0.2);
   color: white;
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  list-style: none;
+  padding: var(--spacing-md) !important;
+  margin-bottom: var(--spacing-lg) !important;
+  list-style: none !important;
+  padding-left: 4em !important;
 }
 
 /* Success Messages */
@@ -205,8 +206,9 @@ button[type="submit"]:hover {
   background: rgba(95, 255, 4, 0.1);
   border: 1px solid rgba(95, 255, 4, 0.2);
   color: white;
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md) !important;
+  margin-bottom: var(--spacing-lg) !important;
+  padding-left: 4em !important;
 }
 
 /* Message Styles */

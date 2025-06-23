@@ -51,7 +51,7 @@ img {
 
 /* Base Link Styling */
 a {
-    color: var(--primary);
+    color: var(--color-highlight);
     text-decoration: none;
     transition: var(--transition-base);
 }

@@ -1648,8 +1648,6 @@ function twintack_get_grip_status_label($status) {
     return isset($status_map[$status]) ? $status_map[$status] : ucfirst($status);
 }
 
-
-
 /**
  * Register grip designs endpoint content
  * NOTE: Only runs if plugin hasn't already loaded content
