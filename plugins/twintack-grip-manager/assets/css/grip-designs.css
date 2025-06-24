@@ -530,7 +530,7 @@
 
 /* Purchase Section */
 .purchase-section {
-    background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+    background: var(--color-primary) !important;
     padding: 25px;
     margin: 25px 0;
     border-radius: 8px;
@@ -540,16 +540,15 @@
 
 .purchase-section h3 {
     margin-top: 0;
-    color: #155724;
+    color: #28a745;
     font-size: 1.4em;
 }
 
 .purchase-details {
-    background: white;
+    background: var(--color-accent) !important;
     padding: 15px;
     margin: 15px 0;
     border-radius: 4px;
-    border: 1px solid #c3e6cb;
 }
 
 .purchase-details p {
