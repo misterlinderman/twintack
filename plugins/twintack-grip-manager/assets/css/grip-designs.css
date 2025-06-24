@@ -390,16 +390,17 @@
 
 /* Customer Feedback Form Styles */
 .customer-feedback-section {
-    background: #f8f9fa;
+    background: var(--color-primary);
     padding: 20px;
     margin: 20px 0;
     border-radius: 8px;
-    border: 1px solid #e1e5e9;
+    border: 2px solid var(--color-text);
+    color: var(--color-text);
 }
 
 .customer-feedback-section h3 {
     margin-top: 0;
-    color: #2c3e50;
+    color: var(--color-highlight);
     font-size: 1.2em;
 }
 
@@ -415,7 +416,11 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #495057;
+    color: var(--color-text-muted);
+}
+
+button#approve-design {
+    background: var(--color-highlight);
 }
 
 .feedback-textarea textarea {
@@ -440,6 +445,7 @@
     display: flex;
     gap: 15px;
     align-items: center;
+    flex-direction: column;
 }
 
 .feedback-btn {

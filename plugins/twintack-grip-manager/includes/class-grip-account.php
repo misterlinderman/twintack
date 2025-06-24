@@ -387,11 +387,11 @@ class TwinTack_Grip_Account {
                                 
                                 <div class="feedback-buttons">
                                     <button type="button" id="approve-design" class="button button-primary feedback-btn approve-btn">
-                                        <span class="btn-text">✓ Approve Design</span>
+                                        <span class="btn-text">Approve Design</span>
                                         <span class="btn-loading" style="display: none;">Processing...</span>
                                     </button>
                                     <button type="button" id="request-changes" class="button feedback-btn changes-btn">
-                                        <span class="btn-text">↻ Request Changes</span>
+                                        <span class="btn-text">Request Changes</span>
                                         <span class="btn-loading" style="display: none;">Processing...</span>
                                     </button>
                                 </div>
