@@ -452,15 +452,16 @@ a.marquee-link {
     text-decoration: none;
 }
 
+.sport-icon:hover svg {
+    fill: var(--color-highlight);
+}
+
 .sport-icon svg {
     width: 100%;
     margin-bottom: -0.4em;
+    fill: var(--color-text);
 }
 
-g#fishing, g#baseball {
-    fill: white;
-    width: 100%;
-}
 
 /* Navigation Links */
 .nav-section a {
