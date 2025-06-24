@@ -16,11 +16,23 @@ if ($header_configs) {
                 $callout_title = get_field('callout_content_title', $config->ID);
                 $product_image = get_field('product_image', $config->ID);
                 $callout_content = get_field('callout_content', $config->ID);
+                $tint_enabled = get_field('tint_enabled', $config->ID);
+                $tint_color = get_field('tint_color', $config->ID);
+                $tint_opacity = get_field('tint_opacity', $config->ID);
+                
+                // Set default tint values if not set
+                $tint_color = $tint_color ? $tint_color : '#000000';
+                $tint_opacity = $tint_opacity !== '' ? $tint_opacity : 0.3;
             ?>
                 <div class="marquee-slide <?php echo ($index === 0) ? 'active' : ''; ?>" 
                      <?php if ($background_image) : ?>
                          style="background-image: url('<?php echo esc_url($background_image); ?>');"
                      <?php endif; ?>>
+                    
+                    <?php if ($tint_enabled && $background_image) : ?>
+                        <div class="marquee-tint-overlay" 
+                             style="background-color: <?php echo esc_attr($tint_color); ?>; opacity: <?php echo esc_attr($tint_opacity); ?>;"></div>
+                    <?php endif; ?>
                     
                     <?php if ($embed_shortcode) : ?>
                         <div class="marquee-embed">
