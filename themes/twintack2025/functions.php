@@ -1661,3 +1661,22 @@ function twintack_grip_designs_endpoint_content() {
 add_action('woocommerce_account_grip-designs_endpoint', 'twintack_grip_designs_endpoint_content', 10);
 
 // Note: Grip design post type is registered by the TwinTack Grip Manager plugin
+
+/**
+ * Legacy Custom Grip Product Functionality Moved
+ * 
+ * The volume pricing and quantity restriction functionality has been moved
+ * to the TwinTack Grip Manager plugin for better configurability.
+ * 
+ * To configure volume pricing:
+ * 1. Go to WordPress Admin > Grip Designs > Volume Pricing
+ * 2. Select your custom grip product
+ * 3. Configure quantity restrictions and pricing tiers
+ * 
+ * The new system supports:
+ * - Configurable product selection (not hardcoded to ID 1196)
+ * - Flexible quantity minimums and steps
+ * - Multiple pricing tiers
+ * - Fixed dollar discounts or percentage discounts
+ * - Individual product settings or global settings
+ */
