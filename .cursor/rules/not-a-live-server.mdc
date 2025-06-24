@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+This is a WordPress, WooCommerce theme build.
+This is a development environment with no server emulation or connectivity. 
+Any debug scripts, modifications to wp-config, or commands against the server will need to be create for FTP as that is the environment I am forced to use.
+The theme directory is "themes/twintack2025" and contains the primary theme for the project
+The plugins direcory is "plugins/twintack-grip-manager" and contains the main theme custom plugin
+
