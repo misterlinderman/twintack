@@ -911,9 +911,9 @@ div.product-menu a.product-link:hover {
     transition: transform 0.3s ease;
 }
 
-.callout-card:hover {
+/*.callout-card:hover {
     transform: translateY(-5px);
-}
+}*/
 
 .callout-title {
     font-size: 3rem;

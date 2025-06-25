@@ -144,7 +144,7 @@ section h2 {
 .info-block-cta .button {
     display: inline-block;
     padding: 0.5rem 2rem;
-    background-color: rgba(95, 255, 4, 1);
+    background-color: var(--color-highlight);
     color: black;
     text-decoration: none;
     border-radius: 0;
@@ -154,8 +154,9 @@ section h2 {
     text-transform: uppercase;
     letter-spacing: -0.02em;
     transform: skew(-13deg, 0);
+    width: max-content;
+    margin: 0 auto;
 }
-
 .info-block-cta .button:hover {
     background-color: rgba(255, 255, 255, 1);
 }
@@ -181,7 +182,7 @@ h2.woocommerce-loop-product__title {
     font-size: 2em !important;
     font-weight: 700 !important;
     padding: 0 !important;
-    margin-bottom: 2.5em;
+    margin-bottom: 2.5rem;
 }
 
 h2.woocommerce-loop-product__title {
@@ -204,6 +205,16 @@ h2.woocommerce-loop-product__title {
     padding: 0;
     margin: 0;
     font-size: 1em;
+}
+
+
+/* Product Page */
+section.related a.button.product_type_variable.add_to_cart_button.wvs-add-to-cart-button {
+    display: none !important;
+}
+
+section.related .wvs-archive-variations-wrapper.wvs-pro-loaded {
+    display: none;
 }
 
 
@@ -351,11 +362,12 @@ tr.woocommerce-orders-table__row:nth-child(even) {
 
 /* Homepage Edits */
 .callout-card a.button {
-    color: white;
+    color: var(--color-primary);
     font-size: 1.5em;
     text-transform: uppercase;
     padding: 0;
     margin: 0;
+    font-weight: bold;
 }
 
 .callout-cta {
@@ -409,8 +421,16 @@ a.custom-grips-link {
     border: 2px solid;
     text-align: center;
     margin-bottom: 1rem;
+    border-radius: 3px;
+    background: var(--color-primary);
+    color: var(--color-text) !important;
+    border-color: var(--color-text) !important;
 }
 
+a.custom-grips-link:hover {
+    background: var(--color-highlight) !important;
+    color: var(--color-primary) !important;
+}
 
 /* Login Page Styles */
 body.page-id-747 {
@@ -682,4 +702,10 @@ p.woocommerce-result-count {
     box-shadow: none;
     background-color: var(--color-text);
     border-radius: 5px;
+}
+
+
+/* Home Styles */
+.twintack-callouts .container {
+    background-color: transparent;
 }

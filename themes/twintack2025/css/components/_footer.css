@@ -163,6 +163,17 @@ footer .custom-logo-link:hover svg {
     text-decoration: underline;
 }
 
+
+/* Klavyio Styles */
+button#klaviyo_submit {
+    background: var(--color-highlight) !important;
+}
+
+button#klaviyo_submit:hover {
+    background: var(--color-text) !important;
+}
+
+
 /* Responsive Styles */
 @media (max-width: 992px) {
     .footer-container {
