@@ -9,6 +9,11 @@ wp-content/backup-db/
 wp-content/cache/
 wp-content/backups/
 
+# Plugin files
+plugins/woo-variation-swatches/
+plugins/woo-variation-swatches-pro/
+plugins/woo-variation-swatches-pro.zip
+
 # Development files
 node_modules/
 vendor/
