@@ -1546,9 +1546,11 @@ require get_template_directory() . '/inc/carousel-integration.php';
 function twintack_customize_account_menu_items($items) {
     $new_items = array();
     
-    // Copy existing items
+    // Copy existing items, but skip downloads
     foreach ($items as $key => $value) {
-        $new_items[$key] = $value;
+        if ($key !== 'downloads') {
+            $new_items[$key] = $value;
+        }
     }
     
     // Add wholesale-specific menu items for wholesale users
