@@ -1,0 +1,180 @@
+# TwinTack WordPress Project - Cursor Rules
+
+## Project Overview
+This is a WordPress project for TwinTack, featuring:
+- **Custom Theme**: `themes/twintack2025` - A dual-purpose sports equipment theme (baseball/fishing)
+- **Custom Plugin**: `plugins/twintack-grip-manager` - Grip customization and order management system
+- **E-commerce**: WooCommerce integration with custom features
+- **Third-party integrations**: Monday.com, Make.com, Klaviyo, Gravity Forms
+
+## WordPress Standards & Best Practices
+
+### PHP Development
+- Follow WordPress PHP Coding Standards
+- Use WordPress hooks and filters (no direct core modifications)
+- Prefix all functions with `twintack_` to avoid conflicts
+- Use class-based architecture for major components (singleton pattern preferred)
+- Always escape output using `esc_html()`, `esc_attr()`, `wp_kses()`, etc.
+- Sanitize all user inputs using appropriate WordPress functions
+- Use WordPress database functions (`get_post_meta()`, `update_post_meta()`, etc.)
+- Document all functions and classes with PHPDoc comments
+
+### File Structure Conventions
+- **Theme PHP classes**: `/inc/` with naming `class-{name}.php`
+- **Theme template parts**: `/template-parts/` organized by functionality
+- **Theme templates**: `/templates/` with naming `template-{name}.php`
+- **Plugin classes**: `/includes/` with naming `class-grip-{name}.php`
+- **WooCommerce overrides**: `/woocommerce/` maintaining WooCommerce directory structure
+
+### Database & Custom Post Types
+- Use custom post types for specialized content (grip-design, etc.)
+- Prefix all custom meta fields with `_grip_` or `_twintack_`
+- Use WordPress meta functions for data storage/retrieval
+- Implement proper data validation and sanitization
+- Use transients for caching expensive operations
+
+## Theme-Specific Guidelines
+
+### TwinTack Theme (`themes/twintack2025`)
+- **Main entry point**: `functions.php` - includes loader and core functionality
+- **Class organization**: Use `/inc/` subdirectories by functionality (header/, team/, marquee/, etc.)
+- **Template hierarchy**: Follow WordPress template hierarchy with custom templates in `/templates/`
+- **Dual-category system**: Support both baseball and fishing product categories
+- **Responsive design**: Mobile-first approach using Bootstrap 5.3.2
+- **Font system**: Use Archivo Google Font as primary typeface
+
+### Asset Management
+- **CSS**: Use `/css/` directory, compile SASS if needed
+- **JavaScript**: Use `/js/` directory, enqueue properly through WordPress
+- **Images**: Optimize before adding, use SVG for icons when possible
+- **Fonts**: Load Google Fonts through wp_enqueue_style()
+
+### Component Architecture
+- **Modular design**: Use template parts for reusable components
+- **Class-based functionality**: Major features as PHP classes with singleton pattern
+- **Hook-based integration**: Prefer hooks over direct function calls
+- **Conditional loading**: Only load scripts/styles when needed
+
+## Plugin-Specific Guidelines
+
+### TwinTack Grip Manager (`plugins/twintack-grip-manager`)
+- **Version**: Currently 1.6.01 - maintain semantic versioning
+- **Main class**: `TwinTack_Grip_Manager` - singleton pattern
+- **Dependencies**: Requires WooCommerce and Gravity Forms
+- **File organization**: Use `/includes/` for classes, `/assets/` for CSS/JS, `/templates/` for template overrides
+
+### Key Plugin Features
+- **Custom post type**: `grip-design` for customer grip orders
+- **Status system**: Separate WordPress post status from artwork status
+- **Customer dashboard**: Integration with WooCommerce My Account
+- **API endpoints**: REST API for Monday.com and Make.com integrations
+- **Purchase-based creation**: Only create grip posts when orders are completed
+
+### API Development
+- **REST API**: Use WordPress REST API standards
+- **Authentication**: API key authentication for external integrations
+- **Error handling**: Comprehensive error responses with proper HTTP codes
+- **Data validation**: Validate all API inputs thoroughly
+- **Security**: Proper nonce verification for AJAX requests
+
+## Integration Guidelines
+
+### Third-Party Services
+- **Monday.com**: Use asset IDs for mockup storage, support direct asset URLs
+- **Make.com**: Webhook integration for status updates and notifications
+- **Klaviyo**: Email marketing integration with proper API handling
+- **Gravity Forms**: Form processing and data collection
+- **WooCommerce**: Custom product features and checkout modifications
+
+### WooCommerce Customization
+- **Product variations**: Custom display logic for different product types
+- **Cart modifications**: Custom metadata for grip designs
+- **Checkout process**: Purchase-based grip creation workflow
+- **Account pages**: Custom endpoints for grip design management
+- **Order processing**: Hook into order completion for grip creation
+
+## Development Workflow
+
+### Before Starting Development
+1. Check `claude notes/` directory for relevant reference materials
+2. Review existing documentation in `themes/twintack2025/docs/`
+3. Understand the feature in context of the overall system
+4. Check for existing similar implementations in the codebase
+
+### Code Standards
+- **Debugging**: Use `WP_DEBUG` and WordPress debugging functions
+- **Error logging**: Use `error_log()` with descriptive prefixes
+- **Performance**: Minimize database queries, use caching where appropriate
+- **Security**: Always validate, sanitize, and escape data
+- **Compatibility**: Ensure WordPress 5.8+ and PHP 7.4+ compatibility
+
+### Testing Requirements
+- Test on multiple browsers (Chrome, Firefox, Safari, Edge)
+- Test responsive design on mobile, tablet, desktop
+- Verify WooCommerce integration works correctly
+- Test user roles and permissions
+- Validate form submissions and data processing
+
+## Specific Implementation Patterns
+
+### User Role Management
+- Support multiple user types: customers, wholesale, affiliates
+- Role-based pricing and product access
+- Unified login system with appropriate redirects
+- Custom user registration process
+
+### Status Management
+- **Grip designs**: Use artwork status separate from post status
+- **Order workflow**: Track from submission to production to shipping
+- **Customer communication**: Clear status labels and progress indicators
+- **Admin management**: Comprehensive status controls
+
+### Data Flow Patterns
+1. **Form submission** → **Temporary storage** → **Payment** → **Post creation**
+2. **Order completion** → **Webhook notification** → **Status update**
+3. **Customer feedback** → **Make.com integration** → **Design revision**
+
+## Security Considerations
+- Always use WordPress security functions (nonce verification, capability checks)
+- Sanitize all user inputs using WordPress functions
+- Escape all output appropriately
+- Use secure API key authentication for external services
+- Implement proper permission checks for customer data access
+- Follow WordPress security best practices for file uploads
+
+## Performance Guidelines
+- Use WordPress caching mechanisms (transients, object cache)
+- Optimize database queries (avoid N+1 problems)
+- Conditionally load assets (only when needed)
+- Optimize images and use appropriate formats
+- Minimize HTTP requests where possible
+
+## Documentation Requirements
+- Update relevant documentation when adding/modifying features
+- Use PHPDoc comments for all functions and classes
+- Document any non-obvious implementation decisions
+- Update changelog files when releasing new versions
+- Maintain API documentation for external integrations
+
+## File Naming Conventions
+- **PHP classes**: `class-{descriptive-name}.php`
+- **Template files**: `template-{name}.php` or follow WordPress conventions
+- **JavaScript files**: `{descriptive-name}.js`
+- **CSS files**: `{descriptive-name}.css`
+- **Asset files**: Use descriptive names, optimize for web
+
+## Error Handling Standards
+- Use WordPress error handling (`WP_Error` class)
+- Provide meaningful error messages for debugging
+- Log errors appropriately for different environments
+- Handle API failures gracefully
+- Provide user-friendly error messages in frontend
+
+## When Working with Existing Code
+- Review existing patterns before implementing similar features
+- Maintain consistency with established coding styles
+- Update related documentation when modifying features
+- Consider backward compatibility when making changes
+- Test thoroughly before deploying changes
+
+Remember: This is a complex e-commerce system with multiple integrations. Always consider the impact of changes on the entire workflow from customer form submission to order fulfillment. 
