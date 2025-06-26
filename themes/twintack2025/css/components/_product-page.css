@@ -93,7 +93,7 @@ div.product.type-product.product_cat-baseball, div.product.type-product.product_
 /* Product Title and Price */
 .woocommerce div.product .product_title {
     font-weight: 600;
-    font-size: 3em;
+    font-size: 2.5rem;
 }
 
 .woocommerce:where(body:not(.woocommerce-uses-block-theme)) div.product p.price {
@@ -174,6 +174,32 @@ table.variations th.label {
     color: var(--color-primary) !important;
 }
 
+body.product-template-default .woocommerce-message {
+    background: var(--color-primary);
+    border: 1px solid var(--color-highlight);
+    color: white;
+    padding: 1rem !important;
+    margin-bottom: 2rem !important;
+    padding-left: 4em !important;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+body.product-template-default .woocommerce-message::before {
+    content: "\e015";
+    color: #8fae1b;
+    display: none;
+}
+
+.woocommerce .woocommerce-error .button, .woocommerce .woocommerce-info .button, .woocommerce .woocommerce-message .button, .woocommerce-page .woocommerce-error .button, .woocommerce-page .woocommerce-info .button, .woocommerce-page .woocommerce-message .button {
+    float: right;
+    width: 6rem;
+    text-align: center;
+}
 
 /* How To Videos */
 .sport-how-to-videos {
