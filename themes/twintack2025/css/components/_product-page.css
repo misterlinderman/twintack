@@ -201,6 +201,16 @@ body.product-template-default .woocommerce-message::before {
     text-align: center;
 }
 
+/* Reviews */
+.woocommerce-reviews-section {
+    color: var(--color-text);
+    background: var(--color-accent);
+    width: 100%;
+    padding: 1.5rem;
+    border-radius: 4px;
+}
+
+
 /* How To Videos */
 .sport-how-to-videos {
     padding: 60px 0;

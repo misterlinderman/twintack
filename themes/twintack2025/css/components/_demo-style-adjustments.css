@@ -562,6 +562,12 @@ table.shop_table.shop_table_responsive.cart.woocommerce-cart-form__contents {
     background-color: var(--color-accent);
 }
 
+.woocommerce-info {
+    border-top-color: var(--color-highlight);
+    background: var(--color-primary);
+    color: var(--color-text);
+}
+
 /* Hide the duplicate alert message on checkout */
 form.checkout .woocommerce-notices-wrapper .woocommerce-message {
     display: none;

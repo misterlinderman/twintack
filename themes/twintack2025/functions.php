@@ -382,9 +382,9 @@ function custom_product_tabs($tabs) {
         $tabs['additional_information']['title'] = 'Specs';
     }
 
-    // Optionally reorder tabs
+    // Reorder tabs - Specs first, then Description
+    $tabs['additional_information']['priority'] = 5;
     $tabs['description']['priority'] = 10;
-    $tabs['additional_information']['priority'] = 20;
     $tabs['reviews']['priority'] = 30;
 
     return $tabs;

@@ -72,7 +72,7 @@
 button[type="submit"] {
   width: 100%;
   height: var(--input-height);
-  background: #5fff04;
+  background: var(--color-highlight);
   color: #111;
   font-weight: 600;
   border: none;
