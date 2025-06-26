@@ -121,6 +121,59 @@ h2.section-title {
     color: var(--color-text);
 }
 
+li#summary-tab-title-description a, li#summary-tab-title-additional_information a {
+    background: var(--color-accent);
+    color: var(--color-text);
+    padding: 0.5rem 1rem;
+}
+
+.woocommerce-summary-tabs.wc-tabs-wrapper {
+    color: var(--color-text);
+    border: 2px solid var(--color-accent);
+    border-radius: 4px;
+    padding: 1.5rem 1rem;
+    margin-top: 1rem;
+}
+
+ul.tabs.wc-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.wc-tabs li.active a {
+    background-color: var(--color-highlight) !important;
+    color: var(--color-primary) !important;
+}
+
+#wc-stripe-express-checkout-element {
+    margin-bottom: 12px;
+    display: none !important;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Product Quantity and Variations */
+table.variations th.label {
+    color: var(--color-text);
+    font-size: 1.2rem;
+    width: 10%;
+}
+
+
+.woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) #respond input#submit.alt, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) a.button.alt, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) button.button.alt, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) input.button.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce #respond input#submit.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce a.button.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce button.button.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce input.button.alt {
+    background-color: var(--color-highlight) !important;
+    color: var(--color-primary) !important;
+    -webkit-font-smoothing: antialiased;
+    font-size: 1.5rem;
+}
+
+.woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) #respond input#submit.alt:hover, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) a.button.alt:hover, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) button.button.alt:hover, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) input.button.alt:hover, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce #respond input#submit.alt:hover, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce a.button.alt:hover, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce button.button.alt:hover, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce input.button.alt:hover {
+    background-color: var(--color-text) !important;
+    color: var(--color-primary) !important;
+}
+
 
 /* How To Videos */
 .sport-how-to-videos {

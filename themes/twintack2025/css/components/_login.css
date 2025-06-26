@@ -395,6 +395,16 @@ button[type="submit"]:hover {
     border-radius: 4px;
 }
 
+.twintack-login-page .container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  background-color: var(--color-primary);
+  padding: 2rem;
+  border-radius: 0.4rem;
+}
+
 /* Message Styles */
 .tt-login-container .woocommerce-message {
     background: #f7f7f7;
@@ -402,6 +412,10 @@ button[type="submit"]:hover {
     padding: 1rem;
     margin-bottom: 1.5rem;
     border-radius: 4px;
+}
+
+.woocommerce-privacy-policy-text {
+  color: var(--color-primary);
 }
 
 /* Animation */

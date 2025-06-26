@@ -52,17 +52,22 @@ section#shop-custom {
 }
 
 a.marquee-link {
-    background-color: black;
+    background-color: var(--color-text);
     padding: 0px 25px;
-    border-radius: 0;
+    border-radius: 5px;
     border: none;
-    color: white;
+    color: var(--color-primary);
     text-decoration: none;
     box-shadow: none;
     font-weight: 900;
     font-size: 2em;
     text-transform: uppercase;
     font-style: italic;
+}
+
+a.marquee-link:hover {
+    background-color: var(--color-highlight);
+    color: var(--color-primary);
 }
 
 header#masthead {
@@ -224,7 +229,7 @@ section.related .wvs-archive-variations-wrapper.wvs-pro-loaded {
 }
 
 .twintack-login-page {
-    margin: 15vh auto;
+    margin: 2vh auto;
 }
 
 
