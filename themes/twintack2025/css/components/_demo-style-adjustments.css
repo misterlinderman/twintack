@@ -171,7 +171,7 @@ section h2 {
 }
 
 #technology .info-block-text {
-    color: black;
+    color: var(--color-text);
 }
 
 
@@ -719,4 +719,19 @@ p.woocommerce-result-count {
 /* Home Styles */
 .twintack-callouts .container {
     background-color: transparent;
+}
+
+
+
+/* Contact Page */
+input#gform_submit_button_10 {
+    background-color: var(--color-highlight);
+    color: var(--color-primary);
+    font-size: 1.2rem;
+}
+
+input#gform_submit_button_10:hover {
+    background-color: var(--color-text);
+    color: var(--color-primary);
+    font-size: 1.2rem;
 }
