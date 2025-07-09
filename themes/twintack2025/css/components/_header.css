@@ -300,13 +300,15 @@ a.marquee-link {
     position: absolute;
     top: 0;
     left: 0;
-    display: flex;
+    display: flex
+;
     justify-content: space-between;
     align-items: center;
     width: 340px;
     padding: 1.5rem;
     z-index: 1001;
-    overflow: hidden; /* Contain the pseudo-element */
+    overflow: hidden;
+    flex-direction: row-reverse;
 }
 
 /* Gradient pseudo-element with proper transition */
@@ -904,10 +906,9 @@ div.product-menu a.product-link:hover {
 }
 
 .callout-card {
-    background: white;
+    background: var(--color-highlight);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
 }
 
@@ -916,10 +917,10 @@ div.product-menu a.product-link:hover {
 }*/
 
 .callout-title {
-    font-size: 3rem;
+    font-size: 2rem;
     font-weight: 900;
     text-align: center;
-    padding: 1.5rem;
+    padding: 0.5rem 1.5rem;
     margin: 0;
     text-transform: uppercase;
     font-style: italic;
@@ -950,6 +951,18 @@ div.product-menu a.product-link:hover {
     padding: 1.5rem;
     text-align: center;
     border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+a.callout-card-link {
+    color: var(--color-primary);
+}
+
+a.callout-card-link:hover {
+    color: var(--color-primary);
+}
+
+.callout-card:hover {
+    background: var(--color-text);
 }
 
 /* Responsive adjustments */

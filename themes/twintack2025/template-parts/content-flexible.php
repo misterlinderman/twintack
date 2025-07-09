@@ -232,29 +232,17 @@ if (have_rows('content_configurations')) :
                                 $link_url = get_sub_field('link_url');
                                 ?>
                                 <div class="callout-card">
-                                    <?php if ($title) : ?>
-                                        <h3 class="callout-title"><?php echo esc_html($title); ?></h3>
-                                    <?php endif; ?>
+                                    <a href="<?php echo esc_url($link_url); ?>" class="callout-card-link">
+                                        <?php if ($hero_image) : ?>
+                                            <div class="callout-image">
+                                                <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($title); ?>">
+                                            </div>
+                                        <?php endif; ?>
 
-                                    <?php if ($hero_image) : ?>
-                                        <div class="callout-image">
-                                            <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($title); ?>">
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <?php if ($description) : ?>
-                                        <div class="callout-description">
-                                            <?php echo wp_kses_post($description); ?>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <?php if ($link_text && $link_url) : ?>
-                                        <div class="callout-cta">
-                                            <a href="<?php echo esc_url($link_url); ?>" class="button">
-                                                <?php echo esc_html($link_text); ?>
-                                            </a>
-                                        </div>
-                                    <?php endif; ?>
+                                        <?php if ($title) : ?>
+                                            <h3 class="callout-title"><?php echo esc_html($title); ?></h3>
+                                        <?php endif; ?>
+                                    </a>
                                 </div>
                             <?php endwhile; ?>
                         </div>

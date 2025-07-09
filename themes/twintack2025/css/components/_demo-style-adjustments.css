@@ -148,7 +148,7 @@ section h2 {
 
 .info-block-cta .button {
     display: inline-block;
-    padding: 0.5rem 2rem;
+    padding: 0.5rem 1.5rem;
     background-color: var(--color-highlight);
     color: black;
     text-decoration: none;
@@ -158,10 +158,12 @@ section h2 {
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: -0.02em;
-    transform: skew(-13deg, 0);
     width: max-content;
     margin: 0 auto;
+    border-radius: 3px;
+    font-style: italic;
 }
+
 .info-block-cta .button:hover {
     background-color: rgba(255, 255, 255, 1);
 }
@@ -184,7 +186,7 @@ h2.woocommerce-loop-product__title {
 
 .woocommerce ul.products li.product .price {
     color: var(--color-highlight) !important;
-    font-size: 2em !important;
+    font-size: 1.6em !important;
     font-weight: 700 !important;
     padding: 0 !important;
     margin-bottom: 2.5rem;
@@ -192,7 +194,7 @@ h2.woocommerce-loop-product__title {
 
 h2.woocommerce-loop-product__title {
     color: var(--color-text);
-    font-size: 1.4em !important;
+    font-size: 1.2em !important;
     font-weight: 500 !important;
 }
 
@@ -423,13 +425,13 @@ a.custom-grips-link {
     font-size: inherit;
     padding: 0.5rem 0 0.25rem !important;
     margin: inherit;
-    border: 2px solid;
+    /* border: 2px solid; */
     text-align: center;
     margin-bottom: 1rem;
     border-radius: 3px;
-    background: var(--color-primary);
-    color: var(--color-text) !important;
-    border-color: var(--color-text) !important;
+    background: var(--color-text);
+    color: var(--color-primary) !important;
+    /* border-color: var(--color-text) !important; */
 }
 
 a.custom-grips-link:hover {

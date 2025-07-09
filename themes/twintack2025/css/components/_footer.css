@@ -167,11 +167,20 @@ footer .custom-logo-link:hover svg {
 /* Klavyio Styles */
 button#klaviyo_submit {
     background: var(--color-highlight) !important;
+    border-radius: 3px;
+    font-size: 1.2rem;
+    font-family: 'Saira Condensed' !important;
+    letter-spacing: 0;
+    padding: 0.4rem 1rem;
+    font-weight: bold;
+    font-style: italic;
+    text-transform: uppercase;
 }
 
 button#klaviyo_submit:hover {
     background: var(--color-text) !important;
 }
+
 
 
 /* Responsive Styles */
