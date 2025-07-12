@@ -1,0 +1,201 @@
+# TwinTack Data Structure & Workflow Rules
+
+## Grip Design Post Structure
+
+### Core WordPress Fields
+- **Post Type**: `grip-design`
+- **Post Status**: `publish` (default for paid designs)
+- **Post Title**: Format: "Custom Grip - [Team Name] [YYMMDD]"
+- **Post Content**: Design instructions/feedback from customer
+
+### Critical Meta Fields (Always Required)
+- **_grip_customer_name** - Full customer name
+- **_grip_customer_email** - Customer email address
+- **_grip_team_name** - Team/School name
+- **_grip_quantity** - Number of grips ordered
+- **_grip_form_entry_id** - Gravity Forms entry ID
+- **_grip_form_type** - 'original' or 'new' (identifies form version)
+- **_grip_order_id** - WooCommerce order ID (purchase link)
+- **_grip_order_item_id** - Specific order item ID
+
+### Design Specification Fields
+- **_grip_design_type** - Complete design description
+- **_grip_design_layout** - Base layout type (New Form Only)
+- **_grip_primary_color** - Primary color (New Form Only)
+- **_grip_secondary_color** - Secondary color (New Form Only)
+- **_grip_tertiary_color** - Tertiary color (New Form Only)
+
+### Workflow Status Fields
+- **_grip_artwork_status** - Internal workflow status
+- **_grip_artwork_url** - URL to uploaded artwork file
+- **_grip_artwork_filename** - Original filename of artwork
+- **_grip_feedback** - Customer design instructions
+- **_grip_monday_feedback** - Monday.com team feedback
+- **_grip_mockup_url** - URL to mockup files
+
+## Purchase-Based Workflow (CRITICAL)
+
+### OLD Workflow (Do Not Use)
+```
+❌ Form Submission → Immediate Post Creation → Add to Cart → Payment → Confusion
+```
+
+### CURRENT Workflow (Always Follow)
+```
+✅ Form Submission → Store in Cart Meta → Add to Cart → Payment Complete → Create Post
+```
+
+### Implementation Rules
+1. **NEVER create grip design posts before payment**
+2. **ALWAYS store form data in cart item metadata first**
+3. **ONLY create posts on `woocommerce_order_status_completed` or `woocommerce_order_status_processing`**
+4. **ALWAYS link posts to orders via `_grip_order_id`**
+5. **ALWAYS set new posts to `publish` status (customer has paid)**
+
+### Form Data Storage Pattern
+```php
+// Store in cart item metadata (temporary)
+$cart_item_data = array(
+    '_grip_customer_name' => $customer_name,
+    '_grip_customer_email' => $customer_email,
+    '_grip_team_name' => $team_name,
+    '_grip_quantity' => $quantity,
+    '_grip_form_entry_id' => $entry_id,
+    '_grip_form_type' => $form_type,
+    '_grip_artwork_url' => $artwork_url,
+    '_grip_artwork_filename' => $filename,
+    '_grip_feedback' => $feedback,
+    // ... other fields
+);
+```
+
+## Volume Pricing System
+
+### Configuration Structure
+- **Global Settings**: WordPress options table
+- **Product Settings**: WooCommerce product meta
+- **Min Quantity**: Default 25 units
+- **Quantity Step**: Default 25 unit increments
+- **Volume Break**: Default 75 units
+- **Discount Type**: Fixed amount or percentage
+- **Discount Amount**: Dollar amount or percentage value
+
+### Pricing Logic
+```
+Quantity 25-74: Regular price ($19.99)
+Quantity 75+: Volume price (Regular - $2.00 = $17.99)
+```
+
+### Meta Field Conventions
+- **Product Meta**: `_volume_pricing_enabled`, `_volume_pricing_config`
+- **Global Options**: `twintack_volume_pricing_enabled`, `twintack_volume_pricing_config`
+
+## User Role & Access Patterns
+
+### User Types
+- **Regular Customer**: Standard WooCommerce experience
+- **Wholesale Customer**: Volume pricing access
+- **Affiliate Partner**: Marketing tools access
+- **Administrator**: Full system access
+
+### Role-Based Features
+- **Pricing**: Different pricing tiers based on user role
+- **Product Access**: Some products restricted by role
+- **Dashboard**: Role-specific redirect after login
+- **Registration**: User type selection during signup
+
+## Meta Field Naming Conventions
+
+### Grip Design Fields
+- **Prefix**: `_grip_` for all grip-related meta
+- **Customer Data**: `_grip_customer_*`
+- **Design Data**: `_grip_design_*`
+- **Workflow Data**: `_grip_artwork_*`
+- **Order Data**: `_grip_order_*`
+
+### Volume Pricing Fields
+- **Prefix**: `_volume_` for volume pricing meta
+- **Product Fields**: `_volume_pricing_*`
+- **Global Options**: `twintack_volume_pricing_*`
+
+### General TwinTack Fields
+- **Prefix**: `_twintack_` for general theme meta
+- **Global Options**: `twintack_*`
+
+## Status Management System
+
+### Artwork Status Values
+- `artwork_pending` - Initial state after payment
+- `pending_review` - Under design team review
+- `customer_requested_changes` - Customer wants changes
+- `customer_approved` - Customer approved design
+- `artwork_approved` - Ready for production
+- `approved_for_production` - Final approval
+- `in_production` - Being manufactured
+- `shipped` - Completed and shipped
+- `internal_review` - Internal only (hidden from customer)
+
+### Status Display Logic
+- **Customer View**: Show user-friendly labels
+- **Admin View**: Show status codes and labels
+- **API Integration**: Use status codes for consistency
+
+## WooCommerce Integration Patterns
+
+### Product Types
+- **Simple Products**: Regular TwinTack products
+- **Variable Products**: Products with variations (size, color)
+- **Custom Grip Product**: Special handling for grip designs
+
+### Cart & Checkout
+- **Cart Metadata**: Store temporary form data
+- **Order Processing**: Create posts after payment
+- **Order Notes**: Log grip design creation
+- **Custom Fields**: Display grip design info in orders
+
+### My Account Integration
+- **Custom Endpoints**: Add grip design management
+- **Dashboard Links**: Role-based navigation
+- **Order History**: Show grip design status
+
+## Data Validation Rules
+
+### Required Fields Validation
+- **Customer Info**: Name, email, team name must not be empty
+- **Design Info**: Design type and quantity required
+- **Order Link**: Must have valid order ID and item ID
+- **Form Data**: Must have valid Gravity Forms entry ID
+
+### Data Sanitization
+- **Text Fields**: Use `sanitize_text_field()`
+- **Email Fields**: Use `sanitize_email()`
+- **URLs**: Use `esc_url_raw()`
+- **Numbers**: Use `absint()` for positive integers
+
+## Error Handling Patterns
+
+### Form Processing Errors
+- **Invalid Data**: Return user-friendly error messages
+- **Missing Fields**: Identify specific missing requirements
+- **File Upload Issues**: Handle file size/type errors
+- **Database Errors**: Log technical details, show generic message
+
+### API Integration Errors
+- **External API Failures**: Fallback gracefully
+- **Authentication Errors**: Log and notify admin
+- **Data Sync Issues**: Queue for retry where possible
+- **Rate Limiting**: Implement backoff strategies
+
+## Performance Considerations
+
+### Database Queries
+- **Avoid N+1 Queries**: Use `WP_Query` with proper meta queries
+- **Use Transients**: Cache expensive operations
+- **Index Meta Fields**: Consider indexing frequently queried meta
+- **Batch Operations**: Process multiple items efficiently
+
+### Caching Strategy
+- **Transients**: Use for external API data
+- **Object Cache**: Leverage if available
+- **Page Cache**: Ensure compatibility with caching plugins
+- **Asset Cache**: Optimize CSS/JS loading 

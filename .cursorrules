@@ -177,4 +177,15 @@ This is a WordPress project for TwinTack, featuring:
 - Consider backward compatibility when making changes
 - Test thoroughly before deploying changes
 
-Remember: This is a complex e-commerce system with multiple integrations. Always consider the impact of changes on the entire workflow from customer form submission to order fulfillment. 
+Remember: This is a complex e-commerce system with multiple integrations. Always consider the impact of changes on the entire workflow from customer form submission to order fulfillment.
+
+## Additional Specialized Rules
+
+For comprehensive guidance, also reference these specialized rule files in `.cursor/rules/`:
+
+- **api-integrations.cursor-rules** - Third-party API integration patterns (Monday.com, Make.com, Klaviyo, Gravity Forms)
+- **data-workflow.cursor-rules** - Data structures, workflow patterns, and purchase-based grip creation
+- **development-environment.cursor-rules** - FTP-only environment debugging and deployment strategies
+- **README.md** - Complete documentation of all rule files and their usage
+
+These specialized rules provide detailed guidance for specific aspects of the TwinTack build and should be consulted alongside these base rules.

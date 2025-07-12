@@ -1,0 +1,301 @@
+# TwinTack Development Environment & Debugging Rules
+
+## Development Environment Constraints
+
+### FTP-Only Environment (CRITICAL)
+- **No Server Emulation**: This is a development build with no local server
+- **No Database Connectivity**: Cannot execute database queries or WordPress functions
+- **FTP Deployment**: All changes must be created for FTP upload
+- **No Live Testing**: Cannot test WordPress functionality in development environment
+
+### File Creation Requirements
+- **Debug Scripts**: Create standalone PHP files for debugging
+- **Config Modifications**: Create separate wp-config.php files for different environments
+- **SQL Scripts**: Create .sql files for database changes
+- **Documentation**: Create .md files for deployment instructions
+
+### Directory Structure for Development
+```
+/debug-scripts/          # Standalone PHP debug files
+/sql-updates/           # Database update scripts
+/deployment-notes/      # Environment-specific instructions
+/config-files/          # Various wp-config.php versions
+```
+
+## Debugging Patterns
+
+### Debug Script Creation
+Always create standalone PHP files for debugging:
+```php
+<?php
+// Debug script for [purpose]
+// Upload to WordPress root and access via browser
+
+// WordPress bootstrap
+require_once('wp-config.php');
+require_once('wp-load.php');
+
+// Debug code here
+// Always include error handling and output formatting
+?>
+```
+
+### Debug Script Naming Convention
+- **Purpose-based**: `debug-[feature-name].php`
+- **Test Scripts**: `test-[functionality].php`
+- **Utilities**: `utility-[purpose].php`
+- **Cleanup**: `cleanup-[purpose].php`
+
+### WordPress Debug Configuration
+Create separate wp-config.php files for different environments:
+```php
+// Development debugging
+define('WP_DEBUG', true);
+define('WP_DEBUG_LOG', true);
+define('WP_DEBUG_DISPLAY', false);
+define('SCRIPT_DEBUG', true);
+
+// Custom debug flags
+define('TWINTACK_DEBUG_API', true);
+define('TWINTACK_DEBUG_FORMS', true);
+define('TWINTACK_DEBUG_PRICING', true);
+```
+
+## Logging & Monitoring
+
+### Custom Logging Prefixes
+- **Plugin**: `TwinTack Grip Manager: `
+- **Theme**: `TwinTack Theme: `
+- **API**: `Monday.com API: `
+- **Forms**: `Gravity Forms: `
+- **Pricing**: `Volume Pricing: `
+
+### Log File Locations
+- **WordPress**: `/wp-content/debug.log`
+- **Custom**: `/twintack-debug.log`
+- **Server**: Check server-specific log locations
+
+### Error Logging Pattern
+```php
+// Always include context and actionable information
+error_log('TwinTack Grip Manager: Order processing failed - Order ID: ' . $order_id . ' - Error: ' . $error_message);
+
+// Include relevant data
+error_log('TwinTack Grip Manager: Form data - ' . print_r($form_data, true));
+```
+
+## Database Debugging
+
+### SQL Query Creation
+Create .sql files for database investigations:
+```sql
+-- grip-design-analysis.sql
+-- Check grip design post structure
+
+SELECT 
+    p.ID,
+    p.post_title,
+    p.post_status,
+    pm.meta_key,
+    pm.meta_value
+FROM wp_posts p
+LEFT JOIN wp_postmeta pm ON p.ID = pm.post_id
+WHERE p.post_type = 'grip-design'
+ORDER BY p.ID DESC, pm.meta_key;
+```
+
+### Meta Field Validation Queries
+```sql
+-- Check for missing critical meta fields
+SELECT p.ID, p.post_title
+FROM wp_posts p
+WHERE p.post_type = 'grip-design'
+AND p.ID NOT IN (
+    SELECT post_id FROM wp_postmeta 
+    WHERE meta_key = '_grip_order_id'
+);
+```
+
+## API Debugging
+
+### API Test Scripts
+Create test scripts for external APIs:
+```php
+<?php
+// test-monday-api.php
+// Test Monday.com API integration
+
+require_once('wp-load.php');
+
+// Test API endpoint
+$grip_id = 123; // Replace with actual ID
+$test_data = array(
+    'monday_feedback' => 'Test feedback',
+    'artwork_status' => 'pending_review'
+);
+
+// Make API call and log results
+?>
+```
+
+### API Response Logging
+```php
+// Log all API interactions
+error_log('Monday API Request: ' . json_encode($request_data));
+error_log('Monday API Response: ' . json_encode($response_data));
+error_log('Monday API Status: ' . $response_code);
+```
+
+## Form Debugging
+
+### Gravity Forms Debug Pattern
+```php
+// Debug form entries
+$entry_id = 123;
+$entry = GFAPI::get_entry($entry_id);
+error_log('Gravity Forms Entry: ' . print_r($entry, true));
+
+// Debug form processing
+add_action('gform_after_submission', function($entry, $form) {
+    error_log('Form Submission: Form ID ' . $form['id'] . ' - Entry ID ' . $entry['id']);
+    error_log('Form Data: ' . print_r($entry, true));
+}, 10, 2);
+```
+
+### Cart Debug Pattern
+```php
+// Debug cart contents
+$cart_contents = WC()->cart->get_cart();
+foreach ($cart_contents as $cart_item_key => $cart_item) {
+    error_log('Cart Item: ' . print_r($cart_item, true));
+}
+```
+
+## Performance Debugging
+
+### Query Debugging
+```php
+// Enable query debugging
+define('SAVEQUERIES', true);
+
+// In debug script
+global $wpdb;
+error_log('Total Queries: ' . $wpdb->num_queries);
+error_log('Query Details: ' . print_r($wpdb->queries, true));
+```
+
+### Memory Usage Monitoring
+```php
+// Monitor memory usage
+error_log('Memory Usage: ' . memory_get_usage() . ' bytes');
+error_log('Peak Memory: ' . memory_get_peak_usage() . ' bytes');
+```
+
+## Testing Patterns
+
+### Unit Test Creation
+Create simple test functions:
+```php
+// Test grip design post creation
+function test_grip_design_creation() {
+    $test_data = array(
+        'customer_name' => 'Test Customer',
+        'customer_email' => 'test@example.com',
+        // ... other test data
+    );
+    
+    $result = create_grip_design_post($test_data);
+    
+    if ($result) {
+        error_log('Test PASSED: Grip design created successfully');
+    } else {
+        error_log('Test FAILED: Grip design creation failed');
+    }
+}
+```
+
+### Integration Test Scripts
+```php
+// Test complete workflow
+function test_complete_grip_workflow() {
+    // 1. Test form submission
+    // 2. Test cart addition
+    // 3. Test order processing
+    // 4. Test post creation
+    // 5. Test API integration
+    
+    error_log('Workflow test completed');
+}
+```
+
+## Deployment Helpers
+
+### Version Control for Configs
+- **Development**: `wp-config-dev.php`
+- **Staging**: `wp-config-staging.php`
+- **Production**: `wp-config-prod.php`
+
+### Deployment Checklist Files
+Create deployment checklists:
+```markdown
+# Deployment Checklist
+
+## Pre-Deployment
+- [ ] Test all debug scripts
+- [ ] Verify database changes
+- [ ] Check API integrations
+- [ ] Validate form processing
+
+## Post-Deployment
+- [ ] Monitor error logs
+- [ ] Test critical workflows
+- [ ] Verify API connections
+- [ ] Check performance metrics
+```
+
+## Error Recovery
+
+### Cleanup Scripts
+Create cleanup utilities:
+```php
+// cleanup-orphaned-posts.php
+// Remove grip design posts without orders
+
+// cleanup-test-data.php
+// Remove test entries and data
+
+// reset-artwork-status.php
+// Reset artwork status for testing
+```
+
+### Recovery Procedures
+Document recovery steps:
+```markdown
+# Recovery Procedures
+
+## If Grip Posts Are Missing
+1. Check order completion hooks
+2. Verify cart metadata
+3. Run post creation manually
+4. Check API integration logs
+
+## If API Integration Fails
+1. Verify API keys
+2. Check network connectivity
+3. Review webhook configurations
+4. Test with mock data
+```
+
+## Best Practices
+
+### Code Organization
+- **Separate debug code**: Keep debug scripts separate from production code
+- **Version control**: Track all debug scripts and configurations
+- **Documentation**: Document all debug procedures and scripts
+- **Clean up**: Remove debug code before production deployment
+
+### Security Considerations
+- **Remove debug scripts**: Delete debug files from production
+- **Protect sensitive data**: Don't log sensitive information
+- **Access control**: Restrict debug script access
+- **API keys**: Use environment-specific API keys 
