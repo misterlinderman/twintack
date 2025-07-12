@@ -190,14 +190,15 @@
     .marquee-callout h2 {
         font-style: italic;
         text-transform: uppercase;
-        font-size: 4rem;
-        /* top: 20%; */
+        font-size: 3rem;
+        top: 3%;
         position: relative;
         margin: 0 auto;
         color: white;
         font-weight: 900;
         letter-spacing: -0.05em;
         text-shadow: 4px 5px 5px black;
+        z-index: 10;
     }
 
     .marquee-product-image {
@@ -207,27 +208,26 @@
     }
 
     .marquee-callout .callout-content {
-        font-size: 2rem;
+        font-size: 1.4rem;
         font-style: normal;
-        color: black;
+        /* color: var(--color-text); */
         letter-spacing: -0.02em;
         font-weight: 500;
-        background-color: rgba(255, 255, 255, .3);
         width: fit-content;
         margin: 0 auto;
-        padding: 1rem 1em 0;
-        transform: skew(-13deg, 0deg);
+        /* padding: 1rem 1em 0; */
+        /* transform: skew(-13deg, 0deg); */
         line-height: 2.5rem;
         margin-bottom: .5rem;
     }
 
-    .marquee-links {
+    /*.marquee-links {
         transform: skew(-13deg, 0);
-    }
+    }*/
 
     a.marquee-link {
         background-color: black;
-        padding: 0px 25px;
+        padding: 0.1rem 1.2rem;
         border-radius: 0;
         border: none;
         color: white;
@@ -238,6 +238,7 @@
         text-transform: uppercase;
         /* font-style: italic; */
         /* transform: skew(13deg, 0); */
+        border-radius: 3px;
     }
 
     .marquee-navigation {

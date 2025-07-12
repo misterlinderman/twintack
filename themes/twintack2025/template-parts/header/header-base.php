@@ -85,6 +85,7 @@
                         <a href="/shop">SHOP ALL</a>
                         <a href="/shop/?product_cat=baseball">BASEBALL GRIPS</a>
                         <a href="/shop/?product_cat=fishing">FISHING GRIPS</a>
+                        <a href="/shop/?product_cat=accessory">ACCESSORIES</a>
                     </nav>
                 </div>
 
@@ -92,11 +93,9 @@
                 <div class="nav-section">
                     <h2>TWINTACK</h2>
                     <nav class="main-nav">
+                        <a href="/twintack#ourstory">OUR STORY</a>
                         <a href="/twintack#technology">TECHNOLOGY</a>
-                        <!--a href="/twintack#our-team">OUR TEAM</a-->
-                        <!--a href="/partners">PARTNERS</a-->
                         <a href="/contact">CONTACT</a>
-                        <a href="/temp-all-links/">TEMP ALL LINKS</a>
                         <a href="/login/">LOGIN/REGISTER</a>
                     </nav>
                 </div>

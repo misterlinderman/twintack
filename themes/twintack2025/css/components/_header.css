@@ -749,7 +749,12 @@ div.product-menu a.product-link:hover {
     }
     
     .header-controls {
-        width: 320px; /* Match nav panel width */
+        width: 300px; /* Match nav panel width */
+    }
+
+    .custom-logo-link svg {
+        width: 180px;
+        transition: fill 0.3s ease;
     }
 }
 
@@ -833,10 +838,10 @@ div.product-menu a.product-link:hover {
 }
 
 .info-block-text {
-    font-size: 1.4rem;
-    line-height: 1.8em;
+    font-size: 1.2rem;
+    line-height: 1.8rem;
     max-width: 100%;
-    margin: 0 auto;
+    margin: 0 3rem;
     color: white;
 }
 

@@ -41,14 +41,20 @@ section#shop-custom {
 .marquee-callout .callout-content {
     font-size: 3rem;
     font-style: normal;
-    color: black;
+    color: var(--color-primary);
     letter-spacing: -0.02em;
     font-weight: 500;
-    background-color: rgba(255, 255, 255, .3);
     width: fit-content;
     margin: 0 auto;
-    padding: 0 1em;
-    transform: skew(-13deg, 0deg);
+    padding: 0.3rem 1.2rem;
+    /* transform: skew(-13deg, 0deg); */
+    backdrop-filter: blur(2px);
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.marquee-slide .callout-content p {
+    margin: 0;
 }
 
 a.marquee-link {
@@ -74,6 +80,7 @@ header#masthead {
     padding: 2.5em;
     display: flex;
     background: linear-gradient(90deg, black, transparent);
+    backdrop-filter: blur(10px);
 }
 
 [data-nav-state="open"] .header-controls::before {

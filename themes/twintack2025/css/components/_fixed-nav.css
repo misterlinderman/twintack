@@ -6,11 +6,11 @@
     z-index: 9999;
     display: flex;
     gap: 15px;
-    background-color: rgba(0, 0, 0, 0.6);
+    /*background-color: rgba(0, 0, 0, 0.6);*/
     padding: 10px;
     border-radius: 8px;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    /*backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);*/
     transition: background-color 0.3s ease;
 }
 
@@ -63,6 +63,6 @@
 
 @media screen and (max-width: 782px) {
     .admin-bar .fixed-nav-icons {
-        top: 66px; /* 46px for admin bar on mobile + 20px padding */
+        top: 64px; /* 46px for admin bar on mobile + 20px padding */
     }
 } 
