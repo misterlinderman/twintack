@@ -1,0 +1,428 @@
+/**
+ * TwinTack Enhanced Shop Filters CSS
+ * Styles for the enhanced filtering system
+ */
+
+/* Common Filter Styles */
+.twintack-enhanced-filters {
+    margin: 1rem 0;
+}
+
+.filter-control {
+    margin-bottom: 1rem;
+}
+
+.filter-control label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: #fff;
+    color: #333;
+    transition: border-color 0.3s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #000;
+}
+
+.price-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: #fff;
+    color: #333;
+    transition: border-color 0.3s ease;
+}
+
+.price-input:focus {
+    outline: none;
+    border-color: #000;
+}
+
+/* Horizontal Filters */
+.horizontal-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.horizontal-filters .filter-control {
+    margin-bottom: 0;
+    min-width: 200px;
+}
+
+.horizontal-filters .filter-control label {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.horizontal-filters .filter-select,
+.horizontal-filters .price-input {
+    padding: 0.4rem;
+    font-size: 0.9rem;
+}
+
+.horizontal-filters .price-filter {
+    display: flex;
+    flex-direction: column;
+}
+
+.horizontal-filters .price-inputs {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.horizontal-filters .price-inputs span {
+    font-weight: bold;
+}
+
+.horizontal-filters .price-inputs input {
+    width: 80px;
+}
+
+/* Sidebar Filters */
+.sidebar-filters {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-filters h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #000;
+    padding-bottom: 0.5rem;
+}
+
+.sidebar-filters .filter-group {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.sidebar-filters .filter-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Modal Filters Enhancement */
+.filter-modal-content {
+    padding: 1.5rem;
+}
+
+.filter-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #eee;
+    background-color: #f9f9f9;
+}
+
+.filter-modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.filter-modal-header button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-modal-header button:hover {
+    color: #333;
+}
+
+.filter-modal-content .filter-group {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.filter-modal-content .filter-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.apply-filters-btn {
+    width: 100%;
+    padding: 1rem;
+    background-color: #000;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem;
+}
+
+.apply-filters-btn:hover {
+    background-color: #333;
+}
+
+/* Price Filter Specific Styles */
+.price-filter .price-inputs {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.price-filter .price-inputs span {
+    font-weight: bold;
+    color: #666;
+}
+
+.price-filter .price-inputs input {
+    width: 100px;
+}
+
+/* Color Swatches */
+.color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.color-swatch {
+    width: 30px;
+    height: 30px;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    border-color: #000;
+}
+
+.color-swatch.selected {
+    border-color: #000;
+    border-width: 3px;
+}
+
+.color-swatch.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Loading States */
+.loading {
+    position: relative;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.filter-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    font-weight: bold;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.filter-loading::after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-top: 2px solid #000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Clear Filters Button */
+.clear-filters {
+    background-color: #666;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.clear-filters:hover {
+    background-color: #999;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .horizontal-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .horizontal-filters .filter-control {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .horizontal-filters .price-inputs {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .horizontal-filters .price-inputs input {
+        width: 100%;
+    }
+    
+    .sidebar-filters {
+        margin: 1rem 0;
+        padding: 1rem;
+    }
+    
+    .filter-modal-container {
+        margin: 1rem;
+        max-width: none;
+    }
+    
+    .color-swatches {
+        justify-content: center;
+    }
+    
+    .color-swatch {
+        width: 25px;
+        height: 25px;
+    }
+}
+
+/* Integration with existing theme styles */
+.twintack-enhanced-filters .filter-button {
+    /* Inherit existing filter button styles */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background-color: #000;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: bold;
+    width: 100%;
+    max-width: 200px;
+    margin: 1.5rem 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border: none;
+    border-radius: 4px;
+}
+
+.twintack-enhanced-filters .filter-button:hover {
+    background-color: #333;
+}
+
+.twintack-enhanced-filters .filter-button svg {
+    margin-left: 0.5rem;
+}
+
+/* Active Filter Indicators */
+.filter-control.has-active-filter label {
+    color: #000;
+    font-weight: bold;
+}
+
+.filter-control.has-active-filter .filter-select,
+.filter-control.has-active-filter .price-input {
+    border-color: #000;
+    background-color: #f9f9f9;
+}
+
+/* Filter Count Badge */
+.filter-count-badge {
+    display: inline-block;
+    background-color: #000;
+    color: #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+}
+
+/* Accessibility */
+.filter-control:focus-within label {
+    color: #000;
+}
+
+.filter-select:focus,
+.price-input:focus {
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .filter-select,
+    .price-input {
+        border-width: 2px;
+    }
+    
+    .color-swatch {
+        border-width: 3px;
+    }
+    
+    .color-swatch.selected {
+        border-width: 4px;
+    }
+} 

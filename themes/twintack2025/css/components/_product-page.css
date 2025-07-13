@@ -206,6 +206,32 @@ body.product-template-default .woocommerce-message::before {
     text-align: center;
 }
 
+body.product-template-default .quantity .input-text {
+    height: var(--input-height);
+    padding: 0;
+    background: var(--color-accent);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text) !important;
+}
+
+body.product-template-default .quantity:before {
+    content: "Quantity: ";
+    color: var(--color-text);
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+body.product-template-default.woocommerce div.product form.cart div.quantity {
+    float: left;
+    margin: 0 4px 2rem 0 !important;
+}
+
+body.product-template-default.woocommerce div.product form.cart .variations {
+    margin-bottom: 0;
+    border: 0;
+    width: 100%;
+}
+
 /* Reviews */
 .woocommerce-reviews-section {
     color: var(--color-text);
@@ -213,6 +239,65 @@ body.product-template-default .woocommerce-message::before {
     width: 100%;
     padding: 1.5rem;
     border-radius: 4px;
+}
+
+img.avatar {
+    display: none;
+}
+
+.woocommerce #reviews #comments ol.commentlist li .comment-text {
+    margin: 0 !important;
+    border: 1px solid #e1dde7;
+    border-radius: 4px;
+    padding: 1em 1em 0;
+    background-color: var(--color-text) !important;
+}
+
+.woocommerce .star-rating::before {
+    content: "sssss";
+    color: var(--color-primary) !important;
+    float: left;
+    top: 0;
+    left: 0;
+    position: absolute;
+}
+
+.woocommerce .star-rating {
+    float: right;
+    overflow: hidden;
+    position: relative;
+    height: 1em;
+    line-height: 1;
+    font-size: 1em;
+    width: 5.4em;
+    font-family: WooCommerce;
+    color: var(--color-primary) !important;
+}
+
+.woocommerce #reviews #comments ol.commentlist li .comment-text p.meta {
+    font-size: 1.2rem;
+}
+
+.comment-text .description {
+    color: var(--color-primary);
+    font-size: 1.2rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.woocommerce #reviews #comments ol.commentlist li .comment-text p.meta {
+    font-size: 1.2rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    padding: 0.3rem 0 0;
+}
+
+.woocommerce #reviews #comments ol.commentlist {
+    margin: 0;
+    width: 100%;
+    background: 0 0;
+    list-style: none;
+    padding-right: 2rem;
 }
 
 
