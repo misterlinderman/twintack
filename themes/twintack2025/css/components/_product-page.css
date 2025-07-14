@@ -7,6 +7,23 @@ div.product.type-product.product_cat-baseball, div.product.type-product.product_
     align-items: flex-start;
 }
 
+.product-template-default main#main {
+    margin: 5rem 5%;
+}
+
+.product-template-default .woocommerce-breadcrumb a {
+    color: var(--color-accent);
+}
+
+.product-template-default .woocommerce-breadcrumb a:hover {
+    color: var(--color-highlight);
+}
+
+.product-template-default .woocommerce-breadcrumb {
+    font-size: .92em;
+    color: var(--color-accent);
+}
+
 /* Product Gallery */
 .woocommerce-product-gallery {
     position: relative;

@@ -45,6 +45,10 @@
     transition: transform 0.3s ease;
 }
 
+.woocommerce div.product div.images .woocommerce-product-gallery__wrapper .zoomImg {
+    background-color: var(--color-primary) !important;
+    opacity: 0;
+}
 
 /* Product Cards */
 a.product-variation-link.woocommerce-LoopProduct-link img {

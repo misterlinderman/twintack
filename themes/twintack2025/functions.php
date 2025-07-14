@@ -1747,3 +1747,19 @@ add_action('admin_notices', function() {
         <?php
     }
 });
+
+/**
+ * Move WooCommerce breadcrumb to product summary
+ * Places breadcrumb inside the product summary div above the product title
+ */
+function twintack_move_product_breadcrumb() {
+    // Only modify on single product pages
+    if (is_product()) {
+        // Remove breadcrumb from its default location
+        remove_action('woocommerce_before_main_content', 'woocommerce_breadcrumb', 20);
+        
+        // Add breadcrumb to product summary with priority 1 (before product title which has priority 5)
+        add_action('woocommerce_single_product_summary', 'woocommerce_breadcrumb', 1);
+    }
+}
+add_action('template_redirect', 'twintack_move_product_breadcrumb');

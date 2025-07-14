@@ -277,19 +277,22 @@ section.related .wvs-archive-variations-wrapper.wvs-pro-loaded {
     border-radius: 3px;
     left: auto;
     color: var(--color-primary);
-    background-color: var(--color-text);
+    background-color: var(--color-highlight);
     border: 0;
     display: inline-block;
     background-image: none;
     box-shadow: none;
     text-shadow: none;
+    font-style: italic;
+    text-transform: uppercase;
+    font-weight: 800;
 }
 
 .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) #respond input#submit:hover, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) a.button:hover, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) button.button:hover, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) input.button:hover, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce #respond input#submit:hover, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce a.button:hover, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce button.button:hover, :where(body:not(.woocommerce-block-theme-has-button-styles)):where(:not(.edit-post-visual-editor)) .woocommerce input.button:hover {
     background-color: var(--color-text);
     text-decoration: none;
     background-image: none;
-    color: var(--color-highlight);
+    color: var(--color-primary);
 }
 
 
