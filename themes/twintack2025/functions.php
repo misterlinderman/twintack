@@ -1035,6 +1035,60 @@ function twintack_filter_variations_by_active_filters($variations) {
 }
 
 /**
+ * Get formatted attribute display name from slug
+ * 
+ * @param string $attribute_name The attribute taxonomy name
+ * @param string $value The attribute value/slug
+ * @return string The formatted display name
+ */
+function twintack_get_attribute_display_name($attribute_name, $value) {
+    $taxonomy = str_replace('attribute_', '', $attribute_name);
+    $term = get_term_by('slug', $value, $taxonomy);
+    
+    if ($term) {
+        return $term->name;
+    }
+    
+    // Fallback: convert slug to readable format
+    return ucwords(str_replace('-', ' ', $value));
+}
+
+/**
+ * Parse product name components for structured display
+ * 
+ * @param WC_Product $product The product object
+ * @param array $variation_attributes The variation attributes array
+ * @return array Array containing pattern, model, and color components
+ */
+function twintack_parse_product_name_components($product, $variation_attributes) {
+    $model_name = $product->get_title(); // e.g., "TT Pro Bat Grip"
+    $pattern_name = '';
+    $color_name = '';
+    
+    // Extract pattern and color from variation attributes
+    if (!empty($variation_attributes)) {
+        $attribute_values = array_values($variation_attributes);
+        $attribute_keys = array_keys($variation_attributes);
+        
+        // First attribute is typically the pattern/style
+        if (count($attribute_values) > 0) {
+            $pattern_name = twintack_get_attribute_display_name($attribute_keys[0], $attribute_values[0]);
+        }
+        
+        // Second attribute is typically the color
+        if (count($attribute_values) > 1) {
+            $color_name = twintack_get_attribute_display_name($attribute_keys[1], $attribute_values[1]);
+        }
+    }
+    
+    return array(
+        'pattern' => $pattern_name,
+        'model' => $model_name,
+        'color' => $color_name
+    );
+}
+
+/**
  * Display a single product variation in the product loop
  * 
  * @param array $variation The variation data
@@ -1055,12 +1109,34 @@ function twintack_display_single_variation($variation, $product) {
     // Display variation image
     echo wp_get_attachment_image($variation['image_id'], 'woocommerce_thumbnail', false, array('class' => 'attachment-woocommerce_thumbnail size-woocommerce_thumbnail'));
     
-    // Display product title with variation attributes
+    // Display structured product title
     echo '<h2 class="woocommerce-loop-product__title">';
-    echo esc_html($product->get_title());
+    
     if (!empty($variation['attributes'])) {
-        echo ' - ' . implode(', ', array_values($variation['attributes']));
+        // Parse the product name components
+        $components = twintack_parse_product_name_components($product, $variation['attributes']);
+        
+        // Display in the requested order: Pattern > Model > Color
+        echo '<div class="product-title-structured">';
+        
+        if (!empty($components['pattern'])) {
+            echo '<span class="product-pattern">' . esc_html($components['pattern']) . '</span>';
+        }
+        
+        if (!empty($components['model'])) {
+            echo '<span class="product-model">' . esc_html($components['model']) . '</span>';
+        }
+        
+        if (!empty($components['color'])) {
+            echo '<span class="product-color">' . esc_html($components['color']) . '</span>';
+        }
+        
+        echo '</div>';
+    } else {
+        // Fallback for products without variations
+        echo '<span class="product-model">' . esc_html($product->get_title()) . '</span>';
     }
+    
     echo '</h2>';
     
     // Display price
