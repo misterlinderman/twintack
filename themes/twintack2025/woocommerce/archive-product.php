@@ -67,13 +67,18 @@ if ( woocommerce_product_loop() ) {
 				// Get available variations
 				$variations = $product->get_available_variations();
 				
-				// Display each variation as a separate "product"
-				foreach ($variations as $variation) {
-					// Display the variation
-					twintack_display_single_variation($variation, $product);
+				// Filter variations based on active filters
+				$filtered_variations = twintack_filter_variations_by_active_filters($variations);
+				
+				// Only display if there are variations that match the filters
+				if (!empty($filtered_variations)) {
+					// Display each filtered variation as a separate "product"
+					foreach ($filtered_variations as $variation) {
+						twintack_display_single_variation($variation, $product);
+					}
 				}
 			} else {
-				// Display regular product
+				// Display regular product (check if it matches any category or other filters)
 				wc_get_template_part( 'content', 'product' );
 			}
 		}

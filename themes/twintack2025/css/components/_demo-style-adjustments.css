@@ -221,6 +221,10 @@ h2.woocommerce-loop-product__title {
     font-size: 1em;
 }
 
+.post-type-archive-product main#main {
+    margin: 5.5rem 5%;
+}
+
 
 /* Product Page */
 section.related a.button.product_type_variable.add_to_cart_button.wvs-add-to-cart-button {

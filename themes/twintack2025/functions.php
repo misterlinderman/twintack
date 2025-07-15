@@ -962,6 +962,79 @@ function twintack_flush_rules() {
 add_action('init', 'twintack_flush_rules', 20);
 
 /**
+ * Filter variations based on active filters
+ * 
+ * @param array $variations Array of product variations
+ * @return array Filtered variations that match active filters
+ */
+function twintack_filter_variations_by_active_filters($variations) {
+    // Get current active filters from URL
+    $active_filters = array();
+    
+    // Get all attribute taxonomies
+    $attributes = wc_get_attribute_taxonomies();
+    
+    foreach ($attributes as $attribute) {
+        $filter_key = 'filter_pa_' . $attribute->attribute_name;
+        if (isset($_GET[$filter_key]) && !empty($_GET[$filter_key])) {
+            $active_filters['attribute_pa_' . $attribute->attribute_name] = $_GET[$filter_key];
+        }
+    }
+    
+    // If no attribute filters are active, return all variations
+    if (empty($active_filters)) {
+        return $variations;
+    }
+    
+    // Debug logging for administrators
+    if (WP_DEBUG && current_user_can('administrator')) {
+        error_log('TwinTack Variation Filter - Active filters: ' . print_r($active_filters, true));
+    }
+    
+    // Filter variations based on active filters
+    $filtered_variations = array();
+    
+    foreach ($variations as $variation) {
+        $should_include = true;
+        
+        // Check each active filter against this variation's attributes
+        foreach ($active_filters as $attribute_name => $filter_value) {
+            // Get the variation's attribute value
+            $variation_attribute_value = '';
+            if (isset($variation['attributes'][$attribute_name])) {
+                $variation_attribute_value = $variation['attributes'][$attribute_name];
+            }
+            
+            // Debug logging for administrators
+            if (WP_DEBUG && current_user_can('administrator')) {
+                error_log('TwinTack Variation Filter - Checking variation ' . $variation['variation_id'] . 
+                         ' for attribute ' . $attribute_name . 
+                         ': variation="' . $variation_attribute_value . 
+                         '" filter="' . $filter_value . '"');
+            }
+            
+            // If this variation doesn't match the filter, exclude it
+            if ($variation_attribute_value !== $filter_value) {
+                $should_include = false;
+                break;
+            }
+        }
+        
+        // Only include variations that match all active filters
+        if ($should_include) {
+            $filtered_variations[] = $variation;
+        }
+    }
+    
+    // Debug logging for administrators
+    if (WP_DEBUG && current_user_can('administrator')) {
+        error_log('TwinTack Variation Filter - Filtered ' . count($filtered_variations) . ' variations out of ' . count($variations) . ' total');
+    }
+    
+    return $filtered_variations;
+}
+
+/**
  * Display a single product variation in the product loop
  * 
  * @param array $variation The variation data
