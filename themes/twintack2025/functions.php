@@ -1184,20 +1184,6 @@ function twintack_redirect_product_categories_to_shop() {
 }
 add_action('template_redirect', 'twintack_redirect_product_categories_to_shop', 5); // Lower priority to run early
 
-require get_template_directory() . '/inc/how-to-videos.php';
-
-function twintack_enqueue_video_modal_styles() {
-    if (is_product()) {
-        wp_enqueue_style(
-            'twintack-video-modal',
-            get_template_directory_uri() . '/css/components/_how-to-videos.css',
-            array(),
-            '1.0.0'
-        );
-    }
-}
-add_action('wp_enqueue_scripts', 'twintack_enqueue_video_modal_styles');
-
 // Add this to your theme's functions.php or a debugging plugin
 add_action('gform_after_submission', function($entry, $form) {
     error_log('Form submitted: ' . print_r($entry, true));

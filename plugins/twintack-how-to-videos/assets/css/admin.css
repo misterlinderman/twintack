@@ -1,0 +1,121 @@
+/**
+ * TwinTack How-To Videos Admin Styles
+ * 
+ * @package TwinTackHowToVideos
+ */
+
+/* Video Assignment Page Styles */
+.twintack-htv-assignment-table {
+    margin-top: 20px;
+}
+
+.twintack-htv-assignment-table th.check-column {
+    width: 10%;
+    text-align: center;
+}
+
+.twintack-htv-assignment-table td {
+    vertical-align: middle;
+}
+
+.twintack-htv-assignment-table td img {
+    max-width: 50px;
+    height: auto;
+    border-radius: 4px;
+}
+
+.twintack-htv-assignment-table .dashicons {
+    color: #ccc;
+}
+
+/* Meta Box Styles */
+.twintack-htv-meta-box .form-table th {
+    width: 150px;
+}
+
+.twintack-htv-meta-box .form-table td {
+    padding: 10px;
+}
+
+.twintack-htv-meta-box input[type="url"],
+.twintack-htv-meta-box input[type="text"] {
+    width: 100%;
+    max-width: 400px;
+}
+
+.twintack-htv-meta-box .description {
+    font-style: italic;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Admin Notice Improvements */
+.twintack-htv-notice {
+    margin: 20px 0;
+}
+
+.twintack-htv-notice.notice-success {
+    border-left-color: #46b450;
+}
+
+.twintack-htv-notice.notice-warning {
+    border-left-color: #ffb900;
+}
+
+.twintack-htv-notice.notice-error {
+    border-left-color: #dc3232;
+}
+
+/* Instructions Box */
+.twintack-htv-instructions {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 4px;
+}
+
+.twintack-htv-instructions h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.twintack-htv-instructions ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.twintack-htv-instructions li {
+    margin-bottom: 5px;
+}
+
+/* Loading States */
+.twintack-htv-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.twintack-htv-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+/* Responsive Admin */
+@media (max-width: 768px) {
+    .twintack-htv-assignment-table th,
+    .twintack-htv-assignment-table td {
+        padding: 8px 4px;
+        font-size: 12px;
+    }
+    
+    .twintack-htv-assignment-table td img {
+        max-width: 30px;
+    }
+    
+    .twintack-htv-meta-box .form-table th {
+        width: 120px;
+    }
+} 

@@ -318,16 +318,8 @@ img.avatar {
 }
 
 
-/* How To Videos */
-.sport-how-to-videos {
-    padding: 60px 0;
-    background-color: var(--color-primary) !important;
-}
-
-.video-carousel-section {
-    background-color: var(--color-primary);
-    padding: 4rem 0;
-}
+/* How To Videos - Now handled by plugin
+ * Remove these styles if no longer needed */
 
 
 /* Hide Unnecessary Elements */

@@ -38,7 +38,9 @@ get_header( 'shop' ); ?>
             
             <?php
             // Add our how-to videos section after the product content
-            get_template_part('template-parts/product/how-to-videos');
+            if (function_exists('twintack_htv_display_videos')) {
+                twintack_htv_display_videos();
+            }
             ?>
 
 		<?php endwhile; // end of the loop. ?>

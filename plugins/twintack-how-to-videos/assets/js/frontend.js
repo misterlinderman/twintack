@@ -1,24 +1,26 @@
 /**
- * Enhanced Product Video Carousel functionality
+ * TwinTack How-To Videos Frontend JavaScript
  * 
- * @package TwinTack2025
+ * @package TwinTackHowToVideos
  */
 
 (function() {
+    'use strict';
+    
     document.addEventListener('DOMContentLoaded', function() {
         initVideoCarousel();
         initVideoModal();
     });
 
     function initVideoCarousel() {
-        const carousels = document.querySelectorAll('.video-carousel-container');
+        const carousels = document.querySelectorAll('.twintack-video-carousel-container');
         
         carousels.forEach(carousel => {
-            const track = carousel.querySelector('.video-carousel-slides');
-            const slides = carousel.querySelectorAll('.video-slide');
-            const prevBtn = carousel.querySelector('.carousel-prev');
-            const nextBtn = carousel.querySelector('.carousel-next');
-            const indicators = carousel.querySelectorAll('.carousel-indicator');
+            const track = carousel.querySelector('.twintack-video-carousel-slides');
+            const slides = carousel.querySelectorAll('.twintack-video-slide');
+            const prevBtn = carousel.querySelector('.twintack-carousel-prev');
+            const nextBtn = carousel.querySelector('.twintack-carousel-next');
+            const indicators = carousel.querySelectorAll('.twintack-carousel-indicator');
             
             let activeSlide = 0;
             const slideCount = slides.length;
@@ -125,36 +127,12 @@
                     }
                 });
                 
-                // Update button states - optional: add visual disabled state
+                // Update button states
                 if (slideCount > 1) {
-                    prevBtn.disabled = false;
-                    nextBtn.disabled = false;
+                    if (prevBtn) prevBtn.disabled = false;
+                    if (nextBtn) nextBtn.disabled = false;
                 }
             }
-            
-            // Auto-rotate carousel (optional)
-            // Uncomment this section if you want auto-rotation
-            /*
-            let autoRotateInterval;
-            
-            function startAutoRotate() {
-                autoRotateInterval = setInterval(() => {
-                    activeSlide = (activeSlide + 1) % slideCount;
-                    updateCarouselPosition();
-                }, 5000); // Change slide every 5 seconds
-            }
-            
-            function stopAutoRotate() {
-                clearInterval(autoRotateInterval);
-            }
-            
-            // Start auto-rotation
-            startAutoRotate();
-            
-            // Pause on hover
-            carousel.addEventListener('mouseenter', stopAutoRotate);
-            carousel.addEventListener('mouseleave', startAutoRotate);
-            */
             
             // Update carousel on window resize for responsive behavior
             window.addEventListener('resize', updateCarouselPosition);
@@ -162,31 +140,37 @@
     }
 
     function initVideoModal() {
-        const modal = document.getElementById('video-modal');
-        const videoContainer = document.getElementById('video-container');
-        const modalTitle = document.getElementById('video-modal-title');
+        const modal = document.getElementById('twintack-video-modal');
+        const videoContainer = document.getElementById('twintack-video-container');
+        const modalTitle = document.getElementById('twintack-video-modal-title');
         
-        if (!modal || !videoContainer) return;
+        if (!modal || !videoContainer) {
+            console.log('TwinTack HTV: Video modal elements not found');
+            return;
+        }
         
         // Ensure modal is appended to body
         if (modal.parentElement !== document.body) {
             document.body.appendChild(modal);
         }
         
-        const playButtons = document.querySelectorAll('.play-button');
-        const closeButton = document.getElementById('close-video-modal');
-        const modalOverlay = modal ? modal.querySelector('.video-modal-overlay') : null;
+        const playButtons = document.querySelectorAll('.twintack-play-button');
+        const closeButton = document.getElementById('twintack-close-video-modal');
+        const modalOverlay = modal ? modal.querySelector('.twintack-video-modal-overlay') : null;
         
         // Open modal on play button click
         playButtons.forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
-                e.stopPropagation(); // Stop event propagation
+                e.stopPropagation();
                 
                 const videoUrl = this.getAttribute('data-video-url');
                 const videoTitle = this.getAttribute('data-video-title');
                 
-                if (!videoUrl) return;
+                if (!videoUrl) {
+                    console.error('TwinTack HTV: No video URL provided');
+                    return;
+                }
                 
                 // Set modal title if available
                 if (modalTitle && videoTitle) {
@@ -201,7 +185,7 @@
                 if (match && match[1]) {
                     vimeoId = match[1];
                 } else {
-                    console.error('Invalid Vimeo URL format');
+                    console.error('TwinTack HTV: Invalid Vimeo URL format');
                     return;
                 }
                 
@@ -219,12 +203,12 @@
                 
                 // Show modal with animation
                 modal.classList.add('active');
-                document.body.classList.add('modal-open'); // Prevent background scrolling
+                document.body.classList.add('twintack-modal-open');
                 
                 // Add animation classes
                 setTimeout(() => {
                     modal.classList.add('animate-in');
-                }, 10); // Small delay to ensure the transition works
+                }, 10);
             });
         });
         
@@ -235,9 +219,9 @@
             // Wait for animation to complete before hiding
             setTimeout(() => {
                 modal.classList.remove('active');
-                videoContainer.innerHTML = ''; // Remove iframe
-                document.body.classList.remove('modal-open'); // Re-enable scrolling
-            }, 300); // Match this with the CSS transition duration
+                videoContainer.innerHTML = '';
+                document.body.classList.remove('twintack-modal-open');
+            }, 300);
         }
         
         // Close modal on close button click
@@ -262,4 +246,11 @@
             }
         });
     }
+    
+    // Reinitialize functionality for dynamically loaded content
+    window.twintackHTVReinit = function() {
+        initVideoCarousel();
+        initVideoModal();
+    };
+    
 })(); 

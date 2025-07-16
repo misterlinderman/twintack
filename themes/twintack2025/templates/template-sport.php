@@ -25,9 +25,8 @@ $sport = sanitize_title($page_title); // Default to page title as sport slug
     }
     
     // How-To Videos Section
-    $videos = twintack_get_how_to_videos_by_sport($sport);
-    if (!empty($videos)) {
-        get_template_part('template-parts/sport/how-to-videos');
+    if (function_exists('twintack_htv_display_videos')) {
+        twintack_htv_display_videos($sport);
     }
     ?>
 </div>
