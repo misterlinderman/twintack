@@ -589,15 +589,57 @@ table.shop_table.shop_table_responsive.cart.woocommerce-cart-form__contents {
     box-shadow: none;
 }
 
+.update-cart-wrapper button.button {
+    background-color: var(--color-highlight);
+    color: var(--color-primary) !important;
+}
+
 /* Hide the duplicate alert message on checkout */
 form.checkout .woocommerce-notices-wrapper .woocommerce-message {
     display: none;
 }
 
-.woocommerce #content table.cart td.actions .coupon, .woocommerce table.cart td.actions .coupon, .woocommerce-page #content table.cart td.actions .coupon, .woocommerce-page table.cart td.actions .coupon {
-    float: left;
+/* Cart actions wrapper for justified layout */
+.cart-actions-wrapper {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
     padding: 2rem 0;
+}
+
+.woocommerce #content table.cart td.actions .coupon, .woocommerce table.cart td.actions .coupon, .woocommerce-page #content table.cart td.actions .coupon, .woocommerce-page table.cart td.actions .coupon {
+    float: none;
+    display: flex;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
+.update-cart-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+}
+
+/* Responsive stacking for smaller screens */
+@media (max-width: 768px) {
+    .cart-actions-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .woocommerce #content table.cart td.actions .coupon, .woocommerce table.cart td.actions .coupon, .woocommerce-page #content table.cart td.actions .coupon, .woocommerce-page table.cart td.actions .coupon {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .update-cart-wrapper {
+        justify-content: center;
+        width: 100%;
+    }
 }
 
 #add_payment_method table.cart td.actions .coupon .input-text, .woocommerce-cart table.cart td.actions .coupon .input-text, .woocommerce-checkout table.cart td.actions .coupon .input-text {
@@ -615,7 +657,7 @@ form.checkout .woocommerce-notices-wrapper .woocommerce-message {
 a.checkout-button.button.alt.wc-forward, button#place_order {
     background-color: var(--color-highlight) !important;
     color: var(--color-primary) !important;
-    font-size: 2rem;
+    font-size: 1.2rem;
     padding: 1rem;
 }
 
