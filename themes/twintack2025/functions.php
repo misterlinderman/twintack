@@ -797,7 +797,8 @@ add_filter( 'authenticate', 'twintack_authenticate_user_type', 30, 3 );
  * Enqueues scripts and styles for the product display on shop and product category pages
  */
 function twintack_product_display_scripts() {
-    if (is_shop() || is_product_category()) {
+    // Load on shop pages, product category pages, single product pages (for related products), and sport template pages
+    if (is_shop() || is_product_category() || is_product() || is_page_template('templates/template-sport.php')) {
         // Enqueue CSS
         wp_enqueue_style(
             'twintack-product-display',
@@ -1145,6 +1146,62 @@ function twintack_display_single_variation($variation, $product) {
     echo '</a>';
     echo '</li>';
 }
+
+/**
+ * Custom WooCommerce loop product title with structured format
+ * Replaces the default woocommerce_template_loop_product_title function
+ */
+function twintack_custom_loop_product_title() {
+    global $product;
+    
+    if (!$product) {
+        return;
+    }
+    
+    echo '<h2 class="' . esc_attr( apply_filters( 'woocommerce_product_loop_title_classes', 'woocommerce-loop-product__title' ) ) . '">';
+    
+    // Check if this is a variation product (has variation attributes)
+    if ($product->is_type('variation')) {
+        // This is a variation product, parse its attributes
+        $parent_product = wc_get_product($product->get_parent_id());
+        $variation_attributes = $product->get_variation_attributes();
+        
+        if ($parent_product && !empty($variation_attributes)) {
+            $components = twintack_parse_product_name_components($parent_product, $variation_attributes);
+            
+            echo '<div class="product-title-structured">';
+            
+            if (!empty($components['pattern'])) {
+                echo '<span class="product-pattern">' . esc_html($components['pattern']) . '</span>';
+            }
+            
+            if (!empty($components['model'])) {
+                echo '<span class="product-model">' . esc_html($components['model']) . '</span>';
+            }
+            
+            if (!empty($components['color'])) {
+                echo '<span class="product-color">' . esc_html($components['color']) . '</span>';
+            }
+            
+            echo '</div>';
+        } else {
+            // Fallback for variations without proper structure
+            echo '<span class="product-model">' . esc_html($product->get_name()) . '</span>';
+        }
+    } else if ($product->is_type('variable')) {
+        // This is a variable product parent, just show the base name
+        echo '<span class="product-model">' . esc_html($product->get_name()) . '</span>';
+    } else {
+        // Regular product, just show the name
+        echo '<span class="product-model">' . esc_html($product->get_name()) . '</span>';
+    }
+    
+    echo '</h2>';
+}
+
+// Remove the default loop title and add our custom one
+remove_action('woocommerce_shop_loop_item_title', 'woocommerce_template_loop_product_title', 10);
+add_action('woocommerce_shop_loop_item_title', 'twintack_custom_loop_product_title', 10);
 
 /**
  * Redirect product category pages to shop page with category filter

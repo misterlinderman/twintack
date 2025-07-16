@@ -609,6 +609,10 @@ table.shop_table.shop_table_responsive.cart.woocommerce-cart-form__contents {
     background-color: var(--color-primary) !important;
 }
 
+.woocommerce-checkout .woocommerce-privacy-policy-text {
+    color: var(--color-text);
+}
+
 /* Hide the duplicate alert message on checkout */
 form.checkout .woocommerce-notices-wrapper .woocommerce-message {
     display: none;
@@ -674,6 +678,16 @@ a.checkout-button.button.alt.wc-forward, button#place_order {
     color: var(--color-primary) !important;
     font-size: 1.2rem;
     padding: 1rem;
+}
+
+a.checkout-button.button.alt.wc-forward:hover, button#place_order:hover {
+    background-color: var(--color-text) !important;
+}
+
+button#place_order {
+    max-width: 220px;
+    margin: 0 auto;
+    float: none !important;
 }
 
 .cart_totals {

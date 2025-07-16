@@ -39,7 +39,47 @@ if (empty($carousel_items)) {
                                     <?php endif; ?>
                                 </div>
                                 <div class="product-details">
-                                    <h3 class="product-title"><?php echo esc_html($item['product_title'] ?: $item['title']); ?></h3>
+                                    <?php 
+                                    // Parse product name for structured display
+                                    $product_id = $item['product_id'];
+                                    $variation_id = $item['variation_id'];
+                                    $product = wc_get_product($product_id);
+                                    
+                                    if ($product && $variation_id) {
+                                        $variation_obj = wc_get_product($variation_id);
+                                        if ($variation_obj) {
+                                            $variation_attributes = $variation_obj->get_variation_attributes();
+                                            $components = twintack_parse_product_name_components($product, $variation_attributes);
+                                            ?>
+                                            <h3 class="product-title">
+                                                <div class="product-title-structured">
+                                                    <?php if (!empty($components['pattern'])) : ?>
+                                                        <span class="product-pattern"><?php echo esc_html($components['pattern']); ?></span>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($components['model'])) : ?>
+                                                        <span class="product-model"><?php echo esc_html($components['model']); ?></span>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($components['color'])) : ?>
+                                                        <span class="product-color"><?php echo esc_html($components['color']); ?></span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </h3>
+                                            <?php
+                                        } else {
+                                            ?>
+                                            <h3 class="product-title">
+                                                <span class="product-model"><?php echo esc_html($item['product_title'] ?: $item['title']); ?></span>
+                                            </h3>
+                                            <?php
+                                        }
+                                    } else {
+                                        ?>
+                                        <h3 class="product-title">
+                                            <span class="product-model"><?php echo esc_html($item['product_title'] ?: $item['title']); ?></span>
+                                        </h3>
+                                        <?php
+                                    }
+                                    ?>
                                     <div class="product-price"><?php echo wp_kses_post($item['product_price']); ?></div>
                                     <div class="product-actions">
                                         <a href="<?php echo esc_url($item['product_url']); ?>" class="button view-details">View Details</a>

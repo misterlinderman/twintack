@@ -44,7 +44,7 @@
 }
 
 .product-card:hover {
-    /*transform: translateY(-5px);*/
+    transform: none;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
@@ -81,8 +81,10 @@
 
 .product-price {
     font-size: 16px;
-    color: #333;
+    color: var(--color-primary);
     margin-bottom: 15px;
+    font-size: 1.6rem;
+    font-weight: 600;
 }
 
 .product-actions {
@@ -95,7 +97,7 @@
 .button {
     display: inline-block;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 800;
     padding: 8px 16px;
     border-radius: 4px;
     transition: all 0.3s ease;
@@ -103,6 +105,7 @@
     cursor: pointer;
     width: 100%;
     box-sizing: border-box;
+    text-transform: uppercase;
 }
 
 .view-details {
