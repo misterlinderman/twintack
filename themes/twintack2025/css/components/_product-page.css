@@ -1,5 +1,5 @@
 /* Product Page Layout */
-div.product.type-product.product_cat-baseball, div.product.type-product.product_cat-fishing {
+div.product.type-product.product_cat-baseball, div.product.type-product.product_cat-fishing, div.product.type-product.product_cat-accessory {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -37,6 +37,10 @@ div.product.type-product.product_cat-baseball, div.product.type-product.product_
 .carousel-slide img {
     width: 100%;
     height: auto;
+}
+
+.pswp {
+    z-index: 9999;
 }
 
 /* Variation Thumbnails */

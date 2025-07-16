@@ -594,6 +594,21 @@ table.shop_table.shop_table_responsive.cart.woocommerce-cart-form__contents {
     color: var(--color-primary) !important;
 }
 
+.woocommerce a.remove {
+    display: block;
+    font-size: 1.5em;
+    height: 1em;
+    width: 1em;
+    text-align: center;
+    line-height: 0.9;
+    border-radius: 100%;
+    color: var(--var-text) !important;
+    text-decoration: none;
+    font-weight: 700;
+    border: 0;
+    background-color: var(--color-primary) !important;
+}
+
 /* Hide the duplicate alert message on checkout */
 form.checkout .woocommerce-notices-wrapper .woocommerce-message {
     display: none;

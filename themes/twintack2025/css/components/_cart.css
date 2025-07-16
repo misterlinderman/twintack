@@ -1,8 +1,10 @@
 /* Cart & Checkout Component Styles */
+
 .tt-cart {
   --cart-gap: var(--spacing-xl);
   
   padding: var(--spacing-xl) 0;
+
 
   /* Cart Table */
   &-table {

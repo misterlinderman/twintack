@@ -73,7 +73,7 @@
     margin-bottom: 1rem !important;
     display: inline-block !important;
     text-decoration: none !important;
-    z-index: 9999 !important;
+    z-index: 10 !important;
     position: relative !important;
 }
 
