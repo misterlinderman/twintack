@@ -37,9 +37,13 @@ get_header( 'shop' ); ?>
 			<?php wc_get_template_part( 'content', 'single-product' ); ?>
             
             <?php
-            // Add our how-to videos section after the product content
+            // Add our how-to videos section after the product content (grid layout)
             if (function_exists('twintack_htv_display_videos')) {
-                twintack_htv_display_videos();
+                twintack_htv_display_videos(array(
+                    'layout' => 'grid',
+                    'show_title' => true,
+                    'title' => 'How-To Videos'
+                ));
             }
             ?>
 

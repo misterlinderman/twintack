@@ -120,11 +120,14 @@ class TwinTack_HTV_Frontend {
         // Start output buffering
         ob_start();
         
-        // Add wrapper class if specified
+        // Add wrapper class to identify shortcode usage
         $wrapper_class = 'twintack-htv-shortcode twintack-htv-layout-' . $layout;
         if (!empty($class)) {
             $wrapper_class .= ' ' . $class;
         }
+        
+        // Add the shortcode class to the display args so templates can use it
+        $display_args['shortcode_class'] = $wrapper_class;
         
         echo '<div class="' . esc_attr($wrapper_class) . '">';
         

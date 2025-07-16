@@ -4,11 +4,90 @@
  * @package TwinTackHowToVideos
  */
 
+/* Video Modal Styles */
+#video-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 999999 !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+#video-modal.twintack-modal-open,
+#video-modal[style*="display: flex"] {
+    display: flex !important;
+}
+
+.video-modal-content {
+    position: relative !important;
+    width: 90% !important;
+    max-width: 1000px !important;
+    background-color: #000 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+#video-container {
+    position: relative !important;
+    width: 100% !important;
+    aspect-ratio: 16/9 !important;
+    background-color: #000 !important;
+}
+
+#close-video-modal {
+    position: absolute !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    z-index: 10 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    border: none !important;
+    color: white !important;
+    cursor: pointer !important;
+    padding: 0.5rem !important;
+    border-radius: 50% !important;
+}
+
 /* Video Carousel Section */
 .twintack-video-carousel-section {
     background-color: #f5f5f7;
     padding: 4rem 0;
     overflow: hidden;
+    position: relative;
+    z-index: 1; /* Ensure carousel doesn't interfere with modal */
+}
+
+/* Video Grid Section */
+.twintack-video-grid-section {
+    background-color: #f5f5f7;
+    padding: 4rem 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+/* Video List Section */
+.twintack-video-list-section {
+    background-color: #f5f5f7;
+    padding: 4rem 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+/* Video Simple Section */
+.twintack-video-simple-section {
+    background-color: #f5f5f7;
+    padding: 4rem 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
 }
 
 .twintack-section-title {
@@ -38,16 +117,32 @@
 .twintack-video-carousel-slides {
     display: flex;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 100%;
+    width: max-content; /* Allow container to expand to fit all videos */
     gap: 20px;
     align-items: flex-start;
 }
 
-/* Individual Slide */
+/* Individual Slide - Desktop (3 videos per viewport) */
 .twintack-video-slide {
-    flex: 0 0 calc(33.333% - 20px);
+    flex: 0 0 calc((100vw - 4rem - 40px) / 3); /* viewport width minus container padding and gaps, divided by 3 */
     min-width: 280px;
-    padding: 0 0.5rem;
+    width: calc((100vw - 4rem - 40px) / 3);
+}
+
+/* Responsive video slides - Tablet (2 videos per viewport) */
+@media (max-width: 1023px) {
+    .twintack-video-slide {
+        flex: 0 0 calc((100vw - 4rem - 20px) / 2);
+        width: calc((100vw - 4rem - 20px) / 2);
+    }
+}
+
+/* Responsive video slides - Mobile (1 video per viewport) */
+@media (max-width: 639px) {
+    .twintack-video-slide {
+        flex: 0 0 calc(100vw - 4rem);
+        width: calc(100vw - 4rem);
+    }
 }
 
 /* Video Thumbnail */
@@ -228,51 +323,22 @@
     background-color: #333;
 }
 
-/* Video Modal */
-.twintack-video-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+/* Modal open body styling */
+body.twintack-modal-open {
+    overflow: hidden;
 }
 
-.twintack-video-modal.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.twintack-video-modal-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(5px);
-}
-
-.twintack-video-modal-container {
-    position: relative;
-    z-index: 10;
-    width: 90%;
-    max-width: 1000px;
-    margin: 2rem auto;
-    transform: translateY(30px) scale(0.95);
-    opacity: 0;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
-}
-
-.twintack-video-modal.animate-in .twintack-video-modal-container {
-    transform: translateY(0) scale(1);
-    opacity: 1;
+/* Responsive modal adjustments */
+@media (max-width: 768px) {
+    .video-modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    #close-video-modal {
+        top: 0.5rem;
+        right: 0.5rem;
+    }
 }
 
 .twintack-video-modal-content {
@@ -382,6 +448,50 @@ body.twintack-modal-open {
     margin: 2rem 0;
 }
 
+/* Shortcode specific styling */
+.twintack-htv-shortcode {
+    margin: 2rem 0;
+}
+
+/* Ensure proper spacing between shortcode sections */
+.twintack-htv-shortcode + .twintack-htv-shortcode {
+    margin-top: 0;
+}
+
+/* Shortcode section styling - apply background to the inner section */
+.twintack-htv-shortcode .twintack-video-carousel-section,
+.twintack-htv-shortcode .twintack-video-grid-section,
+.twintack-htv-shortcode .twintack-video-list-section,
+.twintack-htv-shortcode .twintack-video-simple-section {
+    background-color: #f5f5f7;
+    padding: 4rem 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    margin: 0; /* Remove default margins when inside shortcode */
+}
+
+/* Override template container styling when used in shortcodes */
+.twintack-htv-shortcode .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Responsive adjustments for shortcode layouts */
+@media (max-width: 768px) {
+    .twintack-htv-shortcode .twintack-video-carousel-section,
+    .twintack-htv-shortcode .twintack-video-grid-section,
+    .twintack-htv-shortcode .twintack-video-list-section,
+    .twintack-htv-shortcode .twintack-video-simple-section {
+        padding: 2rem 0;
+    }
+    
+    .twintack-htv-shortcode .container {
+        padding: 0 0.5rem;
+    }
+}
+
 /* Dark theme support */
 @media (prefers-color-scheme: dark) {
     .twintack-video-carousel-section {
@@ -400,3 +510,307 @@ body.twintack-modal-open {
         color: #aaa;
     }
 } 
+
+/* Video Grid Layout */
+.twintack-video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.twintack-video-grid-item {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.twintack-video-grid-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Video List Layout */
+.twintack-video-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.twintack-video-list-item {
+    display: flex;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.twintack-video-list-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.twintack-video-list-item .twintack-video-thumbnail {
+    flex: 0 0 200px;
+    position: relative;
+}
+
+.twintack-video-list-item .twintack-video-content {
+    flex: 1;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .twintack-video-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .twintack-video-list-item {
+        flex-direction: column;
+    }
+    
+    .twintack-video-list-item .twintack-video-thumbnail {
+        flex: none;
+        width: 100%;
+        height: 200px;
+    }
+    
+    .twintack-video-list-item .twintack-video-content {
+        padding: 1rem;
+    }
+} 
+
+/* Video Simple Layout */
+.twintack-video-simple-section {
+    background-color: #f5f5f7;
+    padding: 4rem 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.twintack-video-simple-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.twintack-video-simple-item {
+    flex: 0 1 auto;
+    max-width: 320px;
+    min-width: 280px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.twintack-video-simple-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.twintack-video-simple-wrapper .twintack-video-thumbnail {
+    aspect-ratio: 16/9;
+    position: relative;
+    overflow: hidden;
+}
+
+.twintack-video-simple-wrapper .twintack-video-info {
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.twintack-video-simple-wrapper .twintack-video-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+    color: #333;
+}
+
+.twintack-video-simple-wrapper .twintack-video-excerpt {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+
+/* Single video layout */
+.twintack-video-simple-wrapper:has(.twintack-video-simple-item:only-child) {
+    justify-content: center;
+}
+
+.twintack-video-simple-wrapper .twintack-video-simple-item:only-child {
+    max-width: 400px;
+}
+
+/* Two video layout */
+.twintack-video-simple-wrapper:has(.twintack-video-simple-item:nth-child(2):last-child) {
+    justify-content: center;
+}
+
+/* Responsive adjustments for simple layout */
+@media (max-width: 768px) {
+    .twintack-video-simple-wrapper {
+        gap: 1.5rem;
+    }
+    
+    .twintack-video-simple-item {
+        min-width: 250px;
+        max-width: 100%;
+    }
+    
+    .twintack-video-simple-wrapper .twintack-video-info {
+        padding: 1rem;
+    }
+    
+    /* Page videos responsive adjustments */
+    .twintack-videos-page .page-title {
+        font-size: 2rem;
+    }
+    
+    .twintack-videos-page .category-title {
+        font-size: 1.5rem;
+    }
+    
+    .twintack-videos-page .page-description {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .twintack-video-simple-wrapper {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .twintack-video-simple-item {
+        width: 100%;
+        max-width: 100%;
+        min-width: auto;
+    }
+}
+
+/* Page Videos Template Styles */
+.twintack-videos-page {
+    padding: 2rem 0;
+}
+
+.twintack-videos-page .page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.twintack-videos-page .page-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.twintack-videos-page .page-description {
+    font-size: 1.1rem;
+    color: #666;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.twintack-videos-page .video-category-section {
+    margin-bottom: 4rem;
+}
+
+.twintack-videos-page .category-header {
+    margin-bottom: 2rem;
+}
+
+.twintack-videos-page .category-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+    border-left: 4px solid #007cba;
+    padding-left: 1rem;
+}
+
+.twintack-videos-page .category-description {
+    font-size: 1rem;
+    color: #666;
+    margin-left: 1.25rem;
+    line-height: 1.5;
+}
+
+.twintack-videos-page .category-view-all {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.twintack-videos-page .view-all-link {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background-color: #007cba;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.twintack-videos-page .view-all-link:hover {
+    background-color: #005a87;
+    color: white;
+}
+
+.twintack-videos-page .no-videos-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+.twintack-videos-page .no-videos-message h3 {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.twintack-videos-page .no-videos-message p {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.twintack-videos-page .all-videos-section {
+    margin-top: 3rem;
+    padding-top: 3rem;
+    border-top: 1px solid #e5e5e5;
+}
+
+.twintack-videos-page .all-videos-section h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #333;
+}
+
+/* Override plugin styles for page layout */
+.twintack-videos-page .twintack-video-grid-section,
+.twintack-videos-page .twintack-video-simple-section {
+    padding: 1rem 0;
+}
+
+.twintack-videos-page .twintack-section-title {
+    display: none; /* Hide individual section titles since we have category titles */
+}

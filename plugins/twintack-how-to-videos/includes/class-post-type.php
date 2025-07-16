@@ -40,6 +40,12 @@ class TwinTack_HTV_Post_Type {
         add_action('init', array($this, 'register_taxonomies'));
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post_how_to_video', array($this, 'save_video_data'));
+        
+        // Admin columns and sorting
+        add_filter('manage_how_to_video_posts_columns', array($this, 'add_admin_columns'));
+        add_action('manage_how_to_video_posts_custom_column', array($this, 'populate_admin_columns'), 10, 2);
+        add_filter('manage_edit-how_to_video_sortable_columns', array($this, 'make_admin_columns_sortable'));
+        add_action('pre_get_posts', array($this, 'admin_column_orderby'));
     }
     
     /**
@@ -168,6 +174,12 @@ class TwinTack_HTV_Post_Type {
         // Get current values
         $vimeo_url = get_post_meta($post->ID, '_htv_vimeo_url', true);
         $duration = get_post_meta($post->ID, '_htv_video_duration', true);
+        $priority = get_post_meta($post->ID, '_htv_video_priority', true);
+        
+        // Default priority to 0 if not set
+        if ($priority === '') {
+            $priority = 0;
+        }
         
         ?>
         <table class="form-table">
@@ -197,6 +209,22 @@ class TwinTack_HTV_Post_Type {
                            class="small-text" 
                            placeholder="2:30" />
                     <p class="description"><?php _e('Video duration in MM:SS format (e.g., "2:30").', 'twintack-how-to-videos'); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="htv_video_priority"><?php _e('Display Priority', 'twintack-how-to-videos'); ?></label>
+                </th>
+                <td>
+                    <input type="number" 
+                           id="htv_video_priority" 
+                           name="htv_video_priority" 
+                           value="<?php echo esc_attr($priority); ?>" 
+                           class="small-text" 
+                           min="0" 
+                           max="999" 
+                           step="1" />
+                    <p class="description"><?php _e('Higher numbers display first. Use 0 for default order by date. (0-999)', 'twintack-how-to-videos'); ?></p>
                 </td>
             </tr>
         </table>
@@ -239,6 +267,82 @@ class TwinTack_HTV_Post_Type {
                 '_htv_video_duration',
                 sanitize_text_field($_POST['htv_video_duration'])
             );
+        }
+        
+        // Save video priority
+        if (isset($_POST['htv_video_priority'])) {
+            $priority = intval($_POST['htv_video_priority']);
+            // Ensure priority is within valid range
+            $priority = max(0, min(999, $priority));
+            update_post_meta(
+                $post_id,
+                '_htv_video_priority',
+                $priority
+            );
+        }
+    }
+    
+    /**
+     * Add admin columns for How-To Videos
+     */
+    public function add_admin_columns($columns) {
+        $new_columns = array();
+        $new_columns['cb'] = $columns['cb'];
+        $new_columns['title'] = $columns['title'];
+        $new_columns['priority'] = __('Priority', 'twintack-how-to-videos');
+        $new_columns['duration'] = __('Duration', 'twintack-how-to-videos');
+        $new_columns['taxonomy-video_sport'] = $columns['taxonomy-video_sport'];
+        $new_columns['taxonomy-video_category'] = $columns['taxonomy-video_category'];
+        $new_columns['date'] = $columns['date'];
+        return $new_columns;
+    }
+    
+    /**
+     * Populate admin columns for How-To Videos
+     */
+    public function populate_admin_columns($column, $post_id) {
+        switch ($column) {
+            case 'priority':
+                $priority = get_post_meta($post_id, '_htv_video_priority', true);
+                if ($priority === '' || $priority === '0') {
+                    echo '<span style="color: #999;">0 (default)</span>';
+                } else {
+                    echo '<strong>' . esc_html($priority) . '</strong>';
+                }
+                break;
+                
+            case 'duration':
+                $duration = get_post_meta($post_id, '_htv_video_duration', true);
+                if (!empty($duration)) {
+                    echo esc_html($duration);
+                } else {
+                    echo '<span style="color: #999;">—</span>';
+                }
+                break;
+        }
+    }
+    
+    /**
+     * Make admin columns sortable
+     */
+    public function make_admin_columns_sortable($columns) {
+        $columns['priority'] = 'priority';
+        return $columns;
+    }
+    
+    /**
+     * Order admin columns by priority
+     */
+    public function admin_column_orderby($query) {
+        if (!is_admin() || !$query->is_main_query()) {
+            return;
+        }
+        
+        $orderby = $query->get('orderby');
+        
+        if ('priority' === $orderby) {
+            $query->set('meta_key', '_htv_video_priority');
+            $query->set('orderby', 'meta_value_num');
         }
     }
 } 

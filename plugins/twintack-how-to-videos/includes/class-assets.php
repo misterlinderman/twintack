@@ -130,6 +130,25 @@ class TwinTack_HTV_Assets {
             $should_enqueue = true;
         }
         
+        // Check if page content contains shortcodes
+        global $post;
+        if (is_a($post, 'WP_Post')) {
+            if (has_shortcode($post->post_content, 'twintack_how_to_videos') || 
+                has_shortcode($post->post_content, 'twintack_video_carousel')) {
+                $should_enqueue = true;
+            }
+        }
+        
+        // Check if any video display functions are being called
+        if (did_action('twintack_htv_display_videos')) {
+            $should_enqueue = true;
+        }
+        
+        // If we detect video-related content in any flexible content or ACF fields
+        if (function_exists('have_rows') && have_rows('content_configurations')) {
+            $should_enqueue = true;
+        }
+        
         // Allow themes/plugins to override
         return apply_filters('twintack_htv_should_enqueue_frontend_assets', $should_enqueue);
     }

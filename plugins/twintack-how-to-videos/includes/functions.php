@@ -34,6 +34,38 @@ function twintack_htv_get_product_sport($product_id) {
 }
 
 /**
+ * Sort videos by priority then date
+ * Helper function to properly sort videos by priority (highest first), then by date (newest first)
+ *
+ * @param array $videos Array of video data to sort
+ * @return array Sorted array of video data
+ */
+function twintack_htv_sort_videos_by_priority($videos) {
+    if (empty($videos)) {
+        return $videos;
+    }
+    
+    usort($videos, function($a, $b) {
+        // Get priority values, default to 0 if not set
+        $priority_a = !empty($a['priority']) ? intval($a['priority']) : 0;
+        $priority_b = !empty($b['priority']) ? intval($b['priority']) : 0;
+        
+        // First sort by priority (higher first)
+        if ($priority_a !== $priority_b) {
+            return $priority_b - $priority_a;
+        }
+        
+        // If priorities are equal, sort by date (newer first)
+        $date_a = get_post_field('post_date', $a['id']);
+        $date_b = get_post_field('post_date', $b['id']);
+        
+        return strcmp($date_b, $date_a);
+    });
+    
+    return $videos;
+}
+
+/**
  * Get how-to videos by sport
  * Retrieves videos assigned to a specific sport
  *
@@ -44,9 +76,7 @@ function twintack_htv_get_product_sport($product_id) {
 function twintack_htv_get_videos_by_sport($sport_slug, $limit = 5) {
     $args = array(
         'post_type' => 'how_to_video',
-        'posts_per_page' => $limit,
-        'orderby' => 'date',
-        'order' => 'DESC',
+        'posts_per_page' => -1, // Get all first, then limit after sorting
         'post_status' => 'publish',
         'tax_query' => array(
             array(
@@ -73,6 +103,7 @@ function twintack_htv_get_videos_by_sport($sport_slug, $limit = 5) {
                 'thumbnail' => get_the_post_thumbnail_url($video_id, 'medium'),
                 'vimeo_url' => get_post_meta($video_id, '_htv_vimeo_url', true),
                 'duration' => get_post_meta($video_id, '_htv_video_duration', true),
+                'priority' => get_post_meta($video_id, '_htv_video_priority', true),
                 'excerpt' => get_the_excerpt(),
                 'permalink' => get_permalink($video_id),
             );
@@ -80,6 +111,14 @@ function twintack_htv_get_videos_by_sport($sport_slug, $limit = 5) {
             $videos[] = apply_filters('twintack_htv_video_data', $video_data, $video_id);
         }
         wp_reset_postdata();
+    }
+    
+    // Sort videos by priority, then date
+    $videos = twintack_htv_sort_videos_by_priority($videos);
+    
+    // Limit results after sorting
+    if ($limit > 0 && count($videos) > $limit) {
+        $videos = array_slice($videos, 0, $limit);
     }
     
     return apply_filters('twintack_htv_videos_by_sport', $videos, $sport_slug, $limit);
@@ -96,9 +135,7 @@ function twintack_htv_get_videos_by_sport($sport_slug, $limit = 5) {
 function twintack_htv_get_videos_by_category($category_slug, $limit = 5) {
     $args = array(
         'post_type' => 'how_to_video',
-        'posts_per_page' => $limit,
-        'orderby' => 'date',
-        'order' => 'DESC',
+        'posts_per_page' => -1, // Get all first, then limit after sorting
         'post_status' => 'publish',
         'tax_query' => array(
             array(
@@ -125,6 +162,7 @@ function twintack_htv_get_videos_by_category($category_slug, $limit = 5) {
                 'thumbnail' => get_the_post_thumbnail_url($video_id, 'medium'),
                 'vimeo_url' => get_post_meta($video_id, '_htv_vimeo_url', true),
                 'duration' => get_post_meta($video_id, '_htv_video_duration', true),
+                'priority' => get_post_meta($video_id, '_htv_video_priority', true),
                 'excerpt' => get_the_excerpt(),
                 'permalink' => get_permalink($video_id),
             );
@@ -132,6 +170,14 @@ function twintack_htv_get_videos_by_category($category_slug, $limit = 5) {
             $videos[] = apply_filters('twintack_htv_video_data', $video_data, $video_id);
         }
         wp_reset_postdata();
+    }
+    
+    // Sort videos by priority, then date
+    $videos = twintack_htv_sort_videos_by_priority($videos);
+    
+    // Limit results after sorting
+    if ($limit > 0 && count($videos) > $limit) {
+        $videos = array_slice($videos, 0, $limit);
     }
     
     return apply_filters('twintack_htv_videos_by_category', $videos, $category_slug, $limit);
@@ -149,7 +195,7 @@ function twintack_htv_get_videos($args = array()) {
         'sport' => '',
         'category' => '',
         'limit' => 5,
-        'orderby' => 'date',
+        'orderby' => 'priority',
         'order' => 'DESC',
     );
     
@@ -157,11 +203,18 @@ function twintack_htv_get_videos($args = array()) {
     
     $query_args = array(
         'post_type' => 'how_to_video',
-        'posts_per_page' => $args['limit'],
-        'orderby' => $args['orderby'],
-        'order' => $args['order'],
+        'posts_per_page' => -1, // Get all first, then limit after sorting if using priority
         'post_status' => 'publish',
     );
+    
+    // Handle ordering
+    $use_priority_sorting = ($args['orderby'] === 'priority');
+    
+    if (!$use_priority_sorting) {
+        $query_args['orderby'] = $args['orderby'];
+        $query_args['order'] = $args['order'];
+        $query_args['posts_per_page'] = $args['limit']; // Use limit directly for non-priority sorting
+    }
     
     // Build tax query
     $tax_query = array();
@@ -205,6 +258,7 @@ function twintack_htv_get_videos($args = array()) {
                 'thumbnail' => get_the_post_thumbnail_url($video_id, 'medium'),
                 'vimeo_url' => get_post_meta($video_id, '_htv_vimeo_url', true),
                 'duration' => get_post_meta($video_id, '_htv_video_duration', true),
+                'priority' => get_post_meta($video_id, '_htv_video_priority', true),
                 'excerpt' => get_the_excerpt(),
                 'permalink' => get_permalink($video_id),
             );
@@ -212,6 +266,16 @@ function twintack_htv_get_videos($args = array()) {
             $videos[] = apply_filters('twintack_htv_video_data', $video_data, $video_id);
         }
         wp_reset_postdata();
+    }
+    
+    // Apply priority sorting if requested
+    if ($use_priority_sorting) {
+        $videos = twintack_htv_sort_videos_by_priority($videos);
+        
+        // Limit results after sorting
+        if ($args['limit'] > 0 && count($videos) > $args['limit']) {
+            $videos = array_slice($videos, 0, $args['limit']);
+        }
     }
     
     return apply_filters('twintack_htv_videos_multi', $videos, $args);
