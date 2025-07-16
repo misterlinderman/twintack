@@ -530,11 +530,12 @@ body.twintack-modal-open {
     }
     
     .twintack-section-title {
-        color: #fff;
+        color: var(--color-text);
+        text-transform: uppercase;
     }
     
     .twintack-video-title {
-        color: #fff;
+        color: var(--color-text);
     }
     
     .twintack-video-excerpt {
