@@ -813,3 +813,46 @@ input#gform_submit_button_10:hover {
     color: var(--color-primary);
     font-size: 1.2rem;
 }
+
+
+
+/* Video Page */
+.page-id-1446 h2.twintack-section-title {
+    display: none;
+}
+
+.page-id-1446 .container {
+    margin: 4rem auto;
+}
+
+.page-id-1446 .twintack-htv-shortcode .twintack-video-carousel-section, .page-id-1446 .twintack-htv-shortcode .twintack-video-grid-section, .page-id-1446 .twintack-htv-shortcode .twintack-video-list-section, .page-id-1446 .twintack-htv-shortcode .twintack-video-simple-section {
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    background-color: transparent;
+}
+
+.page-id-1446 .twintack-video-grid-section .container, .page-id-1446 .twintack-video-list-section .container {
+    background-color: transparent;
+}
+
+.page-id-1446 .full-width-content .twintack-htv-shortcode, .page-id-1446 .callout-text .twintack-htv-shortcode {
+    margin: 0;
+}
+
+.page-id-1446 .twintack-video-grid-item p.twintack-video-excerpt {
+    display: none;
+}
+
+.page-id-1446 section.full-width-content.layout-full {
+    background-color: black;
+    color: white;
+    padding: 1em 0em;
+}
+
+.twintack-video-thumbnail:hover {
+    transform: none;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}

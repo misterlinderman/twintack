@@ -74,28 +74,7 @@ add_action('wp_enqueue_scripts', 'twintack_enqueue_sport_styles');
 function twintack_enqueue_sport_scripts() {
     // Only load on sport template
     if (is_sport_template()) {
-        // For video modal functionality
-        wp_enqueue_script(
-            'twintack-video-modal',
-            get_template_directory_uri() . '/js/video-modal.js',
-            array('jquery'),
-            '1.0.0',
-            true
-        );
-        
-        // Add inline script to initialize modals
-        wp_add_inline_script('twintack-video-modal', '
-            jQuery(document).ready(function($) {
-                // Ensure video modal is properly initialized
-                $("#video-modal").css({
-                    "display": "flex",
-                    "opacity": "0",
-                    "visibility": "hidden"
-                });
-                
-                console.log("Modal initialization complete");
-            });
-        ');
+        // Video modal functionality is handled by the TwinTack How-to Videos plugin
     }
 }
 add_action('wp_enqueue_scripts', 'twintack_enqueue_sport_scripts');

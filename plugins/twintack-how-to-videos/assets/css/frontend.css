@@ -187,38 +187,40 @@
     font-size: 14px;
 }
 
-/* Play Button */
+/* Play Button - Consistent base styling across all layouts */
 .twintack-play-button {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.2);
-    transition: background 0.3s ease;
-    z-index: 5;
-    text-decoration: none;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+    transition: background 0.3s ease !important;
+    z-index: 5 !important;
+    text-decoration: none !important;
 }
 
+/* Play Button Container - Consistent hover state */
 .twintack-play-button:hover {
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.4) !important;
 }
 
+/* Play Icon - Consistent styling across all layouts */
 .twintack-play-icon {
-    width: 64px;
-    height: 64px;
-    color: white;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    opacity: 0.9;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    width: 64px !important;
+    height: 64px !important;
+    color: white !important;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
+    opacity: 0.9 !important;
+    transition: transform 0.3s ease, opacity 0.3s ease !important;
 }
 
 .twintack-play-button:hover .twintack-play-icon {
-    transform: scale(1.1);
-    opacity: 1;
+    transform: scale(1.1) !important;
+    opacity: 1 !important;
 }
 
 /* Video Duration Badge */
@@ -437,9 +439,10 @@ body.twintack-modal-open {
         gap: 10px;
     }
     
+    /* Mobile responsive sizing */
     .twintack-play-icon {
-        width: 48px;
-        height: 48px;
+        width: 48px !important;
+        height: 48px !important;
     }
 }
 
