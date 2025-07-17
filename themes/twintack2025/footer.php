@@ -27,8 +27,8 @@
 			<div class="footer-column">
 				<h3>Products</h3>
 				<nav class="footer-nav">
-					<a href="/twintack-custom-grips">Custom Grips</a>
-					<a href="/shop">Shop All</a>
+					<a href="/twintack-custom-grips/">Custom Grips</a>
+					<a href="/shop/">Shop All</a>
 					<a href="/shop/?product_cat=baseball">Baseball Grips</a>
 					<a href="/shop/?product_cat=fishing">Fishing Grips</a>
 					<a href="/shop/?product_cat=accessory">Accessories</a>
@@ -39,10 +39,10 @@
 			<div class="footer-column">
 				<h3>Company</h3>
 				<nav class="footer-nav">
-					<a href="/twintack">TwinTack</a>
-					<a href="/twintack#technology">Technology</a>
-					<a href="/twintack#ourstory">Our Story</a>
-					<a href="/contact">Contact</a>
+					<a href="/twintack/">TwinTack</a>
+					<a href="/twintack/#technology">Technology</a>
+					<a href="/twintack/#ourstory">Our Story</a>
+					<a href="/contact/">Contact</a>
 					<!--a href="/wholesale-registration-page">Wholesale</a-->
 					<!--a href="/affiliates">Affiliate Program</a-->
 				</nav>
@@ -54,11 +54,11 @@
 				<nav class="footer-nav">
 					<?php if ( is_user_logged_in() ) : ?>
 						<a href="/my-account">Dashboard</a>
-						<a href="/my-account/grip-designs">My Grip Designs</a>
-						<a href="/my-account/orders">Orders</a>
-						<a href="/my-account/edit-address">Addresses</a>
-						<a href="/my-account/edit-account">Account Details</a>
-						<a href="/my-account/customer-logout">Log out</a>
+						<a href="/my-account/grip-designs/">My Grip Designs</a>
+						<a href="/my-account/orders/">Orders</a>
+						<a href="/my-account/edit-address/">Addresses</a>
+						<a href="/my-account/edit-account/">Account Details</a>
+						<a href="/my-account/customer-logout/">Log out</a>
 					<?php else : ?>
 						<a href="/login">Login/Register</a>
 					<?php endif; ?>
