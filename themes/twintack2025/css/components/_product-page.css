@@ -113,7 +113,9 @@ div.product.type-product.product_cat-baseball, div.product.type-product.product_
 
 
 /* Product Image Styles */
-
+ol.flex-control-nav.flex-control-thumbs {
+    display: none;
+}/* Temporary */
 
 
 /* Product Title and Price */

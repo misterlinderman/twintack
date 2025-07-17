@@ -31,7 +31,7 @@
 					<a href="/shop">Shop All</a>
 					<a href="/shop/?product_cat=baseball">Baseball Grips</a>
 					<a href="/shop/?product_cat=fishing">Fishing Grips</a>
-					<a href="/shop/?product_cat=accessory">ACCESSORIES</a>
+					<a href="/shop/?product_cat=accessory">Accessories</a>
 				</nav>
 			</div>
 
@@ -43,8 +43,8 @@
 					<a href="/twintack#technology">Technology</a>
 					<a href="/twintack#ourstory">Our Story</a>
 					<a href="/contact">Contact</a>
-					<a href="/wholesale-registration-page">Wholesale</a>
-					<a href="/affiliates">Affiliate Program</a>
+					<!--a href="/wholesale-registration-page">Wholesale</a-->
+					<!--a href="/affiliates">Affiliate Program</a-->
 				</nav>
 			</div>
 

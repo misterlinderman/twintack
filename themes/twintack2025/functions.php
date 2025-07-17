@@ -1529,6 +1529,18 @@ function twintack_force_correct_account_urls() {
             return $url;
         }
         
+        // Don't modify WooCommerce authentication endpoints (for API integrations like Klaviyo)
+        if (strpos($url, '/wc-auth/') !== false) {
+            return $url;
+        }
+        
+        // Don't modify if this is already an authentication-related URL
+        if (strpos($url, 'access_granted') !== false || 
+            strpos($url, 'wc_auth_nonce') !== false ||
+            strpos($url, 'callback_url') !== false) {
+            return $url;
+        }
+        
         // Rebuild the endpoint URL using the correct account page
         if ($value) {
             return trailingslashit($account_page_url) . trailingslashit($endpoint) . $value;
