@@ -32,42 +32,55 @@ class TwinTack_Grip_Configurator {
     
     /**
      * Enhance the grip configurator page with registration options
+     * Only runs for non-logged-in users
      */
     public function enhance_grip_configurator_page() {
-        // Only run on the grip configurator page
-        if (!$this->is_grip_configurator_page()) {
+        // Only enhance for non-logged-in users
+        if (is_user_logged_in()) {
             return;
         }
         
-        // Only add enhancements if user is not logged in
-        if (is_user_logged_in()) {
+        // Only run on pages that might be the grip configurator
+        if (!$this->is_grip_configurator_page()) {
             return;
         }
         
         ?>
         <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            // Look for the account required message and enhance it
-            var accountRequired = $('body:contains("Account required for custom grip orders")').length > 0;
-            var gripConfiguratorPage = $('body:contains("GRIP CONFIGURATOR")').length > 0;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find elements that suggest this is a grip configurator page
+            var targetElements = [
+                document.querySelector('[class*="grip-configurator"], [id*="grip-configurator"]'),
+                document.querySelector('h1, h2, h3')
+            ].filter(Boolean);
             
-            if (accountRequired || gripConfiguratorPage) {
-                // Find the container with the account required message
-                var targetContainer = $('body').find('*:contains("Account required for custom grip orders")').filter(function() {
-                    return $(this).children().length === 0; // Only target text nodes
-                }).parent();
-                
-                // If we can't find the specific message, look for the GRIP CONFIGURATOR container
-                if (targetContainer.length === 0) {
-                    targetContainer = $('body').find('*:contains("GRIP CONFIGURATOR")').filter(function() {
-                        return $(this).children().length === 0;
-                    }).parent();
-                }
-                
-                // Add our enhanced content below the existing message
-                if (targetContainer.length > 0) {
-                    var registrationHTML = <?php echo json_encode($this->get_registration_html()); ?>;
-                    targetContainer.after(registrationHTML);
+            // Check if any element contains grip configurator text
+            var hasGripContent = targetElements.some(function(el) {
+                return el && el.textContent.toLowerCase().includes('grip configurator');
+            });
+            
+            // Also check for "Account required" text
+            var accountRequiredElements = Array.from(document.querySelectorAll('*')).filter(function(el) {
+                return el.textContent && el.textContent.includes('Account required');
+            });
+            
+            if (hasGripContent || accountRequiredElements.length > 0) {
+                // Find the best place to insert the registration prompt
+                var insertTarget = accountRequiredElements[0] || 
+                                 document.querySelector('.entry-content') || 
+                                 document.querySelector('.content') ||
+                                 document.querySelector('main');
+                                 
+                if (insertTarget && !document.querySelector('.twintack-grip-registration-prompt')) {
+                    // Create the registration prompt
+                    var registrationHtml = <?php echo json_encode($this->get_registration_html()); ?>;
+                    
+                    // Insert after the target element
+                    if (accountRequiredElements[0]) {
+                        accountRequiredElements[0].insertAdjacentHTML('afterend', registrationHtml);
+                    } else {
+                        insertTarget.insertAdjacentHTML('beforeend', registrationHtml);
+                    }
                 }
             }
         });
