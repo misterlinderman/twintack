@@ -1985,3 +1985,9 @@ add_action('template_redirect', 'twintack_move_product_breadcrumb');
  * 
  * No additional enqueuing needed since it's part of template output.
  */
+
+/**
+ * Include Grip Configurator Enhancements
+ * Adds registration options for non-logged-in users on the grip configurator page
+ */
+require get_template_directory() . '/inc/class-twintack-grip-configurator.php';

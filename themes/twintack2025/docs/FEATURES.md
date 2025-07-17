@@ -24,6 +24,33 @@ This document catalogs the features of the TwinTack theme, serving as both docum
 
 ---
 
+### Grip Configurator Enhancement
+
+**Description**: Adds user-friendly registration and login options to the custom grip configurator page for users who aren't logged in. Integrates seamlessly with the unified login system to convert visitors to registered users.
+
+**Implementation**:
+- Grip configurator enhancement class (`inc/class-twintack-grip-configurator.php`)
+- Automatic page detection and enhancement
+- Manual shortcode options for precise control
+- Mobile-responsive design with modern styling
+
+**Status**: Implemented
+
+**Usage**:
+- Automatically enhances grip configurator pages for non-logged-in users
+- Provides two shortcodes: `[twintack_grip_login_prompt]` and `[twintack_account_required]`
+- Shows clear benefits of account creation (design tracking, order history, etc.)
+- Links directly to unified login/registration system
+
+**Features**:
+- Automatic detection of grip configurator pages
+- Registration benefits explanation with compelling copy
+- Mobile-responsive button layout
+- Integration with existing unified login system
+- Admin hints for shortcode usage
+
+---
+
 ### Dual-Category Product Display
 
 **Description**: Products are displayed with category-specific information for both baseball and fishing contexts.
