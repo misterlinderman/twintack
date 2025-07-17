@@ -183,7 +183,7 @@
         height: 70vh;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: flex-start;
         flex-wrap: nowrap;
     }
 
@@ -205,6 +205,7 @@
         max-width: 100%;
         rotate: -90deg;
         margin: 8em 0;
+        padding: 24px 24px 24px 0;
     }
 
     .marquee-callout .callout-content {
