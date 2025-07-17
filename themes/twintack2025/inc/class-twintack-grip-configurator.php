@@ -48,6 +48,32 @@ class TwinTack_Grip_Configurator {
         ?>
         <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
+            // Comprehensive login status check via JavaScript
+            var isLoggedIn = 
+                // WordPress standard body class
+                document.body.classList.contains('logged-in') || 
+                // Admin bar indicators
+                document.querySelector('.admin-bar') !== null ||
+                document.querySelector('#wpadminbar') !== null ||
+                // Account page indicators
+                document.querySelector('.my-account') !== null ||
+                document.querySelector('[href*="/my-account"]') !== null ||
+                document.querySelector('[href*="wp-admin"]') !== null ||
+                // Logout link presence (only appears for logged-in users)
+                document.querySelector('[href*="wp-login.php?action=logout"]') !== null ||
+                document.querySelector('[href*="logout"]') !== null ||
+                // WooCommerce specific indicators
+                document.querySelector('.woocommerce-account') !== null ||
+                document.querySelector('.woocommerce-MyAccount') !== null ||
+                // Check for user account menu items
+                document.querySelector('[class*="account-menu"]') !== null ||
+                document.querySelector('[class*="user-menu"]') !== null;
+            
+            // If user appears to be logged in, don't show the enhancement
+            if (isLoggedIn) {
+                return;
+            }
+            
             // Find elements that suggest this is a grip configurator page
             var targetElements = [
                 document.querySelector('[class*="grip-configurator"], [id*="grip-configurator"]'),
@@ -64,12 +90,22 @@ class TwinTack_Grip_Configurator {
                 return el.textContent && el.textContent.includes('Account required');
             });
             
-            if (hasGripContent || accountRequiredElements.length > 0) {
+            // Check for any form-related content that might indicate this is the grip configurator
+            var formElements = document.querySelectorAll('form, .gform_wrapper, .gform_body');
+            
+            // Check for any element containing "custom grip" text
+            var customGripElements = Array.from(document.querySelectorAll('*')).filter(function(el) {
+                return el.textContent && el.textContent.toLowerCase().includes('custom grip');
+            });
+            
+            if (hasGripContent || accountRequiredElements.length > 0 || (formElements.length > 0 && customGripElements.length > 0)) {
                 // Find the best place to insert the registration prompt
                 var insertTarget = accountRequiredElements[0] || 
                                  document.querySelector('.entry-content') || 
                                  document.querySelector('.content') ||
-                                 document.querySelector('main');
+                                 document.querySelector('main') ||
+                                 document.querySelector('.gform_wrapper') ||
+                                 document.querySelector('form');
                                  
                 if (insertTarget && !document.querySelector('.twintack-grip-registration-prompt')) {
                     // Create the registration prompt
@@ -78,6 +114,8 @@ class TwinTack_Grip_Configurator {
                     // Insert after the target element
                     if (accountRequiredElements[0]) {
                         accountRequiredElements[0].insertAdjacentHTML('afterend', registrationHtml);
+                    } else if (insertTarget.tagName === 'FORM' || insertTarget.className.includes('gform')) {
+                        insertTarget.insertAdjacentHTML('beforebegin', registrationHtml);
                     } else {
                         insertTarget.insertAdjacentHTML('beforeend', registrationHtml);
                     }
@@ -103,6 +141,15 @@ class TwinTack_Grip_Configurator {
         // Check if the current page contains grip configurator content
         if ($post && (strpos($post->post_content, 'GRIP CONFIGURATOR') !== false ||
             strpos($post->post_content, 'Account required for custom grip orders') !== false)) {
+            return true;
+        }
+        
+        // Additional checks for common form page patterns
+        if ($post && (
+            strpos($post->post_content, '[gravityform') !== false ||
+            strpos($post->post_content, 'custom grip') !== false ||
+            strpos(strtolower($post->post_title), 'grip') !== false
+        )) {
             return true;
         }
         
