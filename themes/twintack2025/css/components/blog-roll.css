@@ -1,0 +1,321 @@
+/**
+ * TwinTack Blog Roll Component Styles
+ * 
+ * Styling for the blog roll shortcode component
+ * Supports both grid and list layouts
+ */
+
+/* Homepage Blog Roll Section */
+.homepage-blog-roll {
+    background: var(--color-primary);
+    margin-bottom: 3.5rem;
+}
+
+.homepage-blog-roll .blog-roll-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.homepage-blog-roll .section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-primary, #000);
+    margin-bottom: 0.5rem;
+    font-family: 'Archivo', sans-serif;
+}
+
+.homepage-blog-roll .section-subtitle {
+    font-size: 1.1rem;
+    color: var(--color-text, #6c757d);
+    margin: 0;
+    font-family: 'Archivo', sans-serif;
+}
+
+.homepage-blog-roll .blog-roll-footer {
+    text-align: center;
+    margin-top: 3rem;
+}
+
+.homepage-blog-roll .view-all-posts {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: var(--color-primary, #000);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-family: 'Archivo', sans-serif;
+}
+
+.homepage-blog-roll .view-all-posts:hover {
+    background: var(--color-highlight, #333);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .homepage-blog-roll {
+        padding: 3rem 0;
+    }
+    
+    .homepage-blog-roll .section-title {
+        font-size: 2rem;
+    }
+    
+    .homepage-blog-roll .blog-roll-header {
+        margin-bottom: 2rem;
+    }
+}
+
+/* Base Blog Roll Container */
+.twintack-blog-roll {
+    margin: 2rem 0;
+    font-family: 'Archivo', sans-serif;
+}
+
+/* Grid Layout */
+.twintack-blog-roll.layout-grid .blog-roll-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .twintack-blog-roll.layout-grid .blog-roll-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+/* List Layout */
+.twintack-blog-roll.layout-list .blog-roll-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+/* Individual Blog Roll Item */
+.blog-roll-item {
+    background: var(--light, #ffffff);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid var(--gray-200, #e9ecef);
+}
+
+.blog-roll-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* List layout specific styling */
+.layout-list .blog-roll-item {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+    .layout-list .blog-roll-item {
+        flex-direction: column;
+    }
+}
+
+/* Blog Roll Image - ABSOLUTELY MINIMAL */
+.blog-roll-image {
+    height: 200px;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+.blog-roll-image .image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Blog Roll Content */
+.blog-roll-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
+}
+
+.layout-list .blog-roll-content {
+    padding: 1.5rem;
+}
+
+/* Blog Roll Title */
+.blog-roll-title {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.blog-roll-title a {
+    color: var(--text, #212529);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.blog-roll-title a:hover {
+    color: var(--color-highlight, var(--primary, #007bff));
+    text-decoration: none;
+}
+
+/* Blog Roll Meta */
+.blog-roll-meta {
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-light, #6c757d);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.blog-roll-date {
+    font-weight: 500;
+}
+
+.blog-roll-category {
+    font-style: italic;
+}
+
+.blog-roll-category::before {
+    content: '•';
+    margin-right: 0.5rem;
+    color: var(--gray-300, #dee2e6);
+}
+
+/* Blog Roll Excerpt */
+.blog-roll-excerpt {
+    margin-bottom: 1.5rem;
+    color: var(--text, #495057);
+    line-height: 1.6;
+    font-size: 0.95rem;
+    flex-grow: 1;
+}
+
+/* Read More Link */
+.blog-roll-read-more {
+    display: inline-block;
+    color: var(--color-highlight, var(--primary, #007bff));
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    align-self: flex-start;
+}
+
+.blog-roll-read-more:hover {
+    color: var(--color-accent, var(--primary-dark, #0056b3));
+    border-bottom-color: var(--color-accent, var(--primary-dark, #0056b3));
+    text-decoration: none;
+    transform: translateX(3px);
+}
+
+.blog-roll-read-more::after {
+    content: ' →';
+    transition: transform 0.3s ease;
+}
+
+.blog-roll-read-more:hover::after {
+    transform: translateX(3px);
+}
+
+/* No Posts State */
+.twintack-blog-roll.no-posts {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: var(--gray-100, #f8f9fa);
+    border-radius: 8px;
+    border: 2px dashed var(--gray-300, #dee2e6);
+}
+
+.twintack-blog-roll.no-posts p {
+    margin: 0;
+    color: var(--text-light, #6c757d);
+    font-size: 1.1rem;
+    font-style: italic;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+    .twintack-blog-roll {
+        margin: 1.5rem 0;
+    }
+    
+    .blog-roll-content {
+        padding: 1rem;
+    }
+    
+    .blog-roll-title {
+        font-size: 1.1rem;
+    }
+    
+    .blog-roll-meta {
+        font-size: 0.8rem;
+    }
+    
+    .blog-roll-excerpt {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Custom Class Support */
+.twintack-blog-roll.compact .blog-roll-item {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.twintack-blog-roll.compact .blog-roll-content {
+    padding: 1rem;
+}
+
+.twintack-blog-roll.compact .blog-roll-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.twintack-blog-roll.compact .blog-roll-excerpt {
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+/* Dark theme support if needed */
+@media (prefers-color-scheme: dark) {
+    .twintack-blog-roll .blog-roll-item {
+        background: var(--secondary, #2d3748);
+        border-color: var(--color-border, #4a5568);
+        color: var(--color-text, #e2e8f0);
+    }
+    
+    .twintack-blog-roll .blog-roll-title a {
+        color: var(--color-text, #e2e8f0);
+    }
+    
+    .twintack-blog-roll .blog-roll-title a:hover {
+        color: var(--color-highlight, #63b3ed);
+    }
+    
+    .twintack-blog-roll .blog-roll-meta {
+        color: var(--color-text-muted, #a0aec0);
+    }
+    
+    .twintack-blog-roll .blog-roll-excerpt {
+        color: var(--color-text, #cbd5e0);
+    }
+} 

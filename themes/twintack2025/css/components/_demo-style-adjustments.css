@@ -870,3 +870,43 @@ input#gform_submit_button_10:hover {
     transform: none;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
+
+
+/* Blog Post Styles */
+
+.post-template-default main article {
+    padding: 3% 15%;
+    color: var(--color-text);
+}
+
+.post-template-default main article .entry-content {
+    font-size: 1.2rem;
+}
+
+.post-template-default main article .embed-container {
+    margin: 2rem 0;
+}
+
+.post-template-default main article time.updated {
+    display: none;
+}
+
+.post-template-default main article footer.entry-footer {
+    display: none;
+}
+
+.post-template-default main div#comments {
+    display: none;
+}
+
+.post-template-default aside#secondary {
+    display: none;
+}
+
+.post-template-default main#primary {
+    margin-top: 3.5rem;
+}
+
+.post-template-default main article .post-thumbnail {
+    display: none;
+}

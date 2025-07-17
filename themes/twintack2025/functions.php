@@ -1967,3 +1967,21 @@ function twintack_move_product_breadcrumb() {
     }
 }
 add_action('template_redirect', 'twintack_move_product_breadcrumb');
+
+/**
+ * BLOG ROLL FUNCTIONALITY MOVED TO TEMPLATE
+ * The blog roll is now implemented as a direct template part in:
+ * - template-parts/content-blog-roll.php (template)
+ * - front-page.php (includes the template)
+ * - css/components/blog-roll.css (styling)
+ * 
+ * This approach avoids WordPress content filtering issues that
+ * were stripping inline styles from shortcode output.
+ */
+
+/**
+ * CSS for blog roll is loaded via main.css import:
+ * @import 'components/blog-roll.css';
+ * 
+ * No additional enqueuing needed since it's part of template output.
+ */
