@@ -206,7 +206,7 @@ class TwinTack_Grip_Volume_Pricing {
     /**
      * Calculate volume price based on quantity
      */
-    private function calculate_volume_price($product, $quantity) {
+    public function calculate_volume_price($product, $quantity) {
         $config = $this->get_pricing_config($product->get_id());
         if (!$config) {
             return false;
@@ -276,77 +276,7 @@ class TwinTack_Grip_Volume_Pricing {
                     </span>
                 </div>
             </div>
-            <p class="minimum-order-notice">
-                <strong><?php _e('Note:', 'twintack-grip-manager'); ?></strong>
-                <?php printf(__('Minimum order: %d units. Must be ordered in multiples of %d.', 'twintack-grip-manager'), 
-                    intval($config['min_qty']), 
-                    intval($config['qty_step'])); ?>
-            </p>
         </div>
-        
-        <style>
-        .custom-grip-volume-pricing {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 6px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        
-        .custom-grip-volume-pricing h4 {
-            margin: 0 0 15px 0;
-            color: #333;
-            border-bottom: 2px solid #007cba;
-            padding-bottom: 8px;
-        }
-        
-        .pricing-tiers {
-            margin-bottom: 15px;
-        }
-        
-        .pricing-tier {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .pricing-tier:last-child {
-            border-bottom: none;
-        }
-        
-        .volume-tier {
-            background: #e7f3ff;
-            margin: 5px -10px;
-            padding: 12px 10px;
-            border-radius: 4px;
-            border: 1px solid #b3d9ff;
-        }
-        
-        .tier-range {
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .tier-price {
-            font-weight: bold;
-            color: #007cba;
-        }
-        
-        .savings {
-            color: #28a745;
-            font-weight: normal;
-        }
-        
-        .minimum-order-notice {
-            margin: 0;
-            font-size: 13px;
-            color: #6c757d;
-            padding: 10px 0 0 0;
-            border-top: 1px solid #eee;
-        }
-        </style>
         <?php
     }
     

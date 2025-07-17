@@ -655,8 +655,16 @@ class TwinTack_Grip_Account {
         // Get the Custom Grip Product (ID: 1196)
         $product_id = 1196;
         
-        // Create add to cart URL with grip design meta data
-        $add_to_cart_url = wc_get_cart_url() . '?add-to-cart=' . $product_id . '&grip_design_id=' . $grip_id;
+        // Get the quantity from the grip design
+        $grip_quantity = intval(get_post_meta($grip_id, '_grip_quantity', true));
+        
+        // Ensure we have a valid quantity
+        if ($grip_quantity <= 0) {
+            $grip_quantity = 25; // Default fallback to minimum quantity
+        }
+        
+        // Create add to cart URL with grip design meta data AND quantity
+        $add_to_cart_url = wc_get_cart_url() . '?add-to-cart=' . $product_id . '&quantity=' . $grip_quantity . '&grip_design_id=' . $grip_id;
         
         return $add_to_cart_url;
     }
@@ -875,13 +883,36 @@ class TwinTack_Grip_Account {
      * Update cart item quantity after add to cart
      */
     public function update_cart_item_quantity($cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data) {
+        if (WP_DEBUG) {
+            error_log('TwinTack: update_cart_item_quantity called');
+            error_log('TwinTack: Product ID: ' . $product_id);
+            error_log('TwinTack: Current quantity: ' . $quantity);
+            error_log('TwinTack: Cart item data: ' . print_r($cart_item_data, true));
+        }
+        
         if (isset($cart_item_data['grip_quantity'])) {
             $grip_quantity = intval($cart_item_data['grip_quantity']);
+            if (WP_DEBUG) {
+                error_log('TwinTack: Found grip_quantity in cart data: ' . $grip_quantity);
+            }
+            
             if ($grip_quantity > 0) {
                 if (WP_DEBUG) {
-                    error_log('TwinTack: Updating cart item quantity to ' . $grip_quantity);
+                    error_log('TwinTack: Updating cart item quantity from ' . $quantity . ' to ' . $grip_quantity);
                 }
                 WC()->cart->set_quantity($cart_item_key, $grip_quantity);
+                
+                if (WP_DEBUG) {
+                    error_log('TwinTack: Cart quantity update completed');
+                }
+            } else {
+                if (WP_DEBUG) {
+                    error_log('TwinTack: Grip quantity is 0 or negative, not updating');
+                }
+            }
+        } else {
+            if (WP_DEBUG) {
+                error_log('TwinTack: No grip_quantity found in cart item data');
             }
         }
     }
