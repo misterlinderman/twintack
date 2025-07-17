@@ -24,11 +24,12 @@ $sport = sanitize_title($page_title); // Default to page title as sport slug
         get_template_part('template-parts/content', 'flexible');
     }
     
-    // How-To Videos Section (list layout)
+    // How-To Videos Section (grid layout)
     if (function_exists('twintack_htv_display_videos')) {
         twintack_htv_display_videos(array(
             'sport' => $sport,
-            'layout' => 'list',
+            'layout' => 'grid',
+            'limit' => 6,
             'show_title' => true,
             'title' => 'Latest Videos'
         ));
