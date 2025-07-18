@@ -3,7 +3,7 @@
  * Plugin Name: TwinTack Manual Order Payments
  * Plugin URI: https://twintack.com
  * Description: Enables Stripe and other payment gateways for manually created WooCommerce orders, with seamless integration with TwinTack Grip Manager. Now includes Stripe Checkout Sessions for customer self-service payments.
- * Version: 1.2.0
+ * Version: 1.3.1
  * Author: TwinTack
  * Author URI: https://twintack.com
  * License: GPL v2 or later
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('TWINTACK_MANUAL_PAYMENTS_VERSION', '1.2.0');
+define('TWINTACK_MANUAL_PAYMENTS_VERSION', '1.3.1');
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_FILE', __FILE__);
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -124,6 +124,9 @@ class TwinTack_Manual_Order_Payments {
         // Initialize on admin_init for better timing
         add_action('admin_init', array($this, 'admin_init'));
         
+        // Register custom email class
+        add_filter('woocommerce_email_classes', array($this, 'register_email_classes'));
+        
         // Plugin loaded successfully
         do_action('twintack_manual_payments_loaded');
         
@@ -174,6 +177,19 @@ class TwinTack_Manual_Order_Payments {
     }
     
 
+    
+    /**
+     * Register custom email classes with WooCommerce
+     */
+    public function register_email_classes($email_classes) {
+        // Include the email class file
+        require_once TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-payment-link-email.php';
+        
+        // Add our custom email to WooCommerce emails
+        $email_classes['TwinTack_Payment_Link_Email'] = new TwinTack_Payment_Link_Email();
+        
+        return $email_classes;
+    }
     
     /**
      * Check if WooCommerce is active

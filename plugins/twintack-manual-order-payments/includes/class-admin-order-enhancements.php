@@ -72,6 +72,12 @@ class TwinTack_Admin_Order_Enhancements {
         // Enqueue admin scripts
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         
+        // Handle customer payment pages
+        add_action('init', array($this, 'init_customer_payment_handling'));
+        
+        // Handle payment return from Stripe
+        add_action('woocommerce_thankyou', array($this, 'handle_stripe_payment_return'), 10, 1);
+        
         // Log hook registration
         if (function_exists('twintack_manual_payments_log')) {
             twintack_manual_payments_log('Admin Order Enhancements: Admin hooks registered');
@@ -425,8 +431,8 @@ class TwinTack_Admin_Order_Enhancements {
             
             $order->save();
             
-            // Send email to customer
-            $email_sent = $this->send_payment_link_email($order, $checkout_session->url);
+            // Send professional email to customer
+            $email_sent = $this->send_professional_payment_link_email($order, $checkout_session->url);
             
             twintack_manual_payments_log("Stripe Checkout Session created for order {$order->get_id()}: {$checkout_session->id}");
             
@@ -494,6 +500,123 @@ class TwinTack_Admin_Order_Enhancements {
     }
     
     /**
+     * Initialize customer payment handling
+     */
+    public function init_customer_payment_handling() {
+        // Allow manual orders to be paid by customers
+        add_filter('woocommerce_order_needs_payment', array($this, 'allow_manual_order_payment'), 10, 3);
+        
+        // Redirect to Stripe checkout if session exists
+        add_action('woocommerce_pay_order_before_payment', array($this, 'redirect_to_stripe_checkout'));
+    }
+    
+    /**
+     * Allow manual orders to be paid by customers
+     */
+    public function allow_manual_order_payment($needs_payment, $order, $valid_statuses) {
+        // Debug logging
+        twintack_manual_payments_log("Checking if order {$order->get_id()} needs payment. Current status: {$order->get_status()}, Has session: " . ($order->get_meta('_stripe_checkout_session_id') ? 'yes' : 'no'));
+        
+        // If this is a TwinTack manual payment order and it's pending, allow payment
+        if ($order->get_meta('_stripe_checkout_session_id') && 
+            in_array($order->get_status(), array('pending', 'on-hold'))) {
+            twintack_manual_payments_log("Order {$order->get_id()} allowed for payment (has session and pending/on-hold status)");
+            return true;
+        }
+        
+        // Also allow if the order total is greater than 0 and status is pending
+        if ($order->get_total() > 0 && $order->get_status() === 'pending') {
+            twintack_manual_payments_log("Order {$order->get_id()} allowed for payment (pending status with total > 0)");
+            return true;
+        }
+        
+        return $needs_payment;
+    }
+    
+    /**
+     * Redirect to Stripe checkout if session exists
+     */
+    public function redirect_to_stripe_checkout() {
+        global $wp;
+        $order_id = absint($wp->query_vars['order-pay']);
+        $order = wc_get_order($order_id);
+        
+        if (!$order) {
+            return;
+        }
+        
+        $session_id = $order->get_meta('_stripe_checkout_session_id');
+        if (!$session_id) {
+            return;
+        }
+        
+        // Get the Stripe checkout URL
+        $stripe_gateway = $this->get_stripe_gateway();
+        if (!$stripe_gateway || !$stripe_gateway->secret_key) {
+            return;
+        }
+        
+        try {
+            WC_Stripe_API::set_secret_key($stripe_gateway->secret_key);
+            $session = WC_Stripe_API::request(array(), "checkout/sessions/{$session_id}", 'GET');
+            
+            if (isset($session->url) && !empty($session->url)) {
+                twintack_manual_payments_log("Redirecting order {$order_id} to Stripe checkout: {$session->url}");
+                wp_redirect($session->url);
+                exit;
+            }
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Error retrieving checkout session for redirect: " . $e->getMessage(), 'error');
+        }
+    }
+    
+    /**
+     * Handle payment return from Stripe
+     */
+    public function handle_stripe_payment_return($order_id) {
+        if (!isset($_GET['twintack_payment']) || $_GET['twintack_payment'] !== 'success') {
+            return;
+        }
+        
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return;
+        }
+        
+        $session_id = $order->get_meta('_stripe_checkout_session_id');
+        if (!$session_id) {
+            return;
+        }
+        
+        // Check if payment was successful
+        $stripe_gateway = $this->get_stripe_gateway();
+        if (!$stripe_gateway || !$stripe_gateway->secret_key) {
+            return;
+        }
+        
+        try {
+            WC_Stripe_API::set_secret_key($stripe_gateway->secret_key);
+            $session = WC_Stripe_API::request(array(), "checkout/sessions/{$session_id}", 'GET');
+            
+            if (isset($session->payment_status) && $session->payment_status === 'paid') {
+                if ($order->get_status() !== 'completed' && $order->get_status() !== 'processing') {
+                    $order->payment_complete($session->payment_intent);
+                    $order->add_order_note('Payment completed via Stripe Checkout Session: ' . $session_id);
+                    
+                    // Trigger grip creation if applicable
+                    if (function_exists('twintack_trigger_grip_creation_from_order')) {
+                        twintack_trigger_grip_creation_from_order($order->get_id());
+                    }
+                    
+                    twintack_manual_payments_log("Payment completed for order {$order_id} via Stripe session {$session_id}");
+                }
+            }
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Error checking payment status: " . $e->getMessage(), 'error');
+        }
+    }
+    
+    /**
      * Get Stripe gateway instance
      */
     private function get_stripe_gateway() {
@@ -530,19 +653,20 @@ class TwinTack_Admin_Order_Enhancements {
             )
         );
         
-        // Create success and cancel URLs
+        // Create success and cancel URLs pointing to customer website
         $return_url = add_query_arg(array(
-            'twintack_payment' => 'return',
-            'order_id' => $order->get_id(),
-            'session_id' => '{CHECKOUT_SESSION_ID}',
-        ), admin_url('post.php?post=' . $order->get_id() . '&action=edit'));
+            'order-received' => $order->get_id(),
+            'key' => $order->get_order_key(),
+            'twintack_payment' => 'success',
+        ), wc_get_checkout_url());
         
         $cancel_url = add_query_arg(array(
             'twintack_payment' => 'cancelled',
             'order_id' => $order->get_id(),
-        ), admin_url('post.php?post=' . $order->get_id() . '&action=edit'));
+            'key' => $order->get_order_key(),
+        ), $order->get_checkout_payment_url());
         
-        // Prepare checkout session parameters
+        // Prepare checkout session parameters (standard hosted mode)
         $session_params = array(
             'mode' => 'payment',
             'line_items' => $line_items,
@@ -550,6 +674,7 @@ class TwinTack_Admin_Order_Enhancements {
             'success_url' => $return_url,
             'cancel_url' => $cancel_url,
             'client_reference_id' => $order->get_id(),
+            'expires_at' => time() + (24 * 60 * 60), // 24 hours
             'metadata' => array(
                 'order_id' => $order->get_id(),
                 'woocommerce_order' => 'true',
@@ -564,7 +689,28 @@ class TwinTack_Admin_Order_Enhancements {
         );
         
         // Create the checkout session via Stripe API
-        return WC_Stripe_API::request($session_params, 'checkout/sessions');
+        try {
+            twintack_manual_payments_log("Creating Stripe checkout session with params: " . print_r($session_params, true));
+            
+            $response = WC_Stripe_API::request($session_params, 'checkout/sessions');
+            
+            if (!$response) {
+                twintack_manual_payments_log("Stripe API returned empty response", 'error');
+                throw new Exception('Empty response from Stripe API');
+            }
+            
+            if (isset($response->error)) {
+                twintack_manual_payments_log("Stripe API error: " . print_r($response->error, true), 'error');
+                throw new Exception('Stripe API error: ' . $response->error->message);
+            }
+            
+            twintack_manual_payments_log("Stripe checkout session created successfully: " . $response->id);
+            return $response;
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Exception in checkout session creation: " . $e->getMessage(), 'error');
+            throw $e;
+        }
     }
     
     /**
@@ -586,9 +732,29 @@ class TwinTack_Admin_Order_Enhancements {
     }
     
     /**
-     * Send payment link email to customer
+     * Send professional payment link email using WooCommerce email system
      */
-    private function send_payment_link_email($order, $payment_url) {
+    private function send_professional_payment_link_email($order, $payment_url) {
+        // Use WooCommerce's email system for professional formatting
+        $mailer = WC()->mailer();
+        $emails = $mailer->get_emails();
+        
+        if (isset($emails['TwinTack_Payment_Link_Email'])) {
+            $email = $emails['TwinTack_Payment_Link_Email'];
+            $email->trigger($order->get_id(), $payment_url, $order);
+            
+            twintack_manual_payments_log("Professional payment link email sent to {$order->get_billing_email()} for order {$order->get_id()}");
+            return true;
+        } else {
+            // Fallback to basic email if WooCommerce email not available
+            return $this->send_basic_payment_link_email($order, $payment_url);
+        }
+    }
+    
+    /**
+     * Send basic payment link email (fallback method)
+     */
+    private function send_basic_payment_link_email($order, $payment_url) {
         $customer_email = $order->get_billing_email();
         $customer_name = trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name());
         
