@@ -91,6 +91,10 @@ When debug mode is enabled, the plugin logs to WooCommerce logs under the source
 2. Check that Stripe keys are properly set in WooCommerce settings
 3. Verify user has `edit_shop_orders` capability
 
+### WooCommerce HPOS Compatibility Warning
+
+**Fixed in v1.0.2**: The plugin now properly declares HPOS compatibility and will not show compatibility warnings.
+
 ### AJAX Errors
 
 1. Check browser console for JavaScript errors
@@ -139,6 +143,12 @@ plugins/twintack-manual-order-payments/
 - Proper internationalization ready
 
 ## Changelog
+
+### 1.0.2
+- **Fixed**: HPOS compatibility warning in WordPress admin plugins page
+- **Fixed**: Moved HPOS compatibility declaration to `before_woocommerce_init` hook (proper timing)
+- **Improved**: Plugin now correctly recognized as HPOS compatible by WooCommerce
+- **Updated**: Documentation reflects HPOS compatibility status
 
 ### 1.0.1
 - Added HPOS (High-Performance Order Storage) compatibility

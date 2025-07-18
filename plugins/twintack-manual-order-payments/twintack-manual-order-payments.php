@@ -2,8 +2,8 @@
 /**
  * Plugin Name: TwinTack Manual Order Payments
  * Plugin URI: https://twintack.com
- * Description: Enables Stripe and other payment gateways for manually created WooCommerce orders, with seamless integration with TwinTack Grip Manager.
- * Version: 1.0.1
+ * Description: Enables Stripe and other payment gateways for manually created WooCommerce orders, with seamless integration with TwinTack Grip Manager. Now includes Stripe Checkout Sessions for customer self-service payments.
+ * Version: 1.2.0
  * Author: TwinTack
  * Author URI: https://twintack.com
  * License: GPL v2 or later
@@ -26,11 +26,53 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('TWINTACK_MANUAL_PAYMENTS_VERSION', '1.0.1');
+define('TWINTACK_MANUAL_PAYMENTS_VERSION', '1.2.0');
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_FILE', __FILE__);
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_BASENAME', plugin_basename(__FILE__));
+
+/**
+ * Helper functions - defined early to prevent undefined function errors
+ */
+
+/**
+ * Check if manual payments are enabled
+ */
+function twintack_is_manual_payments_enabled() {
+    if (!class_exists('TwinTack_Manual_Order_Payments')) {
+        return false;
+    }
+    return TwinTack_Manual_Order_Payments::get_option('enable_manual_payment_processing', 'yes') === 'yes';
+}
+
+/**
+ * Check if Stripe admin is enabled
+ */
+function twintack_is_stripe_admin_enabled() {
+    if (!class_exists('TwinTack_Manual_Order_Payments')) {
+        return false;
+    }
+    return TwinTack_Manual_Order_Payments::get_option('enable_stripe_admin', 'yes') === 'yes';
+}
+
+/**
+ * Log debug message
+ */
+function twintack_manual_payments_log($message, $level = 'info') {
+    if (!class_exists('TwinTack_Manual_Order_Payments')) {
+        return;
+    }
+    
+    if (TwinTack_Manual_Order_Payments::get_option('debug_mode', 'no') === 'yes') {
+        if (function_exists('wc_get_logger')) {
+            $logger = wc_get_logger();
+            $logger->log($level, $message, array('source' => 'twintack-manual-payments'));
+        } else {
+            error_log('TwinTack Manual Payments: ' . $message);
+        }
+    }
+}
 
 /**
  * Main Plugin Class
@@ -56,8 +98,7 @@ class TwinTack_Manual_Order_Payments {
      * Constructor
      */
     private function __construct() {
-        add_action('init', array($this, 'init'));
-        add_action('plugins_loaded', array($this, 'plugins_loaded'));
+        add_action('plugins_loaded', array($this, 'init'), 20);
         
         // Activation and deactivation hooks
         register_activation_hook(__FILE__, array($this, 'activate'));
@@ -68,72 +109,77 @@ class TwinTack_Manual_Order_Payments {
      * Initialize plugin
      */
     public function init() {
-        // Load text domain for translations
-        load_plugin_textdomain('twintack-manual-payments', false, dirname(TWINTACK_MANUAL_PAYMENTS_PLUGIN_BASENAME) . '/languages');
-        
-        // Initialize only if WooCommerce is active
-        if ($this->is_woocommerce_active()) {
-            $this->includes();
-            $this->init_hooks();
-        } else {
-            add_action('admin_notices', array($this, 'woocommerce_missing_notice'));
-        }
-    }
-    
-    /**
-     * Load plugin after all plugins are loaded
-     */
-    public function plugins_loaded() {
-        // Check for required plugins
+        // Check if WooCommerce is active first
         if (!$this->is_woocommerce_active()) {
+            add_action('admin_notices', array($this, 'woocommerce_missing_notice'));
             return;
         }
         
-        // Declare HPOS compatibility
-        $this->declare_hpos_compatibility();
+        // Create plugin options if they don't exist
+        $this->create_plugin_options();
+        
+        // Load text domain for translations
+        load_plugin_textdomain('twintack-manual-payments', false, dirname(TWINTACK_MANUAL_PAYMENTS_PLUGIN_BASENAME) . '/languages');
+        
+        // Initialize on admin_init for better timing
+        add_action('admin_init', array($this, 'admin_init'));
         
         // Plugin loaded successfully
         do_action('twintack_manual_payments_loaded');
+        
+        twintack_manual_payments_log('Plugin initialized successfully');
     }
     
     /**
-     * Include required files
+     * Initialize admin functionality
      */
-    private function includes() {
-        // Load admin functionality only in admin
-        if (is_admin()) {
-            require_once TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-admin-order-enhancements.php';
+    public function admin_init() {
+        // Only in admin and if WooCommerce is available
+        if (!is_admin() || !function_exists('WC')) {
+            return;
         }
+        
+        // Include admin functionality with error handling
+        $this->load_admin_functionality();
     }
     
     /**
-     * Initialize hooks
+     * Load admin functionality safely
      */
-    private function init_hooks() {
-        // Initialize admin enhancements
-        if (is_admin()) {
+    private function load_admin_functionality() {
+        try {
+            $admin_file = TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-admin-order-enhancements.php';
+            
+            if (!file_exists($admin_file)) {
+                twintack_manual_payments_log('Admin enhancements file not found: ' . $admin_file, 'error');
+                return;
+            }
+            
+            require_once $admin_file;
+            
+            if (!class_exists('TwinTack_Admin_Order_Enhancements')) {
+                twintack_manual_payments_log('Admin enhancements class not found after include', 'error');
+                return;
+            }
+            
+            // Initialize immediately to ensure AJAX handlers are registered
+            // AJAX requests don't go through current_screen hook
             TwinTack_Admin_Order_Enhancements::get_instance();
+            
+            twintack_manual_payments_log('Admin functionality loaded successfully');
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log('Error loading admin functionality: ' . $e->getMessage(), 'error');
         }
     }
+    
+
     
     /**
      * Check if WooCommerce is active
      */
     private function is_woocommerce_active() {
         return class_exists('WooCommerce');
-    }
-    
-    /**
-     * Declare HPOS (High-Performance Order Storage) compatibility
-     */
-    private function declare_hpos_compatibility() {
-        if (class_exists('Automattic\WooCommerce\Utilities\FeaturesUtil')) {
-            \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
-                'custom_order_tables',
-                TWINTACK_MANUAL_PAYMENTS_PLUGIN_FILE,
-                true
-            );
-        }
     }
     
     /**
@@ -193,10 +239,13 @@ class TwinTack_Manual_Order_Payments {
             'enable_stripe_admin' => 'yes',
             'enable_manual_payment_processing' => 'yes',
             'auto_create_grip_posts' => 'yes',
-            'debug_mode' => 'no'
+            'debug_mode' => 'yes'
         );
         
-        add_option('twintack_manual_payments_options', $default_options);
+        $existing_options = get_option('twintack_manual_payments_options', array());
+        if (empty($existing_options)) {
+            add_option('twintack_manual_payments_options', $default_options);
+        }
     }
     
     /**
@@ -231,6 +280,17 @@ class TwinTack_Manual_Order_Payments {
     }
 }
 
+// Declare WooCommerce HPOS compatibility (must be called before WooCommerce init)
+add_action('before_woocommerce_init', function() {
+    if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+            'custom_order_tables',
+            __FILE__,
+            true
+        );
+    }
+});
+
 /**
  * Initialize the plugin
  */
@@ -239,36 +299,4 @@ function twintack_manual_order_payments() {
 }
 
 // Start the plugin
-twintack_manual_order_payments();
-
-/**
- * Helper functions
- */
-
-/**
- * Check if manual payments are enabled
- */
-function twintack_is_manual_payments_enabled() {
-    return TwinTack_Manual_Order_Payments::get_option('enable_manual_payment_processing', 'yes') === 'yes';
-}
-
-/**
- * Check if Stripe admin is enabled
- */
-function twintack_is_stripe_admin_enabled() {
-    return TwinTack_Manual_Order_Payments::get_option('enable_stripe_admin', 'yes') === 'yes';
-}
-
-/**
- * Log debug message
- */
-function twintack_manual_payments_log($message, $level = 'info') {
-    if (TwinTack_Manual_Order_Payments::get_option('debug_mode', 'no') === 'yes') {
-        if (function_exists('wc_get_logger')) {
-            $logger = wc_get_logger();
-            $logger->log($level, $message, array('source' => 'twintack-manual-payments'));
-        } else {
-            error_log('TwinTack Manual Payments: ' . $message);
-        }
-    }
-} 
+twintack_manual_order_payments(); 
