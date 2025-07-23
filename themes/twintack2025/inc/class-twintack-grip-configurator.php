@@ -107,7 +107,9 @@ class TwinTack_Grip_Configurator {
                                  document.querySelector('.gform_wrapper') ||
                                  document.querySelector('form');
                                  
-                if (insertTarget && !document.querySelector('.twintack-grip-registration-prompt')) {
+                if (insertTarget && !document.querySelector('.twintack-grip-registration-prompt') && 
+                   !document.querySelector('.twintack-grip-login-prompt-wrapper') && 
+                   !document.querySelector('.twintack-account-required-wrapper')) {
                     // Create the registration prompt
                     var registrationHtml = <?php echo json_encode($this->get_registration_html()); ?>;
                     
@@ -196,7 +198,18 @@ class TwinTack_Grip_Configurator {
                 flex-wrap: wrap;
                 margin-bottom: 20px;
             ">
-                <a href="<?php echo esc_url(site_url('/login/?action=register')); ?>" 
+                <?php 
+                // Get current page URL for redirect after login
+                $current_url = (is_ssl() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+                $register_url = add_query_arg(array(
+                    'action' => 'register',
+                    'redirect_to' => urlencode($current_url)
+                ), site_url('/login/'));
+                $login_url = add_query_arg(array(
+                    'redirect_to' => urlencode($current_url)
+                ), site_url('/login/'));
+                ?>
+                <a href="<?php echo esc_url($register_url); ?>" 
                    class="btn btn-primary" 
                    style="
                        background: var(--color-highlight);
@@ -218,7 +231,7 @@ class TwinTack_Grip_Configurator {
                     Create Account
                 </a>
                 
-                <a href="<?php echo esc_url(site_url('/login/')); ?>" 
+                <a href="<?php echo esc_url($login_url); ?>" 
                    class="btn btn-outline" 
                    style="
                        background: transparent;
@@ -339,18 +352,73 @@ class TwinTack_Grip_Configurator {
      * Usage: [twintack_grip_login_prompt]
      */
     public function render_grip_login_prompt($atts = array()) {
-        // Don't show if user is logged in
-        if (is_user_logged_in()) {
-            return '';
-        }
-        
         $atts = shortcode_atts(array(
             'title' => 'Ready to Design Your Custom Grips?',
             'subtitle' => 'Create your free account to start designing custom grips for your team or personal use.',
             'show_benefits' => 'true'
         ), $atts);
         
-        return $this->get_registration_html();
+        // Always render the content but add client-side login detection
+        // This prevents caching issues where server-side login check is cached
+        ob_start();
+        ?>
+        <div class="twintack-grip-login-prompt-wrapper" style="<?php echo is_user_logged_in() ? 'display: none;' : 'display: block;'; ?>">
+            <?php echo $this->get_registration_html(); ?>
+        </div>
+        <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var promptWrapper = document.querySelector('.twintack-grip-login-prompt-wrapper');
+            if (!promptWrapper) {
+                console.log('TwinTack: Login prompt wrapper not found');
+                return;
+            }
+            
+            // Server-side check (most reliable when not cached)
+            var serverSideLoggedIn = <?php echo is_user_logged_in() ? 'true' : 'false'; ?>;
+            
+            // Client-side login indicators (for cached pages)
+            var hasLoggedInBodyClass = document.body.classList.contains('logged-in');
+            var hasAdminBar = document.querySelector('#wpadminbar') !== null;
+            var hasMyAccountLinks = document.querySelector('a[href*="/my-account"]') !== null;
+            var hasLogoutLinks = document.querySelector('a[href*="logout"]') !== null;
+            
+            // Determine if user is logged in
+            var isLoggedIn = serverSideLoggedIn || hasLoggedInBodyClass || hasAdminBar || (hasMyAccountLinks && hasLogoutLinks);
+            
+            console.log('TwinTack Login Detection:', {
+                serverSide: serverSideLoggedIn,
+                bodyClass: hasLoggedInBodyClass,
+                adminBar: hasAdminBar,
+                myAccountLinks: hasMyAccountLinks,
+                logoutLinks: hasLogoutLinks,
+                finalDecision: isLoggedIn
+            });
+            
+            // Check for significant cache mismatch (logged in indicators present but server says logged out)
+            var cacheConflict = !serverSideLoggedIn && (hasLoggedInBodyClass || hasAdminBar);
+            
+            // Hide the prompt if user is confirmed logged in (for cached pages)
+            if (isLoggedIn && !serverSideLoggedIn) {
+                promptWrapper.style.display = 'none';
+                console.log('TwinTack: User detected as logged in via client-side, hiding login prompt');
+                
+                // If there's a significant cache conflict, refresh the page to get fresh content
+                if (cacheConflict) {
+                    console.log('TwinTack: Cache conflict detected, refreshing page for fresh content');
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 500);
+                }
+            } else if (!isLoggedIn) {
+                promptWrapper.style.display = 'block';
+                console.log('TwinTack: User not logged in, ensuring login prompt is visible');
+            } else {
+                console.log('TwinTack: Server-side detection handled display');
+            }
+        });
+        </script>
+        <?php
+        return ob_get_clean();
     }
     
     /**
@@ -358,65 +426,127 @@ class TwinTack_Grip_Configurator {
      * Usage: [twintack_account_required]
      */
     public function render_account_required_message($atts = array()) {
-        // Don't show if user is logged in
-        if (is_user_logged_in()) {
-            return '';
-        }
-        
         $atts = shortcode_atts(array(
             'message' => 'Account required for custom grip orders.',
             'style' => 'compact' // 'compact' or 'full'
         ), $atts);
         
+        // Always render the content but add client-side login detection
+        // This prevents caching issues where server-side login check is cached
         ob_start();
         ?>
-        <div class="twintack-account-required" style="
-            background: rgba(26, 26, 26, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-            font-family: 'Saira Condensed', 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: #ffffff;
-        ">
-            <p style="margin: 0 0 15px 0; color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 500;">
-                <?php echo esc_html($atts['message']); ?>
-            </p>
-            
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <a href="<?php echo esc_url(site_url('/login/?action=register')); ?>" 
-                   style="
-                       background: #a9ff00;
-                       color: #000000;
-                       padding: 10px 20px;
-                       text-decoration: none;
-                       border-radius: 4px;
-                       font-weight: 600;
-                       display: inline-block;
-                       transition: all 0.3s ease;
-                       font-family: 'Saira Condensed', 'Archivo', sans-serif;
-                       text-transform: uppercase;
-                       letter-spacing: 0.5px;
-                   ">Create Account</a>
+        <div class="twintack-account-required-wrapper" style="<?php echo is_user_logged_in() ? 'display: none;' : 'display: block;'; ?>">
+            <div class="twintack-account-required" style="
+                background: rgba(26, 26, 26, 0.9);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 20px;
+                margin: 20px 0;
+                text-align: center;
+                font-family: 'Saira Condensed', 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
+                color: #ffffff;
+            ">
+                <p style="margin: 0 0 15px 0; color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 500;">
+                    <?php echo esc_html($atts['message']); ?>
+                </p>
                 
-                <a href="<?php echo esc_url(site_url('/login/')); ?>" 
-                   style="
-                       background: transparent;
-                       color: #ffffff;
-                       padding: 10px 20px;
-                       text-decoration: none;
-                       border-radius: 4px;
-                       font-weight: 600;
-                       display: inline-block;
-                       border: 1px solid rgba(255, 255, 255, 0.3);
-                       transition: all 0.3s ease;
-                       font-family: 'Saira Condensed', 'Archivo', sans-serif;
-                       text-transform: uppercase;
-                       letter-spacing: 0.5px;
-                   ">Sign In</a>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <?php 
+                    // Get current page URL for redirect after login
+                    $current_url = (is_ssl() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+                    $register_url = add_query_arg(array(
+                        'action' => 'register',
+                        'redirect_to' => urlencode($current_url)
+                    ), site_url('/login/'));
+                    $login_url = add_query_arg(array(
+                        'redirect_to' => urlencode($current_url)
+                    ), site_url('/login/'));
+                    ?>
+                    <a href="<?php echo esc_url($register_url); ?>" 
+                       style="
+                           background: #a9ff00;
+                           color: #000000;
+                           padding: 10px 20px;
+                           text-decoration: none;
+                           border-radius: 4px;
+                           font-weight: 600;
+                           display: inline-block;
+                           transition: all 0.3s ease;
+                           font-family: 'Saira Condensed', 'Archivo', sans-serif;
+                           text-transform: uppercase;
+                           letter-spacing: 0.5px;
+                       ">Create Account</a>
+                    
+                    <a href="<?php echo esc_url($login_url); ?>" 
+                       style="
+                           background: transparent;
+                           color: #ffffff;
+                           padding: 10px 20px;
+                           text-decoration: none;
+                           border-radius: 4px;
+                           font-weight: 600;
+                           display: inline-block;
+                           border: 1px solid rgba(255, 255, 255, 0.3);
+                           transition: all 0.3s ease;
+                           font-family: 'Saira Condensed', 'Archivo', sans-serif;
+                           text-transform: uppercase;
+                           letter-spacing: 0.5px;
+                       ">Sign In</a>
+                </div>
             </div>
         </div>
+        <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var accountWrapper = document.querySelector('.twintack-account-required-wrapper');
+            if (!accountWrapper) {
+                console.log('TwinTack: Account required wrapper not found');
+                return;
+            }
+            
+            // Server-side check (most reliable when not cached)
+            var serverSideLoggedIn = <?php echo is_user_logged_in() ? 'true' : 'false'; ?>;
+            
+            // Client-side login indicators (for cached pages)
+            var hasLoggedInBodyClass = document.body.classList.contains('logged-in');
+            var hasAdminBar = document.querySelector('#wpadminbar') !== null;
+            var hasMyAccountLinks = document.querySelector('a[href*="/my-account"]') !== null;
+            var hasLogoutLinks = document.querySelector('a[href*="logout"]') !== null;
+            
+            // Determine if user is logged in
+            var isLoggedIn = serverSideLoggedIn || hasLoggedInBodyClass || hasAdminBar || (hasMyAccountLinks && hasLogoutLinks);
+            
+            console.log('TwinTack Account Required Detection:', {
+                serverSide: serverSideLoggedIn,
+                bodyClass: hasLoggedInBodyClass,
+                adminBar: hasAdminBar,
+                myAccountLinks: hasMyAccountLinks,
+                logoutLinks: hasLogoutLinks,
+                finalDecision: isLoggedIn
+            });
+            
+            // Check for significant cache mismatch (logged in indicators present but server says logged out)
+            var cacheConflict = !serverSideLoggedIn && (hasLoggedInBodyClass || hasAdminBar);
+            
+            // Hide the account required message if user is confirmed logged in (for cached pages)
+            if (isLoggedIn && !serverSideLoggedIn) {
+                accountWrapper.style.display = 'none';
+                console.log('TwinTack: User detected as logged in via client-side, hiding account required message');
+                
+                // If there's a significant cache conflict, refresh the page to get fresh content
+                if (cacheConflict) {
+                    console.log('TwinTack: Cache conflict detected, refreshing page for fresh content');
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 500);
+                }
+            } else if (!isLoggedIn) {
+                accountWrapper.style.display = 'block';
+                console.log('TwinTack: User not logged in, ensuring account required message is visible');
+            } else {
+                console.log('TwinTack: Server-side detection handled display for account required');
+            }
+        });
+        </script>
         <?php
         return ob_get_clean();
     }
