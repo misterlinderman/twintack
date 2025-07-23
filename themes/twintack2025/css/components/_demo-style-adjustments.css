@@ -910,3 +910,27 @@ input#gform_submit_button_10:hover {
 .post-template-default main article .post-thumbnail {
     display: none;
 }
+
+
+
+
+/* Login/Register */
+
+.twintack-reset-password-form {
+    border: none !important;
+}
+
+.twintack-reset-password-form div {
+    background: var(--color-primary) !important;
+}
+
+form.woocommerce-ResetPassword .woocommerce-Input, .input-text
+ {
+    width: 100%;
+    height: var(--input-height);
+    padding: 0 var(--spacing-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text) !important;
+    transition: border-color 0.2s ease;
+}

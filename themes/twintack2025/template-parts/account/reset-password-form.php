@@ -29,12 +29,6 @@ if (WP_DEBUG === true) {
     error_log('GET parameters: ' . json_encode($_GET));
 }
 
-// Add client-side debugging
-echo '<script>console.log("PASSWORD RESET FORM LOADED");</script>';
-echo '<script>console.log("Key: ' . esc_js($key) . '");</script>';
-echo '<script>console.log("Login: ' . esc_js($login) . '");</script>';
-echo '<script>console.log("URL: ' . esc_js($_SERVER['REQUEST_URI']) . '");</script>';
-
 // Check for special setup_password action to display appropriate message
 $is_new_account = (isset($_GET['action']) && $_GET['action'] === 'setup_password');
 $info_message = $is_new_account ? 

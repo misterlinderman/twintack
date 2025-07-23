@@ -2,24 +2,9 @@
  * Password reset form validation
  */
 jQuery(document).ready(function($) {
-    console.log('Password reset script loaded');
-    
-    // Debug URL parameters
+    // Debug URL parameters (console only)
     var urlParams = new URLSearchParams(window.location.search);
-    console.log('Current URL:', window.location.href);
-    console.log('Search params:', window.location.search);
-    console.log('Action:', urlParams.get('action'));
-    console.log('Key:', urlParams.get('key'));
-    console.log('Login:', urlParams.get('login'));
-    
-    // Add a helper to make the form more visible
-    $('.twintack-reset-password-form').css('border', '2px solid blue').prepend(
-        '<div style="background: #eef; padding: 10px; margin-bottom: 15px;">' +
-        '<p><strong>Password Reset Form</strong></p>' +
-        '<p>Key: ' + urlParams.get('key') + '</p>' +
-        '<p>Login: ' + urlParams.get('login') + '</p>' +
-        '</div>'
-    );
+    console.log('Password reset script loaded');
     
     // Password strength meter
     $('.reset-password').on('keyup', '#password_1', function() {
@@ -50,42 +35,42 @@ jQuery(document).ready(function($) {
             strengthIndicator = $('.password-strength');
         }
         
-        // Update strength indicator
+        // Update strength display
         switch(strength) {
             case 0:
             case 1:
-                strengthIndicator.html('Very Weak').css('color', 'red');
+                strengthIndicator.html('<span style="color: red;">Weak</span>');
                 break;
             case 2:
-                strengthIndicator.html('Weak').css('color', 'orange');
-                break;
             case 3:
-                strengthIndicator.html('Medium').css('color', 'yellow');
+                strengthIndicator.html('<span style="color: orange;">Medium</span>');
                 break;
             case 4:
-                strengthIndicator.html('Strong').css('color', 'green');
-                break;
             case 5:
-                strengthIndicator.html('Very Strong').css('color', 'darkgreen');
+                strengthIndicator.html('<span style="color: green;">Strong</span>');
                 break;
         }
     });
     
-    // Check passwords match
+    // Password confirmation validation
     $('.reset-password').on('keyup', '#password_2', function() {
         var password1 = $('#password_1').val();
         var password2 = $(this).val();
         
-        var matchIndicator = $('.password-match');
-        if (matchIndicator.length === 0) {
-            $(this).after('<div class="password-match"></div>');
-            matchIndicator = $('.password-match');
+        var confirmationIndicator = $('.password-confirmation');
+        if (confirmationIndicator.length === 0) {
+            $(this).after('<div class="password-confirmation"></div>');
+            confirmationIndicator = $('.password-confirmation');
         }
         
-        if (password1 === password2) {
-            matchIndicator.html('Passwords match').css('color', 'green');
+        if (password2.length > 0) {
+            if (password1 === password2) {
+                confirmationIndicator.html('<span style="color: green;">Passwords match</span>');
+            } else {
+                confirmationIndicator.html('<span style="color: red;">Passwords do not match</span>');
+            }
         } else {
-            matchIndicator.html('Passwords do not match').css('color', 'red');
+            confirmationIndicator.html('');
         }
     });
     
@@ -93,30 +78,59 @@ jQuery(document).ready(function($) {
     $('.reset-password').on('submit', function(e) {
         var password1 = $('#password_1').val();
         var password2 = $('#password_2').val();
-        var valid = true;
         
-        // Clear previous errors
-        $('.form-error').remove();
-        
-        // Validate password
         if (password1.length < 8) {
-            $('#password_1').after('<div class="form-error" style="color: red;">Password must be at least 8 characters</div>');
-            valid = false;
-        }
-        
-        // Check passwords match
-        if (password1 !== password2) {
-            $('#password_2').after('<div class="form-error" style="color: red;">Passwords do not match</div>');
-            valid = false;
-        }
-        
-        // If validation fails, prevent form submission
-        if (!valid) {
             e.preventDefault();
+            alert('Password must be at least 8 characters long.');
             return false;
         }
         
+        if (password1 !== password2) {
+            e.preventDefault();
+            alert('Passwords do not match.');
+            return false;
+        }
+    });
+    
+    // Add some basic styling for password indicators
+    $('<style>')
+        .prop("type", "text/css")
+        .html(`
+            .password-strength, .password-confirmation {
+                font-size: 12px;
+                margin-top: 5px;
+                font-weight: bold;
+            }
+        `)
+        .appendTo("head");
+});
+
+// Utility function to get URL parameters
+function getUrlParameter(name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+}
+
+// Additional debugging for password reset issues
+if (window.location.search.indexOf('action=resetpass') !== -1 || 
+    window.location.search.indexOf('action=rp') !== -1) {
+    console.log('Password reset page detected');
+    
+    // Check if the form is present
+    jQuery(document).ready(function($) {
+        if ($('.reset-password').length === 0) {
+            console.error('Reset password form not found');
+        } else {
+            console.log('Reset password form found');
+        }
+    });
+}
+
+// Debug form submission
+jQuery(document).ready(function($) {
+    $('.reset-password').on('submit', function() {
         console.log('Password reset form submitted');
-        return true;
     });
 }); 
