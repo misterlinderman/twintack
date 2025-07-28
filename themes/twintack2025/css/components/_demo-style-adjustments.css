@@ -808,6 +808,10 @@ p.woocommerce-result-count {
 }
 
 
+
+
+
+
 /* Home Styles */
 .twintack-callouts .container {
     background-color: transparent;
@@ -933,4 +937,22 @@ form.woocommerce-ResetPassword .woocommerce-Input, .input-text
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--color-text) !important;
     transition: border-color 0.2s ease;
+}
+
+
+
+
+/* Manual Checkout Styles */
+
+.woocommerce-order-pay .woocommerce table.shop_table
+ {
+    border: 1px solid rgba(0, 0, 0, .1);
+    margin: 0 -1px 24px 0;
+    text-align: left;
+    width: 100%;
+    border-collapse: separate;
+    border-radius: 5px;
+    background-color: var(--color-primary);
+    color: var(--color-text);
+    font-size: 1.2rem;
 }
