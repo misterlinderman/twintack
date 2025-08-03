@@ -55,6 +55,8 @@ class TwinTack_Admin_Order_Enhancements {
         add_action('wp_ajax_twintack_mark_paid', array($this, 'handle_mark_paid'));
         add_action('wp_ajax_twintack_process_payment', array($this, 'handle_process_payment'));
         add_action('wp_ajax_twintack_send_payment_link', array($this, 'handle_send_payment_link'));
+        add_action('wp_ajax_twintack_set_pay_later', array($this, 'handle_set_pay_later'));
+        add_action('wp_ajax_twintack_force_shippo_sync', array($this, 'handle_force_shippo_sync'));
         
         // Log AJAX registration
         if (function_exists('twintack_manual_payments_log')) {
@@ -77,6 +79,9 @@ class TwinTack_Admin_Order_Enhancements {
         
         // Handle payment return from Stripe
         add_action('woocommerce_thankyou', array($this, 'handle_stripe_payment_return'), 10, 1);
+        
+        // Ensure only Stripe for invoiced orders
+        add_filter('woocommerce_available_payment_gateways', array($this, 'limit_payment_gateways_for_invoiced_orders'), 10, 1);
         
         // Log hook registration
         if (function_exists('twintack_manual_payments_log')) {
@@ -204,50 +209,96 @@ class TwinTack_Admin_Order_Enhancements {
         }
         
         echo '<div style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 15px;">';
-        echo '<h5 style="margin: 0 0 10px 0;">' . esc_html__('Payment Actions', 'twintack-manual-payments') . '</h5>';
         
-        // Payment buttons row
+        // Show current status information
+        $current_status = $order->get_status();
+        $shippo_status = '';
+        if (class_exists('TwinTack_Order_Status_Manager')) {
+            $status_manager = TwinTack_Order_Status_Manager::get_instance();
+            $shippo_status = $status_manager->get_order_shippo_status($order->get_id());
+        }
+        
+        echo '<div style="margin-bottom: 15px; padding: 10px; background: #f0f8ff; border: 1px solid #0073aa; border-radius: 3px;">';
+        echo '<strong>Current Status:</strong> ' . esc_html(ucfirst($current_status));
+        if ($shippo_status) {
+            echo ' | <strong>Shippo Status:</strong> ' . esc_html($shippo_status);
+        }
+        echo '</div>';
+        
+        echo '<h5 style="margin: 0 0 15px 0;">' . esc_html__('Payment Actions for Manual Orders', 'twintack-manual-payments') . '</h5>';
+        
+        // Primary Action Buttons - Pay Now vs Pay Later
+        echo '<div style="margin-bottom: 20px; padding: 15px; background: #fff; border: 2px solid #e5e5e5; border-radius: 5px;">';
+        echo '<h6 style="margin: 0 0 10px 0; color: #333;">Choose Payment Method for This Order:</h6>';
+        
         echo '<div style="margin-bottom: 15px;">';
         
-        // Mark as Paid button
-        echo '<button type="button" class="button button-primary" id="twintack-mark-paid" data-order-id="' . esc_attr($order->get_id()) . '" style="margin-right: 8px; margin-bottom: 5px;">';
-        echo '✓ ' . esc_html__('Mark as Paid', 'twintack-manual-payments');
+        // Pay Now button (Mark as Paid)
+        echo '<button type="button" class="button button-primary" id="twintack-pay-now" data-order-id="' . esc_attr($order->get_id()) . '" style="margin-right: 15px; margin-bottom: 8px; padding: 8px 20px; font-weight: bold;">';
+        echo '✅ Pay Now (Mark as Paid)';
         echo '</button>';
         
-        // Process Payment button
-        echo '<button type="button" class="button button-secondary" id="twintack-process-payment" data-order-id="' . esc_attr($order->get_id()) . '" style="margin-right: 8px; margin-bottom: 5px;">';
-        echo '💳 ' . esc_html__('Process Payment via Gateway', 'twintack-manual-payments');
-        echo '</button>';
-        
-        // Send Payment Link button
-        echo '<button type="button" class="button button-secondary" id="twintack-send-payment-link" data-order-id="' . esc_attr($order->get_id()) . '" style="margin-bottom: 5px; background: #6c5ce7; border-color: #6c5ce7; color: white;">';
-        echo '📧 ' . esc_html__('Send Payment Link to Customer', 'twintack-manual-payments');
+        // Pay Later button (Invoice)
+        echo '<button type="button" class="button" id="twintack-pay-later" data-order-id="' . esc_attr($order->get_id()) . '" style="margin-right: 15px; margin-bottom: 8px; padding: 8px 20px; background: #ff9800; border-color: #ff9800; color: white; font-weight: bold;">';
+        echo '📄 Pay Later (Invoice)';
         echo '</button>';
         
         echo '</div>';
         
-        // Detailed instructions
-        echo '<div style="font-size: 12px; color: #666; line-height: 1.4; background: #f8f9fa; padding: 10px; border-radius: 3px;">';
-        echo '<div style="margin-bottom: 8px;"><strong>✓ Mark as Paid:</strong> Use for phone orders, cash payments, or when payment was received externally.</div>';
-        echo '<div style="margin-bottom: 8px;"><strong>💳 Process Payment:</strong> Set payment method and update order status for manual gateway processing.</div>';
-        echo '<div><strong>📧 Send Payment Link:</strong> Generate secure Stripe payment link and email it to customer for self-service payment.</div>';
+        echo '<div style="font-size: 11px; color: #666; line-height: 1.3;">';
+        echo '<div style="margin-bottom: 5px;"><strong>Pay Now:</strong> Sets order to Processing status (Shippo: Paid) - ready for fulfillment</div>';
+        echo '<div><strong>Pay Later:</strong> Sets order to Invoiced status (Shippo: Payment Pending) - customer will receive payment link</div>';
+        echo '</div>';
+        
+        echo '</div>';
+        
+        // Advanced Actions
+        echo '<div style="margin-bottom: 15px;">';
+        echo '<h6 style="margin: 0 0 10px 0; color: #666;">Advanced Payment Actions:</h6>';
+        
+        // Send Payment Link button
+        echo '<button type="button" class="button button-secondary" id="twintack-send-payment-link" data-order-id="' . esc_attr($order->get_id()) . '" style="margin-right: 8px; margin-bottom: 5px; background: #6c5ce7; border-color: #6c5ce7; color: white;">';
+        echo '📧 Send Stripe Payment Link';
+        echo '</button>';
+        
+        // Process Payment button (legacy)
+        echo '<button type="button" class="button button-secondary" id="twintack-process-payment" data-order-id="' . esc_attr($order->get_id()) . '" style="margin-right: 8px; margin-bottom: 5px;">';
+        echo '💳 Set Payment Method Only';
+        echo '</button>';
+        
+        // Force Shippo Sync button (for testing)
+        echo '<button type="button" class="button button-secondary" id="twintack-force-shippo-sync" data-order-id="' . esc_attr($order->get_id()) . '" style="margin-right: 8px; margin-bottom: 5px; background: #17a2b8; border-color: #17a2b8; color: white;">';
+        echo '🚢 Force Shippo Sync';
+        echo '</button>';
+        
+        echo '</div>';
+        
+        // Status explanations
+        echo '<div style="font-size: 11px; color: #666; line-height: 1.4; background: #f8f9fa; padding: 10px; border-radius: 3px; margin-bottom: 15px;">';
+        echo '<strong>Status Mapping for Shippo Fulfillment:</strong><br>';
+        echo '• <strong>Processing = Paid</strong> (ready for fulfillment)<br>';
+        echo '• <strong>Invoiced = Payment Pending</strong> (awaiting customer payment)<br>';
+        echo '• <strong>Completed = Shipped</strong> (order fulfilled and shipped)';
         echo '</div>';
         
         // Customer information for payment link
         $customer_email = $order->get_billing_email();
         if ($customer_email) {
             echo '<div style="margin-top: 10px; padding: 8px; background: #e3f2fd; border-left: 3px solid #2196f3; font-size: 12px;">';
-            echo '<strong>📧 Payment Link will be sent to:</strong> ' . esc_html($customer_email);
+            echo '<strong>📧 Customer Email:</strong> ' . esc_html($customer_email);
             echo '</div>';
         } else {
             echo '<div style="margin-top: 10px; padding: 8px; background: #fff3e0; border-left: 3px solid #ff9800; font-size: 12px;">';
-            echo '<strong>⚠️ Warning:</strong> No customer email address found. Please add billing email before sending payment link.';
+            echo '<strong>⚠️ Warning:</strong> No customer email address found. Please add billing email before using Pay Later option.';
             echo '</div>';
         }
         
         // Messages area
         echo '<div id="twintack-payment-messages" style="margin-top: 15px;"></div>';
         echo '</div>';
+        
+        // Add JavaScript for all button handlers
+        $this->add_payment_buttons_javascript();
     }
     
     /**
@@ -456,6 +507,315 @@ class TwinTack_Admin_Order_Enhancements {
     }
     
     /**
+     * Handle Set Pay Later (Invoice) AJAX request
+     */
+    public function handle_set_pay_later() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'twintack_payment_processing')) {
+            wp_send_json_error(array('message' => 'Security check failed'));
+        }
+        
+        // Check permissions
+        if (!current_user_can('edit_shop_orders')) {
+            wp_send_json_error(array('message' => 'Insufficient permissions'));
+        }
+        
+        $order_id = isset($_POST['order_id']) ? intval($_POST['order_id']) : 0;
+        
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            wp_send_json_error(array('message' => 'Order not found'));
+        }
+        
+        // Check for customer email
+        $customer_email = $order->get_billing_email();
+        if (empty($customer_email)) {
+            wp_send_json_error(array('message' => 'Customer email address is required for Pay Later option'));
+        }
+        
+        try {
+            // Set payment method to TwinTack Invoice
+            $order->set_payment_method('twintack_invoice');
+            $order->set_payment_method_title('Invoice Payment (Pay Later)');
+            
+            // Set order to invoiced status - this will trigger Shippo status mapping
+            $order->update_status('invoiced', 'Order set to Pay Later (Invoice). Customer will receive payment link.');
+            
+            // Mark as needing payment link
+            $order->update_meta_data('_twintack_needs_payment_link', 'yes');
+            $order->save();
+            
+            // Create Stripe checkout session for when customer is ready to pay
+            $stripe_gateway = $this->get_stripe_gateway();
+            if ($stripe_gateway && $stripe_gateway->secret_key) {
+                if (class_exists('WC_Stripe_API')) {
+                    WC_Stripe_API::set_secret_key($stripe_gateway->secret_key);
+                    
+                    // Create checkout session
+                    $checkout_session = $this->create_stripe_checkout_session($order);
+                    
+                    if (!empty($checkout_session->url)) {
+                        // Store checkout session ID
+                        $order->update_meta_data('_stripe_checkout_session_id', $checkout_session->id);
+                        $order->save();
+                        
+                        // Send invoice email with payment link
+                        $email_sent = $this->send_invoice_email($order, $checkout_session->url);
+                        
+                        twintack_manual_payments_log("Invoice created for order {$order_id} with Stripe checkout session: {$checkout_session->id}");
+                        
+                        wp_send_json_success(array(
+                            'message' => sprintf(
+                                'Order set to Pay Later (Invoice). %s to %s. Customer can pay via Stripe when ready.',
+                                $email_sent ? 'Invoice email sent' : 'Invoice ready',
+                                $customer_email
+                            ),
+                            'order_status' => 'invoiced',
+                            'shippo_status' => 'Payment Pending',
+                            'payment_url' => $checkout_session->url,
+                            'email_sent' => $email_sent
+                        ));
+                    }
+                }
+            }
+            
+            // Fallback: Order set to invoice but no Stripe session
+            wp_send_json_success(array(
+                'message' => sprintf(
+                    'Order set to Pay Later (Invoice). Customer: %s. Payment link can be sent separately.',
+                    $customer_email
+                ),
+                'order_status' => 'invoiced',
+                'shippo_status' => 'Payment Pending'
+            ));
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Error setting order {$order_id} to Pay Later: " . $e->getMessage(), 'error');
+            wp_send_json_error(array('message' => 'Error: ' . $e->getMessage()));
+        }
+    }
+    
+    /**
+     * Send invoice email to customer
+     */
+    private function send_invoice_email($order, $payment_url) {
+        $customer_email = $order->get_billing_email();
+        $customer_name = trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name());
+        
+        if (empty($customer_name)) {
+            $customer_name = 'Valued Customer';
+        }
+        
+        $subject = sprintf('Invoice for Order #%s - %s', $order->get_order_number(), get_bloginfo('name'));
+        
+        $message = sprintf("
+Dear %s,
+
+Thank you for your order! We've created an invoice for your recent purchase.
+
+ORDER DETAILS:
+- Order Number: #%s
+- Total Amount: %s
+- Order Date: %s
+
+PAYMENT OPTIONS:
+You can pay this invoice at your convenience using the secure payment link below:
+
+%s
+
+This payment link accepts all major credit cards and is fully secure. The link will remain active for 24 hours.
+
+If you have any questions about your order or need assistance, please don't hesitate to contact us.
+
+Thank you for choosing %s!
+
+Best regards,
+%s Team
+
+---
+This invoice was generated automatically. For support, please contact us directly.
+        ",
+            $customer_name,
+            $order->get_order_number(),
+            wc_price($order->get_total()),
+            $order->get_date_created()->format('F j, Y'),
+            $payment_url,
+            get_bloginfo('name'),
+            get_bloginfo('name')
+        );
+        
+        $headers = array(
+            'Content-Type: text/plain; charset=UTF-8',
+            'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
+        );
+        
+        // Add debugging information before sending
+        twintack_manual_payments_log("Attempting to send invoice email to: {$customer_email} for order {$order->get_id()}");
+        twintack_manual_payments_log("Email subject: {$subject}");
+        twintack_manual_payments_log("From address: " . get_option('admin_email'));
+        
+        // Check if WordPress can send emails
+        if (!function_exists('wp_mail')) {
+            twintack_manual_payments_log("wp_mail function not available", 'error');
+            return false;
+        }
+        
+        // Validate email address
+        if (!is_email($customer_email)) {
+            twintack_manual_payments_log("Invalid customer email address: {$customer_email}", 'error');
+            return false;
+        }
+        
+        $email_sent = wp_mail($customer_email, $subject, $message, $headers);
+        
+        if ($email_sent) {
+            $order->add_order_note("Invoice email successfully sent to customer: {$customer_email}");
+            twintack_manual_payments_log("✅ Invoice email sent successfully to {$customer_email} for order {$order->get_id()}");
+        } else {
+            // Get the last error from WordPress mail system
+            global $phpmailer;
+            $mail_error = '';
+            if (isset($phpmailer) && !empty($phpmailer->ErrorInfo)) {
+                $mail_error = $phpmailer->ErrorInfo;
+            }
+            
+            $order->add_order_note("❌ Failed to send invoice email to customer: {$customer_email}. Error: {$mail_error}");
+            twintack_manual_payments_log("❌ Failed to send invoice email to {$customer_email} for order {$order->get_id()}. Error: {$mail_error}", 'error');
+            
+            // Try alternative email method using WooCommerce mailer
+            return $this->send_invoice_email_via_wc_mailer($order, $payment_url);
+        }
+        
+        return $email_sent;
+    }
+    
+    /**
+     * Send invoice email using WooCommerce mailer (fallback method)
+     */
+    private function send_invoice_email_via_wc_mailer($order, $payment_url) {
+        if (!class_exists('WC_Emails')) {
+            return false;
+        }
+        
+        $customer_email = $order->get_billing_email();
+        $customer_name = trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name());
+        
+        if (empty($customer_name)) {
+            $customer_name = 'Valued Customer';
+        }
+        
+        try {
+            $mailer = WC()->mailer();
+            $subject = sprintf('Invoice for Order #%s - %s', $order->get_order_number(), get_bloginfo('name'));
+            
+            // Create HTML message
+            $message = sprintf("
+                <h2>Invoice for Order #%s</h2>
+                <p>Dear %s,</p>
+                <p>Thank you for your order! We've created an invoice for your recent purchase.</p>
+                
+                <h3>Order Details:</h3>
+                <ul>
+                    <li><strong>Order Number:</strong> #%s</li>
+                    <li><strong>Total Amount:</strong> %s</li>
+                    <li><strong>Order Date:</strong> %s</li>
+                </ul>
+                
+                <h3>Payment Options:</h3>
+                <p>You can pay this invoice at your convenience using the secure payment link below:</p>
+                <p><a href='%s' style='background: #0073aa; color: white; padding: 10px 20px; text-decoration: none; border-radius: 3px;'>Pay Invoice Now</a></p>
+                
+                <p><em>This payment link accepts all major credit cards and is fully secure. The link will remain active for 24 hours.</em></p>
+                
+                <p>If you have any questions about your order or need assistance, please don't hesitate to contact us.</p>
+                
+                <p>Thank you for choosing %s!</p>
+                
+                <p>Best regards,<br>%s Team</p>
+                
+                <hr>
+                <p><small>This invoice was generated automatically. For support, please contact us directly.</small></p>
+            ",
+                $order->get_order_number(),
+                $customer_name,
+                $order->get_order_number(),
+                wc_price($order->get_total()),
+                $order->get_date_created()->format('F j, Y'),
+                $payment_url,
+                get_bloginfo('name'),
+                get_bloginfo('name')
+            );
+            
+            // Wrap in WooCommerce email template
+            $message = $mailer->wrap_message($subject, $message);
+            
+            // Send using WooCommerce mailer
+            $sent = $mailer->send($customer_email, $subject, $message);
+            
+            if ($sent) {
+                $order->add_order_note("✅ Invoice email sent via WooCommerce mailer to: {$customer_email}");
+                twintack_manual_payments_log("✅ Invoice email sent via WC mailer to {$customer_email} for order {$order->get_id()}");
+                return true;
+            } else {
+                $order->add_order_note("❌ Failed to send invoice email via WooCommerce mailer to: {$customer_email}");
+                twintack_manual_payments_log("❌ Failed to send invoice email via WC mailer to {$customer_email} for order {$order->get_id()}", 'error');
+                return false;
+            }
+            
+        } catch (Exception $e) {
+            $order->add_order_note("❌ Exception sending invoice email: " . $e->getMessage());
+            twintack_manual_payments_log("❌ Exception sending invoice email for order {$order->get_id()}: " . $e->getMessage(), 'error');
+            return false;
+        }
+    }
+    
+    /**
+     * Limit payment gateways for invoiced orders to Stripe only
+     */
+    public function limit_payment_gateways_for_invoiced_orders($gateways) {
+        // Only apply this on frontend for customers
+        if (is_admin() || !is_wc_endpoint_url('order-pay')) {
+            return $gateways;
+        }
+        
+        global $wp;
+        if (!isset($wp->query_vars['order-pay'])) {
+            return $gateways;
+        }
+        
+        $order_id = absint($wp->query_vars['order-pay']);
+        $order = wc_get_order($order_id);
+        
+        if (!$order) {
+            return $gateways;
+        }
+        
+        // If this is an invoiced order, only show Stripe
+        if ($order->get_status() === 'invoiced' || $order->get_payment_method() === 'twintack_invoice') {
+            $stripe_only = array();
+            
+            // Keep only Stripe gateway
+            if (isset($gateways['stripe'])) {
+                $stripe_only['stripe'] = $gateways['stripe'];
+                
+                // Update the title to be more descriptive
+                $stripe_only['stripe']->title = 'Credit / Debit Card (Stripe)';
+                $stripe_only['stripe']->description = 'Pay securely with your credit or debit card. This is the only payment method available for invoice orders.';
+                
+                twintack_manual_payments_log("Limited payment options to Stripe only for invoiced order {$order_id}");
+                
+                return $stripe_only;
+            } else {
+                // No Stripe available - this shouldn't happen but log it
+                twintack_manual_payments_log("WARNING: Stripe not available for invoiced order {$order_id}", 'error');
+                return array();
+            }
+        }
+        
+        return $gateways;
+    }
+    
+    /**
      * Enqueue admin scripts
      */
     public function enqueue_admin_scripts($hook) {
@@ -517,10 +877,16 @@ class TwinTack_Admin_Order_Enhancements {
         // Debug logging
         twintack_manual_payments_log("Checking if order {$order->get_id()} needs payment. Current status: {$order->get_status()}, Has session: " . ($order->get_meta('_stripe_checkout_session_id') ? 'yes' : 'no'));
         
-        // If this is a TwinTack manual payment order and it's pending, allow payment
+        // If this is a TwinTack manual payment order and it's invoiced, allow payment
         if ($order->get_meta('_stripe_checkout_session_id') && 
-            in_array($order->get_status(), array('pending', 'on-hold'))) {
-            twintack_manual_payments_log("Order {$order->get_id()} allowed for payment (has session and pending/on-hold status)");
+            in_array($order->get_status(), array('pending', 'on-hold', 'invoiced'))) {
+            twintack_manual_payments_log("Order {$order->get_id()} allowed for payment (has session and valid status)");
+            return true;
+        }
+        
+        // Allow invoiced orders to be paid
+        if ($order->get_status() === 'invoiced' && $order->get_total() > 0) {
+            twintack_manual_payments_log("Order {$order->get_id()} allowed for payment (invoiced status)");
             return true;
         }
         
@@ -807,5 +1173,107 @@ This is an automated message. Please do not reply to this email.
         }
         
         return $email_sent;
+    }
+    
+    /**
+     * Handle force Shippo sync AJAX request
+     */
+    public function handle_force_shippo_sync() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'twintack_payment_processing')) {
+            wp_send_json_error(array('message' => 'Security check failed'));
+        }
+        
+        // Check permissions
+        if (!current_user_can('edit_shop_orders')) {
+            wp_send_json_error(array('message' => 'Insufficient permissions'));
+        }
+        
+        $order_id = isset($_POST['order_id']) ? intval($_POST['order_id']) : 0;
+        $order = wc_get_order($order_id);
+        
+        if (!$order) {
+            wp_send_json_error(array('message' => 'Order not found'));
+        }
+        
+        try {
+            // Force trigger Shippo sync for this order
+            $wc_status = $order->get_status();
+            
+            twintack_manual_payments_log("Manual Shippo sync requested for order #{$order_id} with status '{$wc_status}'");
+            
+            // Trigger both possible Shippo integration paths
+            
+            // 1. Trigger our custom action
+            do_action('twintack_shippo_status_updated', $order_id, 'Manual Sync', $wc_status);
+            
+            // 2. If the main Shippo integration class exists, call it directly
+            if (class_exists('TwinTack_Shippo_Integration')) {
+                $shippo_integration = TwinTack_Shippo_Integration::get_instance();
+                if (method_exists($shippo_integration, 'sync_order_with_shippo')) {
+                    $shippo_integration->sync_order_with_shippo($order_id, '', $wc_status, $order);
+                }
+            }
+            
+            // 3. Also trigger the standard WooCommerce hook in case other Shippo plugins are listening
+            do_action('woocommerce_order_status_changed', $order_id, 'pending', $wc_status, $order);
+            
+            $order->add_order_note('Manual Shippo sync triggered by admin via TwinTack plugin.');
+            
+            wp_send_json_success(array(
+                'message' => 'Shippo sync triggered successfully',
+                'order_id' => $order_id,
+                'status' => $wc_status
+            ));
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Error in manual Shippo sync: " . $e->getMessage(), 'error');
+            wp_send_json_error(array('message' => 'Sync failed: ' . $e->getMessage()));
+        }
+    }
+    
+    /**
+     * Add JavaScript for payment button handlers
+     */
+    private function add_payment_buttons_javascript() {
+        ?>
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            var nonce = '<?php echo wp_create_nonce('twintack_payment_processing'); ?>';
+            
+            // Force Shippo Sync button handler
+            $('#twintack-force-shippo-sync').on('click', function() {
+                var button = $(this);
+                var orderId = button.data('order-id');
+                var originalText = button.text();
+                
+                button.prop('disabled', true).text('🚢 Syncing...');
+                
+                $.post(ajaxurl, {
+                    action: 'twintack_force_shippo_sync',
+                    order_id: orderId,
+                    nonce: nonce
+                }, function(response) {
+                    if (response.success) {
+                        $('#twintack-payment-messages').html('<div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px; border-radius: 3px; margin-top: 10px;">✅ ' + response.data.message + '</div>');
+                        // Optionally reload the page to show updated order notes
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        $('#twintack-payment-messages').html('<div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 10px; border-radius: 3px; margin-top: 10px;">❌ ' + response.data.message + '</div>');
+                    }
+                }).fail(function() {
+                    $('#twintack-payment-messages').html('<div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 10px; border-radius: 3px; margin-top: 10px;">❌ Connection error occurred</div>');
+                }).always(function() {
+                    button.prop('disabled', false).text(originalText);
+                });
+            });
+            
+            // Note: Other button handlers (Pay Now, Pay Later, etc.) would be added here
+            // but they may already exist elsewhere in the codebase
+        });
+        </script>
+        <?php
     }
 } 

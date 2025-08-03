@@ -8,7 +8,34 @@
 
 jQuery(document).ready(function($) {
     
-    // Handle Mark as Paid button
+    // Handle Pay Now button (Mark as Paid)
+    $('#twintack-pay-now').on('click', function(e) {
+        e.preventDefault();
+        
+        if (!confirm('Mark this order as paid now? This will set the order to Processing status and make it ready for fulfillment.')) {
+            return;
+        }
+        
+        var paymentMethod = $('#twintack_payment_method_select').val();
+        var orderId = $(this).data('order-id');
+        
+        processPayment(orderId, 'mark_paid', paymentMethod);
+    });
+    
+    // Handle Pay Later button (Invoice)
+    $('#twintack-pay-later').on('click', function(e) {
+        e.preventDefault();
+        
+        if (!confirm('Set this order to Pay Later (Invoice)? The customer will receive an invoice with a payment link via email.')) {
+            return;
+        }
+        
+        var orderId = $(this).data('order-id');
+        
+        processPayment(orderId, 'set_pay_later', '');
+    });
+    
+    // Handle Mark as Paid button (legacy support)
     $('#twintack-mark-paid').on('click', function(e) {
         e.preventDefault();
         
@@ -59,7 +86,7 @@ jQuery(document).ready(function($) {
         showMessage(twintackAdminPayments.messages.processing, 'info');
         
         // Disable all buttons
-        $('#twintack-mark-paid, #twintack-process-payment, #twintack-send-payment-link').prop('disabled', true);
+        $('#twintack-pay-now, #twintack-pay-later, #twintack-mark-paid, #twintack-process-payment, #twintack-send-payment-link').prop('disabled', true);
         
         // Determine the AJAX action based on type
         var ajaxAction = 'twintack_' + actionType;
@@ -80,6 +107,22 @@ jQuery(document).ready(function($) {
                     // Add additional info for different action types
                     if (actionType === 'mark_paid') {
                         message += ' Order status: ' + (response.data.order_status || 'Updated');
+                    } else if (actionType === 'set_pay_later') {
+                        // Show Pay Later specific info
+                        if (response.data.order_status) {
+                            message += '<br/>📄 Order Status: ' + response.data.order_status;
+                        }
+                        if (response.data.shippo_status) {
+                            message += '<br/>📦 Shippo Status: ' + response.data.shippo_status;
+                        }
+                        if (response.data.payment_url) {
+                            message += '<br/>🔗 Payment Link: <a href="' + response.data.payment_url + '" target="_blank">View Payment Page</a>';
+                        }
+                        if (response.data.email_sent === true) {
+                            message += '<br/>✅ Invoice email sent to customer';
+                        } else if (response.data.email_sent === false) {
+                            message += '<br/>⚠️ Invoice created but email failed to send';
+                        }
                     } else if (actionType === 'send_payment_link') {
                         // Show payment link details
                         if (response.data.payment_url) {
@@ -98,20 +141,20 @@ jQuery(document).ready(function($) {
                     showMessage(message, 'success');
                     
                     // Reload page after successful payment actions to reflect changes
-                    if (actionType === 'mark_paid' || actionType === 'process_payment') {
+                    if (actionType === 'mark_paid' || actionType === 'process_payment' || actionType === 'set_pay_later') {
                         setTimeout(function() {
                             location.reload();
-                        }, 2000);
+                        }, 3000); // Slightly longer delay for Pay Later to show full message
                     } else {
                         // Re-enable buttons for payment link (no page reload needed)
                         setTimeout(function() {
-                            $('#twintack-mark-paid, #twintack-process-payment, #twintack-send-payment-link').prop('disabled', false);
+                            $('#twintack-pay-now, #twintack-pay-later, #twintack-mark-paid, #twintack-process-payment, #twintack-send-payment-link').prop('disabled', false);
                         }, 2000);
                     }
                 } else {
                     showMessage(twintackAdminPayments.messages.error + ' ' + response.data.message, 'error');
                     // Re-enable buttons on error
-                    $('#twintack-mark-paid, #twintack-process-payment, #twintack-send-payment-link').prop('disabled', false);
+                    $('#twintack-pay-now, #twintack-pay-later, #twintack-mark-paid, #twintack-process-payment, #twintack-send-payment-link').prop('disabled', false);
                 }
             },
             error: function(xhr, status, error) {
@@ -119,7 +162,7 @@ jQuery(document).ready(function($) {
                 console.error('AJAX Error:', status, error);
                 
                 // Re-enable buttons on error
-                $('#twintack-mark-paid, #twintack-process-payment, #twintack-send-payment-link').prop('disabled', false);
+                $('#twintack-pay-now, #twintack-pay-later, #twintack-mark-paid, #twintack-process-payment, #twintack-send-payment-link').prop('disabled', false);
             }
         });
     }
@@ -223,6 +266,36 @@ jQuery(document).ready(function($) {
             
             #twintack-send-payment-link:hover:not(:disabled) {
                 background: linear-gradient(135deg, #5b4cdb, #8b7eed) !important;
+            }
+            
+            /* Pay Now button styling */
+            #twintack-pay-now {
+                background: linear-gradient(135deg, #00a86b, #4CAF50) !important;
+                border-color: #00a86b !important;
+                color: white !important;
+                font-weight: bold !important;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                box-shadow: 0 2px 4px rgba(0,168,107,0.2);
+            }
+            
+            #twintack-pay-now:hover:not(:disabled) {
+                background: linear-gradient(135deg, #008f5b, #45a049) !important;
+                transform: translateY(-2px);
+            }
+            
+            /* Pay Later button styling */
+            #twintack-pay-later {
+                background: linear-gradient(135deg, #ff9800, #ffa726) !important;
+                border-color: #ff9800 !important;
+                color: white !important;
+                font-weight: bold !important;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                box-shadow: 0 2px 4px rgba(255,152,0,0.2);
+            }
+            
+            #twintack-pay-later:hover:not(:disabled) {
+                background: linear-gradient(135deg, #f57c00, #ff9500) !important;
+                transform: translateY(-2px);
             }
         `)
         .appendTo('head');

@@ -3,7 +3,7 @@
  * Plugin Name: TwinTack Manual Order Payments
  * Plugin URI: https://twintack.com
  * Description: Enables Stripe and other payment gateways for manually created WooCommerce orders, with seamless integration with TwinTack Grip Manager. Now includes Stripe Checkout Sessions for customer self-service payments.
- * Version: 1.3.1
+ * Version: 2.2.1
  * Author: TwinTack
  * Author URI: https://twintack.com
  * License: GPL v2 or later
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('TWINTACK_MANUAL_PAYMENTS_VERSION', '1.3.1');
+define('TWINTACK_MANUAL_PAYMENTS_VERSION', '2.1.0');
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_FILE', __FILE__);
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -57,19 +57,32 @@ function twintack_is_stripe_admin_enabled() {
 }
 
 /**
- * Log debug message
+ * Log debug message - FIXED to work during early loading
  */
 function twintack_manual_payments_log($message, $level = 'info') {
-    if (!class_exists('TwinTack_Manual_Order_Payments')) {
+    // Always log during debugging - don't depend on plugin options during early loading
+    $debug_enabled = true; // Set to false to disable debugging
+    
+    if (!$debug_enabled) {
         return;
     }
     
-    if (TwinTack_Manual_Order_Payments::get_option('debug_mode', 'no') === 'yes') {
-        if (function_exists('wc_get_logger')) {
+    // Add timestamp and prefix for easier tracking
+    $timestamp = date('Y-m-d H:i:s');
+    $prefixed_message = "[$timestamp] $message";
+    
+    // Force logging to work even if WP_DEBUG is disabled
+    $log_file = WP_CONTENT_DIR . '/debug.log';
+    $log_entry = date('c') . " TwinTack Manual Payments: $prefixed_message" . PHP_EOL;
+    file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX);
+    
+    // Also try WooCommerce logger if available
+    if (function_exists('wc_get_logger')) {
+        try {
             $logger = wc_get_logger();
-            $logger->log($level, $message, array('source' => 'twintack-manual-payments'));
-        } else {
-            error_log('TwinTack Manual Payments: ' . $message);
+            $logger->log($level, $prefixed_message, array('source' => 'twintack-manual-payments'));
+        } catch (Exception $e) {
+            // Ignore WC logger errors
         }
     }
 }
@@ -98,7 +111,10 @@ class TwinTack_Manual_Order_Payments {
      * Constructor
      */
     private function __construct() {
-        add_action('plugins_loaded', array($this, 'init'), 20);
+        add_action('plugins_loaded', array($this, 'init'), 5);
+        
+        // Extra early hook to ensure we load before admin functionality
+        add_action('init', array($this, 'ensure_early_loading'), 1);
         
         // Activation and deactivation hooks
         register_activation_hook(__FILE__, array($this, 'activate'));
@@ -106,14 +122,42 @@ class TwinTack_Manual_Order_Payments {
     }
     
     /**
+     * Extra early loading to ensure classes are available before admin hooks
+     */
+    public function ensure_early_loading() {
+        // Only run once
+        static $early_loaded = false;
+        if ($early_loaded) {
+            return;
+        }
+        $early_loaded = true;
+        
+        twintack_manual_payments_log('EARLY LOADING: Triggered on init hook priority 1');
+        
+        // Check if WooCommerce is available yet
+        if (!function_exists('WC')) {
+            twintack_manual_payments_log('EARLY LOADING: WooCommerce not yet available, will load later');
+            return;
+        }
+        
+        twintack_manual_payments_log('EARLY LOADING: WooCommerce available, loading classes early');
+        $this->load_admin_functionality();
+    }
+    
+    /**
      * Initialize plugin
      */
     public function init() {
+        twintack_manual_payments_log('PLUGIN INIT: Starting plugin initialization');
+        
         // Check if WooCommerce is active first
         if (!$this->is_woocommerce_active()) {
+            twintack_manual_payments_log('PLUGIN INIT: WooCommerce not active, showing notice');
             add_action('admin_notices', array($this, 'woocommerce_missing_notice'));
             return;
         }
+        
+        twintack_manual_payments_log('PLUGIN INIT: WooCommerce is active, setting up hooks');
         
         // Create plugin options if they don't exist
         $this->create_plugin_options();
@@ -121,11 +165,29 @@ class TwinTack_Manual_Order_Payments {
         // Load text domain for translations
         load_plugin_textdomain('twintack-manual-payments', false, dirname(TWINTACK_MANUAL_PAYMENTS_PLUGIN_BASENAME) . '/languages');
         
-        // Initialize on admin_init for better timing
+        // Check if classes were already loaded in early loading phase
+        if (class_exists('TwinTack_Debug_Tools')) {
+            twintack_manual_payments_log('PLUGIN INIT: Classes already loaded in early phase, skipping reload');
+        } else {
+            twintack_manual_payments_log('PLUGIN INIT: Loading admin functionality now');
+            $this->load_admin_functionality();
+        }
+        
+        // Keep admin_init for any additional setup
         add_action('admin_init', array($this, 'admin_init'));
+        twintack_manual_payments_log('PLUGIN INIT: Registered admin_init hook');
+        
+        // Remove the fallback since we're loading immediately
+        // add_action('init', array($this, 'ensure_classes_loaded'), 15);
+        twintack_manual_payments_log('PLUGIN INIT: Classes loaded immediately, no fallback needed');
         
         // Register custom email class
         add_filter('woocommerce_email_classes', array($this, 'register_email_classes'));
+        
+        // Register custom payment gateways
+        add_filter('woocommerce_payment_gateways', array($this, 'register_payment_gateways'));
+        
+        twintack_manual_payments_log('PLUGIN INIT: Initialization complete, hooks registered');
         
         // Plugin loaded successfully
         do_action('twintack_manual_payments_loaded');
@@ -134,46 +196,171 @@ class TwinTack_Manual_Order_Payments {
     }
     
     /**
-     * Initialize admin functionality
+     * Admin initialization - classes already loaded during init()
      */
     public function admin_init() {
+        // Debug: Log admin_init call
+        twintack_manual_payments_log('admin_init called - is_admin: ' . (is_admin() ? 'true' : 'false') . ', WC exists: ' . (function_exists('WC') ? 'true' : 'false'));
+        
         // Only in admin and if WooCommerce is available
         if (!is_admin() || !function_exists('WC')) {
+            twintack_manual_payments_log('admin_init: Exiting early - conditions not met');
             return;
         }
         
-        // Include admin functionality with error handling
-        $this->load_admin_functionality();
+        // Classes already loaded during init() - just verify they're available
+        $key_classes = array('TwinTack_Debug_Tools', 'TwinTack_Order_Status_Manager');
+        $missing = array();
+        foreach ($key_classes as $class) {
+            if (!class_exists($class)) {
+                $missing[] = $class;
+            }
+        }
+        
+        if (!empty($missing)) {
+            twintack_manual_payments_log('admin_init: WARNING - Some classes missing: ' . implode(', ', $missing), 'warning');
+        } else {
+            twintack_manual_payments_log('admin_init: All key classes are available');
+        }
     }
     
     /**
-     * Load admin functionality safely
+     * Removed: ensure_classes_loaded - no longer needed since classes load immediately
+     * This method is kept as a stub in case other code references it
+     */
+    public function ensure_classes_loaded() {
+        twintack_manual_payments_log('ensure_classes_loaded: Called but no longer needed - classes load immediately during init()');
+        // No-op - classes are loaded immediately during init()
+    }
+    
+    /**
+     * Get debug logs for troubleshooting
+     * Check WooCommerce → Status → Logs → twintack-manual-payments
+     */
+    public function get_debug_info() {
+        $info = array(
+            'plugin_version' => TWINTACK_MANUAL_PAYMENTS_VERSION,
+            'wordpress_version' => get_bloginfo('version'),
+            'woocommerce_version' => function_exists('WC') ? WC()->version : 'Not available',
+            'is_admin' => is_admin(),
+            'loaded_classes' => array()
+        );
+        
+        $classes_to_check = array(
+            'TwinTack_Order_Status_Manager',
+            'TwinTack_Debug_Tools',
+            'TwinTack_Shippo_Integration',
+            'TwinTack_Invoice_Payment_Gateway',
+            'TwinTack_Admin_Order_Enhancements'
+        );
+        
+        foreach ($classes_to_check as $class) {
+            $info['loaded_classes'][$class] = class_exists($class);
+        }
+        
+        return $info;
+    }
+    
+    /**
+     * Load admin functionality safely with detailed error handling
      */
     private function load_admin_functionality() {
-        try {
-            $admin_file = TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-admin-order-enhancements.php';
-            
-            if (!file_exists($admin_file)) {
-                twintack_manual_payments_log('Admin enhancements file not found: ' . $admin_file, 'error');
-                return;
+        twintack_manual_payments_log('=== STARTING ADMIN FUNCTIONALITY LOADING ===');
+        
+        $classes_to_load = array(
+            'invoice_gateway' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-invoice-payment-gateway.php',
+                'class' => 'TwinTack_Invoice_Payment_Gateway',
+                'instantiate' => false
+            ),
+            'order_status_manager' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-order-status-manager.php',
+                'class' => 'TwinTack_Order_Status_Manager',
+                'instantiate' => true
+            ),
+            'shippo_integration' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-shippo-integration.php',
+                'class' => 'TwinTack_Shippo_Integration',
+                'instantiate' => true
+            ),
+            'shippo_api_client' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-shippo-api-client.php',
+                'class' => 'TwinTack_Shippo_API_Client',
+                'instantiate' => true
+            ),
+            'debug_tools' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-debug-tools.php',
+                'class' => 'TwinTack_Debug_Tools',
+                'instantiate' => true
+            ),
+            'admin_enhancements' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-admin-order-enhancements.php',
+                'class' => 'TwinTack_Admin_Order_Enhancements',
+                'instantiate' => true
+            )
+        );
+        
+        $loaded_count = 0;
+        $failed_count = 0;
+        
+        foreach ($classes_to_load as $name => $config) {
+            try {
+                twintack_manual_payments_log("Loading {$name}...");
+                
+                // Check if file exists
+                if (!file_exists($config['file'])) {
+                    twintack_manual_payments_log("FAILED: File not found - {$config['file']}", 'error');
+                    $failed_count++;
+                    continue;
+                }
+                
+                // Include the file
+                ob_start(); // Capture any output/errors
+                $include_result = require_once $config['file'];
+                $output = ob_get_clean();
+                
+                if ($output) {
+                    twintack_manual_payments_log("Include output for {$name}: " . $output);
+                }
+                
+                // Check if class exists after include
+                if (!class_exists($config['class'])) {
+                    twintack_manual_payments_log("FAILED: Class {$config['class']} not found after including {$config['file']}", 'error');
+                    $failed_count++;
+                    continue;
+                }
+                
+                // Instantiate if needed
+                if ($config['instantiate']) {
+                    $instance = call_user_func(array($config['class'], 'get_instance'));
+                    if (!$instance) {
+                        twintack_manual_payments_log("FAILED: Could not instantiate {$config['class']}", 'error');
+                        $failed_count++;
+                        continue;
+                    }
+                }
+                
+                twintack_manual_payments_log("SUCCESS: {$name} loaded and " . ($config['instantiate'] ? 'instantiated' : 'ready'));
+                $loaded_count++;
+                
+            } catch (Throwable $e) {
+                twintack_manual_payments_log("CRITICAL ERROR loading {$name}: " . $e->getMessage(), 'error');
+                twintack_manual_payments_log("Error file: " . $e->getFile() . " line " . $e->getLine(), 'error');
+                twintack_manual_payments_log("Stack trace: " . $e->getTraceAsString(), 'error');
+                $failed_count++;
             }
-            
-            require_once $admin_file;
-            
-            if (!class_exists('TwinTack_Admin_Order_Enhancements')) {
-                twintack_manual_payments_log('Admin enhancements class not found after include', 'error');
-                return;
-            }
-            
-            // Initialize immediately to ensure AJAX handlers are registered
-            // AJAX requests don't go through current_screen hook
-            TwinTack_Admin_Order_Enhancements::get_instance();
-            
-            twintack_manual_payments_log('Admin functionality loaded successfully');
-            
-        } catch (Exception $e) {
-            twintack_manual_payments_log('Error loading admin functionality: ' . $e->getMessage(), 'error');
         }
+        
+        twintack_manual_payments_log("=== LOADING COMPLETE: {$loaded_count} successful, {$failed_count} failed ===");
+        
+        // Final verification
+        $final_status = array();
+        foreach ($classes_to_load as $name => $config) {
+            $exists = class_exists($config['class']);
+            $final_status[] = "{$name}: " . ($exists ? 'OK' : 'MISSING');
+        }
+        
+        twintack_manual_payments_log("Final class status: " . implode(', ', $final_status));
     }
     
 
@@ -189,6 +376,16 @@ class TwinTack_Manual_Order_Payments {
         $email_classes['TwinTack_Payment_Link_Email'] = new TwinTack_Payment_Link_Email();
         
         return $email_classes;
+    }
+    
+    /**
+     * Register custom payment gateways with WooCommerce
+     */
+    public function register_payment_gateways($gateways) {
+        if (class_exists('TwinTack_Invoice_Payment_Gateway')) {
+            $gateways[] = 'TwinTack_Invoice_Payment_Gateway';
+        }
+        return $gateways;
     }
     
     /**

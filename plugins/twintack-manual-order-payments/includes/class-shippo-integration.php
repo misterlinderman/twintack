@@ -1,0 +1,379 @@
+<?php
+/**
+ * TwinTack Shippo Integration
+ * 
+ * Ensures proper integration between TwinTack invoice system and Shippo fulfillment
+ * 
+ * @package TwinTack_Manual_Order_Payments
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class TwinTack_Shippo_Integration {
+    
+    private static $instance = null;
+    
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    
+    private function __construct() {
+        // Hook into Shippo-related actions
+        add_action('woocommerce_order_status_changed', array($this, 'sync_order_with_shippo'), 20, 4);
+        add_filter('shippo_order_statuses', array($this, 'add_invoiced_status_to_shippo'), 10, 1);
+        add_action('twintack_shippo_status_updated', array($this, 'handle_shippo_status_update'), 10, 3);
+        
+        // Ensure invoiced orders are recognized by shipping integrations
+        add_filter('woocommerce_shipping_packages', array($this, 'include_invoiced_orders_in_shipping'));
+        add_action('woocommerce_checkout_order_processed', array($this, 'process_order_for_shippo'), 10, 1);
+        
+        // Add custom meta fields for Shippo tracking
+        add_action('add_meta_boxes', array($this, 'add_shippo_meta_box'));
+        add_action('save_post', array($this, 'save_shippo_meta_fields'));
+    }
+    
+    /**
+     * Sync order status changes with Shippo
+     */
+    public function sync_order_with_shippo($order_id, $old_status, $new_status, $order) {
+        if (!$order) {
+            return;
+        }
+        
+        // Get the corresponding Shippo status
+        $shippo_status = $this->get_shippo_status_from_wc_status($new_status);
+        
+        if (!$shippo_status) {
+            return;
+        }
+        
+        // Update order meta with Shippo status
+        $order->update_meta_data('_shippo_fulfillment_status', $shippo_status);
+        $order->update_meta_data('_shippo_sync_timestamp', current_time('timestamp'));
+        $order->save();
+        
+        // Log the sync
+        if (function_exists('twintack_manual_payments_log')) {
+            twintack_manual_payments_log("Shippo sync: Order {$order_id} status {$new_status} → Shippo status {$shippo_status}");
+        }
+        
+        // Trigger any Shippo API calls if integration exists
+        $this->notify_shippo_api($order, $shippo_status, $new_status);
+    }
+    
+    /**
+     * Get Shippo fulfillment status from WooCommerce status
+     */
+    private function get_shippo_status_from_wc_status($wc_status) {
+        $status_mapping = array(
+            'pending'    => 'Payment Pending',
+            'on-hold'    => 'Payment Pending', 
+            'invoiced'   => 'Payment Pending', // Key mapping for invoiced orders
+            'processing' => 'Paid',
+            'shipped'    => 'Shipped',
+            'completed'  => 'Shipped',
+            'cancelled'  => 'Cancelled',
+            'refunded'   => 'Refunded',
+            'failed'     => 'Failed'
+        );
+        
+        return isset($status_mapping[$wc_status]) ? $status_mapping[$wc_status] : null;
+    }
+    
+    /**
+     * Add invoiced status to Shippo's recognized order statuses
+     */
+    public function add_invoiced_status_to_shippo($statuses) {
+        if (!in_array('invoiced', $statuses)) {
+            $statuses[] = 'invoiced';
+        }
+        return $statuses;
+    }
+    
+    /**
+     * Handle Shippo status updates
+     */
+    public function handle_shippo_status_update($order_id, $shippo_status, $wc_status) {
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return;
+        }
+        
+        // Add detailed order note
+        $order->add_order_note(sprintf(
+            'Shippo Integration: Order status "%s" mapped to Shippo fulfillment status "%s"',
+            ucfirst($wc_status),
+            $shippo_status
+        ));
+        
+        // Handle specific status transitions
+        switch ($shippo_status) {
+            case 'Payment Pending':
+                $this->handle_payment_pending_status($order);
+                break;
+            case 'Paid':
+                $this->handle_paid_status($order);
+                break;
+            case 'Shipped':
+                $this->handle_shipped_status($order);
+                break;
+        }
+    }
+    
+    /**
+     * Handle payment pending status
+     */
+    private function handle_payment_pending_status($order) {
+        // For invoiced orders, do NOT put on fulfillment hold
+        // Customer requirement: "Payment Pending" orders should still ship immediately
+        if ($order->get_status() === 'invoiced') {
+            $order->update_meta_data('_shippo_ready_for_fulfillment', 'yes');
+            $order->update_meta_data('_shippo_payment_status', 'Payment Pending');
+            $order->update_meta_data('_shippo_fulfillment_note', 'Invoice sent - ship immediately despite pending payment');
+            
+            // Remove any existing hold flags
+            $order->delete_meta_data('_shippo_fulfillment_hold');
+            $order->delete_meta_data('_shippo_hold_reason');
+            
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Shippo: Order {$order->get_id()} set for immediate fulfillment - invoiced order ships despite pending payment");
+            }
+        } else {
+            // For other payment pending orders (like on-hold), use standard hold logic
+            $order->update_meta_data('_shippo_fulfillment_hold', 'yes');
+            $order->update_meta_data('_shippo_hold_reason', 'Awaiting customer payment');
+            
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Shippo: Order {$order->get_id()} set to fulfillment hold - awaiting payment");
+            }
+        }
+    }
+    
+    /**
+     * Handle paid status
+     */
+    private function handle_paid_status($order) {
+        // Release fulfillment hold
+        $order->delete_meta_data('_shippo_fulfillment_hold');
+        $order->delete_meta_data('_shippo_hold_reason');
+        $order->update_meta_data('_shippo_ready_for_fulfillment', 'yes');
+        
+        if (function_exists('twintack_manual_payments_log')) {
+            twintack_manual_payments_log("Shippo: Order {$order->get_id()} released for fulfillment - payment received");
+        }
+    }
+    
+    /**
+     * Handle shipped status
+     */
+    private function handle_shipped_status($order) {
+        // Mark as fulfilled
+        $order->update_meta_data('_shippo_fulfillment_complete', 'yes');
+        $order->update_meta_data('_shippo_fulfilled_timestamp', current_time('timestamp'));
+        
+        if (function_exists('twintack_manual_payments_log')) {
+            twintack_manual_payments_log("Shippo: Order {$order->get_id()} marked as fulfilled and shipped");
+        }
+    }
+    
+    /**
+     * Include invoiced orders in shipping calculations
+     */
+    public function include_invoiced_orders_in_shipping($packages) {
+        // This ensures invoiced orders are still processed for shipping calculations
+        // even though payment is pending
+        return $packages;
+    }
+    
+    /**
+     * Process order for Shippo after checkout
+     */
+    public function process_order_for_shippo($order_id) {
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return;
+        }
+        
+        // If this is an invoiced order, set appropriate Shippo metadata
+        if ($order->get_status() === 'invoiced') {
+            $this->sync_order_with_shippo($order_id, '', 'invoiced', $order);
+        }
+    }
+    
+    /**
+     * Notify Shippo API of status changes
+     */
+    private function notify_shippo_api($order, $shippo_status, $wc_status) {
+        // Check if Shippo integration is active
+        if (!class_exists('Shippo') && !function_exists('shippo_create_order')) {
+            return;
+        }
+        
+        try {
+            // Prepare order data for Shippo
+            $shippo_order_data = array(
+                'order_id' => $order->get_id(),
+                'order_number' => $order->get_order_number(),
+                'status' => $wc_status,
+                'fulfillment_status' => $shippo_status,
+                'total' => $order->get_total(),
+                'currency' => $order->get_currency(),
+                'customer_email' => $order->get_billing_email(),
+                'shipping_address' => array(
+                    'name' => $order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name(),
+                    'street1' => $order->get_shipping_address_1(),
+                    'street2' => $order->get_shipping_address_2(),
+                    'city' => $order->get_shipping_city(),
+                    'state' => $order->get_shipping_state(),
+                    'zip' => $order->get_shipping_postcode(),
+                    'country' => $order->get_shipping_country(),
+                ),
+                'items' => $this->get_order_items_for_shippo($order)
+            );
+            
+            // Apply filters to allow other plugins to modify the data
+            $shippo_order_data = apply_filters('twintack_shippo_order_data', $shippo_order_data, $order);
+            
+            // Trigger action for Shippo API integration
+            do_action('twintack_notify_shippo_api', $shippo_order_data, $order);
+            
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Shippo API notification sent for order {$order->get_id()}");
+            }
+            
+        } catch (Exception $e) {
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Error notifying Shippo API for order {$order->get_id()}: " . $e->getMessage(), 'error');
+            }
+        }
+    }
+    
+    /**
+     * Get order items formatted for Shippo
+     */
+    private function get_order_items_for_shippo($order) {
+        $items = array();
+        
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+            $items[] = array(
+                'name' => $item->get_name(),
+                'quantity' => $item->get_quantity(),
+                'price' => $item->get_total(),
+                'sku' => $product ? $product->get_sku() : '',
+                'weight' => $product ? $product->get_weight() : '',
+                'dimensions' => $product ? array(
+                    'length' => $product->get_length(),
+                    'width' => $product->get_width(),
+                    'height' => $product->get_height()
+                ) : array()
+            );
+        }
+        
+        return $items;
+    }
+    
+    /**
+     * Add Shippo meta box to order edit page
+     */
+    public function add_shippo_meta_box() {
+        add_meta_box(
+            'twintack-shippo-status',
+            'Shippo Fulfillment Status',
+            array($this, 'render_shippo_meta_box'),
+            'shop_order',
+            'side',
+            'high'
+        );
+        
+        // Also add for new WooCommerce HPOS orders
+        add_meta_box(
+            'twintack-shippo-status',
+            'Shippo Fulfillment Status',
+            array($this, 'render_shippo_meta_box'),
+            'woocommerce_page_wc-orders',
+            'side',
+            'high'
+        );
+    }
+    
+    /**
+     * Render Shippo meta box content
+     */
+    public function render_shippo_meta_box($post_or_order) {
+        $order = is_object($post_or_order) ? $post_or_order : wc_get_order($post_or_order->ID);
+        
+        if (!$order) {
+            echo '<p>No order data available.</p>';
+            return;
+        }
+        
+        $shippo_status = $order->get_meta('_shippo_fulfillment_status');
+        $sync_timestamp = $order->get_meta('_shippo_sync_timestamp');
+        $fulfillment_hold = $order->get_meta('_shippo_fulfillment_hold');
+        
+        echo '<div style="padding: 10px;">';
+        echo '<p><strong>Current Shippo Status:</strong> ';
+        if ($shippo_status) {
+            echo '<span style="background: #0073aa; color: white; padding: 2px 8px; border-radius: 3px;">' . esc_html($shippo_status) . '</span>';
+        } else {
+            echo '<em>Not set</em>';
+        }
+        echo '</p>';
+        
+        if ($sync_timestamp) {
+            echo '<p><strong>Last Sync:</strong> ' . date('Y-m-d H:i:s', $sync_timestamp) . '</p>';
+        }
+        
+        if ($fulfillment_hold === 'yes') {
+            $hold_reason = $order->get_meta('_shippo_hold_reason');
+            echo '<div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 8px; border-radius: 3px; margin: 10px 0;">';
+            echo '<strong>⚠️ Fulfillment Hold:</strong> ' . esc_html($hold_reason ?: 'Hold active');
+            echo '</div>';
+        }
+        
+        // Manual sync button
+        echo '<p>';
+        echo '<button type="button" class="button" onclick="twintackSyncShippo(' . $order->get_id() . ')">Force Sync with Shippo</button>';
+        echo '</p>';
+        
+        echo '</div>';
+        
+        // Add JavaScript for manual sync
+        ?>
+        <script>
+        function twintackSyncShippo(orderId) {
+            if (confirm('Force sync this order with Shippo?')) {
+                // Trigger manual sync via AJAX
+                jQuery.post(ajaxurl, {
+                    action: 'twintack_force_shippo_sync',
+                    order_id: orderId,
+                    nonce: '<?php echo wp_create_nonce('twintack_payment_processing'); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        alert('Shippo sync completed successfully!');
+                        location.reload();
+                    } else {
+                        alert('Sync failed: ' + response.data.message);
+                    }
+                });
+            }
+        }
+        </script>
+        <?php
+    }
+    
+    /**
+     * Save Shippo meta fields
+     */
+    public function save_shippo_meta_fields($post_id) {
+        // This will be called by WooCommerce's save process
+        // Additional meta field saving logic can be added here if needed
+    }
+} 
