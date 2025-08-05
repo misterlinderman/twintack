@@ -572,6 +572,20 @@ function twintack_login_redirect( $redirect, $user ) {
         error_log('Login redirect triggered for user: ' . $user->user_login);
         error_log('Default redirect: ' . $redirect);
         error_log('REQUEST redirect_to: ' . (isset($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : 'Not set'));
+        error_log('POST data: ' . print_r($_POST, true));
+    }
+    
+    // Check if this login is coming from Solid Affiliate plugin
+    // If so, let Solid Affiliate handle its own redirect
+    if ( isset( $_POST['submit_solid_affiliate_login'] ) || 
+         ( isset( $_POST['user_email'] ) && isset( $_POST['user_pass'] ) && 
+           ( strpos( $_SERVER['HTTP_REFERER'] ?? '', 'affiliates' ) !== false ||
+             strpos( $_SERVER['REQUEST_URI'] ?? '', 'affiliates' ) !== false ) ) ) {
+        if (WP_DEBUG === true) {
+            error_log('Detected Solid Affiliate login - allowing plugin to handle redirect');
+        }
+        // Return the original redirect to let Solid Affiliate handle it
+        return $redirect;
     }
     
     // If there's a specific redirect_to parameter and it's a valid URL, use it

@@ -44,7 +44,7 @@
 					<a href="/twintack/#ourstory">Our Story</a>
 					<a href="/contact/">Contact</a>
 					<!--a href="/wholesale-registration-page">Wholesale</a-->
-					<!--a href="/affiliates">Affiliate Program</a-->
+					<a href="/affiliates">Affiliate Program</a>
 				</nav>
 			</div>
 

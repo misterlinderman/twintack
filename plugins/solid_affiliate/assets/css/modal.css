@@ -1,0 +1,170 @@
+.modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal__container {
+  background-color: #fff;
+  padding: 30px;
+  max-width: 80%;
+  min-width:40%;
+  max-height: 100vh;
+  border-radius: var(--sld-radius-sm);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #d9e1ec;
+}
+
+.modal__title {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-weight : 400;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  color: #212044;
+  box-sizing: border-box;
+}
+
+.modal__close {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding:0;
+}
+
+.modal__header .modal__close:before {
+  content: url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='32' height='32' rx='16' fill='%23F5F1ED'/%3E%3Cpath d='M10 22L22 10M10 10L22 22' stroke='%23979797' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+  width:18px;
+  height:18px;
+}
+
+.modal__content {
+  margin:20px 0;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.8);
+  display:flex;
+  flex-direction: column;
+  gap:10px;
+}
+
+.modal__content select, .modal__content input {
+  width:100%;
+  max-width:100%;
+}
+.modal__content_text {
+  margin-bottom:20px!important;
+}
+
+.modal__btn {
+  display:flex;
+  font-size: 12px;
+  padding: 10px 20px;
+  line-height:18px;
+  background-color: var(--sld-primary);
+  color: #fff;
+  border: 1px solid #D6D6D6;
+  border-radius: var(--sld-radius-sm);
+  cursor: pointer;
+  border-radius:var(--sld-radius-sm);
+  justify-content: center;
+}
+
+.modal__btn:hover {
+  color:#fff;
+}
+
+.modal__btn svg {
+  margin-right:5px;
+}
+
+.modal__btn-primary {
+  background-color: rgba(var(--sld-accent));
+  color: #fff;
+}
+
+.modal__footer button {
+  width:100%;
+}
+
+/**************************\
+    Demo Animation Style
+  \**************************/
+@keyframes mmfadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mmfadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes mmslideIn {
+  from {
+    transform: translateY(15%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes mmslideOut {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-10%);
+  }
+}
+
+.micromodal-slide {
+  display: none;
+}
+
+.micromodal-slide.is-open {
+  display: block;
+}
+
+.micromodal-slide[aria-hidden="false"] .modal__overlay {
+  animation: mmfadeIn 0.3s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.micromodal-slide[aria-hidden="false"] .modal__container {
+  animation: mmslideIn 0.3s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.micromodal-slide[aria-hidden="true"] .modal__overlay {
+  animation: mmfadeOut 0.3s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.micromodal-slide[aria-hidden="true"] .modal__container {
+  animation: mmslideOut 0.3s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.micromodal-slide .modal__container,
+.micromodal-slide .modal__overlay {
+  will-change: transform;
+}
