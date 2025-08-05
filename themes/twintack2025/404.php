@@ -1,46 +1,118 @@
 <?php
 /**
- * The template for displaying 404 pages
+ * The template for displaying 404 pages with intelligent redirects
  *
  * @package twintack2025
  */
 
 get_header();
 
-// Get header configuration and render
-get_template_part('template-parts/header/header', 'base');
+// Get the current URL for intelligent suggestions
+$current_url = $_SERVER['REQUEST_URI'];
+$url_parts = explode('/', trim($current_url, '/'));
 ?>
 
-<main id="primary" class="site-main">
+<div class="page-wrapper">
+	<main class="main">
 	<section class="error-404 not-found">
-		<header class="page-header">
-			<h1 class="page-title"><?php esc_html_e('Oops! That page can&rsquo;t be found.', 'twintack2025'); ?></h1>
-		</header>
+		<div class="container">
+			<div class="error-404-content">
+				
+				<!-- Main Error Message -->
+				<div class="error-header">
+					<h1 class="error-title">404</h1>
+					<h2 class="error-subtitle">Page Not Found</h2>
+					<p class="error-message">
+						<?php esc_html_e("We couldn't find the page you're looking for, but we can help you get back on track!", 'twintack2025'); ?>
+					</p>
+				</div>
 
-		<div class="page-content">
-			<p><?php esc_html_e('It looks like nothing was found at this location. Maybe try one of the links below or a search?', 'twintack2025'); ?></p>
+				<?php
+				// Intelligent redirect suggestions
+				$suggestions = twintack_get_404_suggestions($current_url, $url_parts);
+				
+				if (!empty($suggestions)): ?>
+					<div class="suggested-pages">
+						<h3><?php esc_html_e('Were you looking for one of these?', 'twintack2025'); ?></h3>
+						<div class="suggestions-grid">
+							<?php foreach ($suggestions as $suggestion): ?>
+								<a href="<?php echo esc_url($suggestion['url']); ?>" class="suggestion-card">
+									<div class="suggestion-icon">
+										<?php echo $suggestion['icon']; ?>
+									</div>
+									<h4><?php echo esc_html($suggestion['title']); ?></h4>
+									<p><?php echo esc_html($suggestion['description']); ?></p>
+								</a>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				<?php endif; ?>
 
-			<?php
-			get_search_form();
-			the_widget('WP_Widget_Recent_Posts');
-			?>
+				<!-- Sport Navigation -->
+				<div class="sport-navigation">
+					<h3><?php esc_html_e('Explore by Sport', 'twintack2025'); ?></h3>
+					<div class="sport-cards">
+						<a href="/baseball/" class="sport-card baseball">
+							<div class="sport-icon">
+								<?php echo file_get_contents(get_template_directory() . '/baseball-icon-3.svg'); ?>
+							</div>
+							<h4>Baseball</h4>
+							<p>Grips, accessories, and custom solutions for baseball</p>
+						</a>
+						<a href="/fishing/" class="sport-card fishing">
+							<div class="sport-icon">
+								<?php echo file_get_contents(get_template_directory() . '/fishing-icon-3.svg'); ?>
+							</div>
+							<h4>Fishing</h4>
+							<p>Grips, accessories, and custom solutions for fishing</p>
+						</a>
+					</div>
+				</div>
 
-			<div class="widget widget_categories">
-				<h2 class="widget-title"><?php esc_html_e('Most Used Categories', 'twintack2025'); ?></h2>
-				<ul>
-					<?php
-					wp_list_categories(array(
-						'orderby'    => 'count',
-						'order'      => 'DESC',
-						'show_count' => 1,
-						'title_li'   => '',
-						'number'     => 10,
-					));
-					?>
-				</ul>
+				<!-- Quick Links -->
+				<div class="quick-links">
+					<h3><?php esc_html_e('Popular Pages', 'twintack2025'); ?></h3>
+					<div class="quick-links-grid">
+						<a href="/shop/" class="quick-link">
+							<span class="link-icon">🛒</span>
+							<span>Shop All Products</span>
+						</a>
+						<a href="/twintack-custom-grips/" class="quick-link">
+							<span class="link-icon">🎨</span>
+							<span>Custom Grips</span>
+						</a>
+						<a href="/twintack/" class="quick-link">
+							<span class="link-icon">ℹ️</span>
+							<span>Our Story</span>
+						</a>
+						<a href="/contact/" class="quick-link">
+							<span class="link-icon">📞</span>
+							<span>Contact Us</span>
+						</a>
+						<?php if (is_user_logged_in()): ?>
+							<a href="/my-account/" class="quick-link">
+								<span class="link-icon">👤</span>
+								<span>My Account</span>
+							</a>
+						<?php else: ?>
+							<a href="/login/" class="quick-link">
+								<span class="link-icon">🔐</span>
+								<span>Login/Register</span>
+							</a>
+						<?php endif; ?>
+					</div>
+				</div>
+
+				<!-- Search Form -->
+				<div class="error-search">
+					<h3><?php esc_html_e('Search Our Site', 'twintack2025'); ?></h3>
+					<?php get_search_form(); ?>
+				</div>
+
 			</div>
 		</div>
 	</section>
-</main>
+	</main>
+</div>
 
 <?php get_footer(); ?>

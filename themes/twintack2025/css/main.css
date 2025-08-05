@@ -24,6 +24,7 @@
 @import 'components/_demo-style-adjustments.css';
 @import 'components/_login.css';
 @import 'components/blog-roll.css';
+@import '404.css';
 
 /* Utilities */
 @import 'utilities/_responsive.css';

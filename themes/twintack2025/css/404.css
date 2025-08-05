@@ -1,0 +1,407 @@
+/**
+ * TwinTack 404 Page Styles
+ * 
+ * Custom styling for the 404 error page with intelligent redirect suggestions
+ * Following TwinTack brand guidelines and site design patterns
+ */
+
+/* 404 Page Layout - Following site structure */
+.error-404.not-found {
+    min-height: 70vh;
+    padding: var(--spacing-xl) 0;
+    background: var(--color-primary);
+}
+
+.error-404-content {
+    /* Content uses site container which already has max-width and margin */
+}
+
+/* Error Header */
+.error-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.error-title {
+    font-size: 8rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-highlight);
+    margin: 0;
+    line-height: 1;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    font-family: var(--font-primary);
+}
+
+.error-subtitle {
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    margin: var(--spacing-sm) 0;
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+}
+
+.error-message {
+    font-size: 1.125rem;
+    color: var(--color-text);
+    max-width: 600px;
+    margin: var(--spacing-lg) auto;
+    line-height: var(--line-height-base);
+}
+
+/* Suggested Pages Section */
+.suggested-pages {
+    margin-bottom: var(--spacing-xl);
+}
+
+.suggested-pages h3 {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+}
+
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.suggestion-card {
+    background: var(--color-accent);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    text-decoration: none;
+    color: var(--color-text);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: var(--transition-base);
+    border: 2px solid transparent;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    border-color: var(--color-highlight);
+    text-decoration: none;
+    color: var(--color-text);
+}
+
+.suggestion-icon {
+    margin-bottom: var(--spacing-md);
+}
+
+.suggestion-icon svg {
+    width: 48px;
+    height: 48px;
+    fill: var(--color-highlight);
+}
+
+.suggestion-card h4 {
+    font-size: 1.25rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    margin: var(--spacing-md) 0 var(--spacing-sm);
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+}
+
+.suggestion-card p {
+    color: var(--color-text);
+    font-size: 0.875rem;
+    margin: 0;
+    line-height: var(--line-height-base);
+}
+
+/* Sport Navigation */
+.sport-navigation {
+    margin-bottom: var(--spacing-xl);
+}
+
+.sport-navigation h3 {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+}
+
+.sport-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.sport-card {
+    background: var(--color-accent);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    text-decoration: none;
+    color: var(--color-text);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    transition: var(--transition-base);
+    border: 3px solid transparent;
+}
+
+.sport-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    text-decoration: none;
+    color: var(--color-text);
+}
+
+.sport-card.baseball:hover {
+    border-color: var(--color-highlight);
+}
+
+.sport-card.fishing:hover {
+    border-color: var(--color-highlight);
+}
+
+.sport-icon {
+    margin-bottom: var(--spacing-lg);
+}
+
+.sport-icon svg {
+    width: 64px;
+    height: 64px;
+}
+
+.sport-card.baseball .sport-icon svg {
+    fill: var(--color-highlight);
+}
+
+.sport-card.fishing .sport-icon svg {
+    fill: var(--color-highlight);
+}
+
+.sport-card h4 {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    margin: var(--spacing-lg) 0 var(--spacing-md);
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+    color: var(--color-text);
+}
+
+.sport-card p {
+    color: var(--color-text);
+    font-size: 1rem;
+    margin: 0;
+    line-height: var(--line-height-base);
+}
+
+/* Quick Links */
+.quick-links {
+    margin-bottom: var(--spacing-xl);
+}
+
+.quick-links h3 {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+}
+
+.quick-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.quick-link {
+    background: var(--color-accent);
+    border: 2px solid transparent;
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-lg) var(--spacing-md);
+    text-align: center;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.quick-link:hover {
+    border-color: var(--color-highlight);
+    background: var(--color-accent);
+    text-decoration: none;
+    color: var(--color-text);
+    transform: translateY(-2px);
+}
+
+.link-icon {
+    font-size: 1.5rem;
+    display: block;
+    color: var(--color-highlight);
+}
+
+.quick-link span:last-child {
+    font-weight: var(--font-weight-medium);
+    font-size: 0.875rem;
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+}
+
+/* Search Section */
+.error-search {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.error-search h3 {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-lg);
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+}
+
+.error-search .search-form {
+    margin: 0 auto;
+}
+
+.error-search .search-field {
+    width: 100%;
+    max-width: 400px;
+    padding: var(--spacing-md);
+    border: 2px solid var(--color-accent);
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    margin-bottom: var(--spacing-md);
+    transition: var(--transition-base);
+    font-family: var(--font-primary);
+    background: var(--color-accent);
+    color: var(--color-text);
+}
+
+.error-search .search-field:focus {
+    outline: none;
+    border-color: var(--color-highlight);
+}
+
+.error-search .search-submit {
+    background: var(--color-highlight);
+    color: var(--color-text);
+    border: none;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: var(--transition-base);
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+}
+
+.error-search .search-submit:hover {
+    background: var(--color-text);
+    color: var(--color-accent);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .error-title {
+        font-size: 5rem;
+    }
+    
+    .error-subtitle {
+        font-size: 1.5rem;
+    }
+    
+    .error-message {
+        font-size: 1rem;
+        padding: 0 var(--spacing-sm);
+    }
+    
+    .suggestions-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .sport-cards {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+    
+    .quick-links-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
+    }
+    
+    .sport-card {
+        padding: var(--spacing-lg);
+    }
+    
+    .suggestion-card {
+        padding: var(--spacing-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .error-title {
+        font-size: 4rem;
+    }
+    
+    .error-subtitle {
+        font-size: 1.25rem;
+    }
+    
+    .quick-links-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .sport-cards {
+        gap: var(--spacing-md);
+    }
+}
+
+/* Animation for page load */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.error-404-content > * {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.error-404-content > *:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.error-404-content > *:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.error-404-content > *:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+.error-404-content > *:nth-child(5) {
+    animation-delay: 0.4s;
+}

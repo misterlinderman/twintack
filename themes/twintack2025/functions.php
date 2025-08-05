@@ -1835,6 +1835,195 @@ function twintack_add_grip_designs_endpoint() {
 add_action('init', 'twintack_add_grip_designs_endpoint');
 
 /**
+ * TwinTack 404 Intelligent Redirect System
+ * 
+ * Analyzes the requested URL and suggests relevant pages based on common patterns
+ */
+function twintack_get_404_suggestions($current_url, $url_parts) {
+    $suggestions = array();
+    
+    // Clean URL for analysis (remove query parameters)
+    $clean_url = strtok($current_url, '?');
+    $clean_url = strtolower($clean_url);
+    
+    // Define URL patterns and their suggestions
+    $patterns = array(
+        // Sport-related patterns
+        array(
+            'patterns' => array('baseball', 'bat', 'batting'),
+            'suggestion' => array(
+                'url' => '/baseball/',
+                'title' => 'Baseball Section',
+                'description' => 'Browse our baseball grips and accessories',
+                'icon' => file_get_contents(get_template_directory() . '/baseball-icon-3.svg')
+            )
+        ),
+        array(
+            'patterns' => array('fishing', 'fish', 'rod', 'reel'),
+            'suggestion' => array(
+                'url' => '/fishing/',
+                'title' => 'Fishing Section',
+                'description' => 'Browse our fishing grips and accessories',
+                'icon' => file_get_contents(get_template_directory() . '/fishing-icon-3.svg')
+            )
+        ),
+        
+        // Product-related patterns
+        array(
+            'patterns' => array('shop', 'store', 'product', 'buy', 'purchase'),
+            'suggestion' => array(
+                'url' => '/shop/',
+                'title' => 'Shop All Products',
+                'description' => 'Browse our complete product catalog',
+                'icon' => '🛒'
+            )
+        ),
+        array(
+            'patterns' => array('custom', 'design', 'personalize', 'configurator'),
+            'suggestion' => array(
+                'url' => '/twintack-custom-grips/',
+                'title' => 'Custom Grips',
+                'description' => 'Design your own custom grip',
+                'icon' => '🎨'
+            )
+        ),
+        
+        // Account-related patterns
+        array(
+            'patterns' => array('account', 'profile', 'dashboard', 'orders'),
+            'suggestion' => array(
+                'url' => '/my-account/',
+                'title' => 'My Account',
+                'description' => 'Access your account dashboard',
+                'icon' => '👤'
+            )
+        ),
+        array(
+            'patterns' => array('login', 'signin', 'register', 'signup'),
+            'suggestion' => array(
+                'url' => '/login/',
+                'title' => 'Login/Register',
+                'description' => 'Sign in to your account or create a new one',
+                'icon' => '🔐'
+            )
+        ),
+        array(
+            'patterns' => array('cart', 'checkout'),
+            'suggestion' => array(
+                'url' => '/cart/',
+                'title' => 'Shopping Cart',
+                'description' => 'View your cart and checkout',
+                'icon' => '🛒'
+            )
+        ),
+        
+        // Company-related patterns
+        array(
+            'patterns' => array('about', 'company', 'story', 'twintack'),
+            'suggestion' => array(
+                'url' => '/twintack/',
+                'title' => 'About TwinTack',
+                'description' => 'Learn about our company and story',
+                'icon' => 'ℹ️'
+            )
+        ),
+        array(
+            'patterns' => array('contact', 'support', 'help'),
+            'suggestion' => array(
+                'url' => '/contact/',
+                'title' => 'Contact Us',
+                'description' => 'Get in touch with our team',
+                'icon' => '📞'
+            )
+        ),
+        
+        // Wholesale patterns
+        array(
+            'patterns' => array('wholesale', 'bulk', 'dealer'),
+            'suggestion' => array(
+                'url' => '/login/',
+                'title' => 'Wholesale Login',
+                'description' => 'Access wholesale pricing and order forms',
+                'icon' => '💼'
+            )
+        )
+    );
+    
+    // Check for pattern matches
+    foreach ($patterns as $pattern_group) {
+        foreach ($pattern_group['patterns'] as $pattern) {
+            if (strpos($clean_url, $pattern) !== false) {
+                $suggestions[] = $pattern_group['suggestion'];
+                break; // Avoid duplicate suggestions from same group
+            }
+        }
+    }
+    
+    // Check for common old WordPress patterns
+    if (strpos($clean_url, 'wp-') !== false) {
+        $suggestions[] = array(
+            'url' => '/shop/',
+            'title' => 'Shop Products',
+            'description' => 'Browse our product catalog',
+            'icon' => '🛒'
+        );
+        $suggestions[] = array(
+            'url' => '/login/',
+            'title' => 'Admin/Login',
+            'description' => 'Access your account',
+            'icon' => '🔐'
+        );
+    }
+    
+    // Check for category patterns
+    if (strpos($clean_url, 'category') !== false || strpos($clean_url, 'cat') !== false) {
+        $suggestions[] = array(
+            'url' => '/shop/',
+            'title' => 'Shop by Category',
+            'description' => 'Browse products by category',
+            'icon' => '📂'
+        );
+    }
+    
+    // Check for blog patterns
+    if (strpos($clean_url, 'blog') !== false || strpos($clean_url, 'news') !== false || strpos($clean_url, 'post') !== false) {
+        $suggestions[] = array(
+            'url' => '/twintack/',
+            'title' => 'Company Information',
+            'description' => 'Learn more about TwinTack',
+            'icon' => 'ℹ️'
+        );
+    }
+    
+    // Remove duplicates based on URL
+    $unique_suggestions = array();
+    $seen_urls = array();
+    foreach ($suggestions as $suggestion) {
+        if (!in_array($suggestion['url'], $seen_urls)) {
+            $unique_suggestions[] = $suggestion;
+            $seen_urls[] = $suggestion['url'];
+        }
+    }
+    
+    // Limit to maximum 4 suggestions for good UX
+    return array_slice($unique_suggestions, 0, 4);
+}
+
+/**
+ * Log 404 errors for analysis (optional - can help identify common missing pages)
+ */
+function twintack_log_404_errors() {
+    if (is_404() && WP_DEBUG_LOG) {
+        $current_url = $_SERVER['REQUEST_URI'];
+        $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'Direct access';
+        $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown';
+        
+        error_log("TwinTack 404 Error - URL: {$current_url} | Referer: {$referer} | User Agent: " . substr($user_agent, 0, 100));
+    }
+}
+add_action('wp', 'twintack_log_404_errors');
+
+/**
  * Add grip designs to account menu items
  * NOTE: Re-enabled for menu item, but content is handled by plugin
  */
