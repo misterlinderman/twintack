@@ -27,7 +27,8 @@ class TwinTack_Order_Status_Manager {
         add_action('init', array($this, 'register_custom_order_statuses'));
         add_filter('wc_order_statuses', array($this, 'add_custom_order_statuses'));
         add_filter('woocommerce_valid_order_statuses_for_payment', array($this, 'add_valid_statuses_for_payment'));
-        add_action('woocommerce_order_status_changed', array($this, 'handle_status_change_for_shippo'), 10, 4);
+        // REMOVED: add_action('woocommerce_order_status_changed', array($this, 'handle_status_change_for_shippo'), 10, 4);
+        // This hook is now handled by TwinTack_Shippo_Integration to prevent double API calls
         
         // Make sure invoiced orders show in admin lists
         add_filter('woocommerce_reports_order_statuses', array($this, 'add_invoiced_to_reports'));
@@ -59,9 +60,12 @@ class TwinTack_Order_Status_Manager {
         
         // Note: Removed problematic woocommerce_order_query_args hook that was causing critical errors
         
-        // Ensure Shippo recognizes invoiced orders (multiple hooks for better coverage)
-        add_action('admin_init', array($this, 'sync_invoiced_orders_with_shippo'), 30);
-        add_action('current_screen', array($this, 'force_shippo_sync_on_orders_page'), 35);
+        // DISABLED: Automatic Shippo sync to prevent conflicts with Simple Order Manager
+        // add_action('admin_init', array($this, 'sync_invoiced_orders_with_shippo'), 30);
+        // add_action('current_screen', array($this, 'force_shippo_sync_on_orders_page'), 35);
+        
+        // Add email notification support for custom statuses
+        add_filter('woocommerce_email_actions', array($this, 'add_email_actions_for_custom_statuses'));
     }
     
     /**
@@ -979,25 +983,10 @@ class TwinTack_Order_Status_Manager {
             $order->delete_meta_data('_shippo_hold_reason');
             $order->save();
             
-            // 2. Manually trigger the WooCommerce order status changed hook that Shippo listens to
-            // This is the key - we simulate the hook that the existing Shippo integration expects
-            if (class_exists('TwinTack_Shippo_Integration')) {
-                $shippo_integration = TwinTack_Shippo_Integration::get_instance();
-                
-                // Call the sync method directly to ensure it fires
-                if (method_exists($shippo_integration, 'sync_order_with_shippo')) {
-                    $shippo_integration->sync_order_with_shippo($order_id, 'pending', 'invoiced', $order);
-                    twintack_manual_payments_log("Direct Shippo Integration: Called sync_order_with_shippo for order #{$order_id}");
-                }
-            }
-            
-            // 3. Also trigger the standard WooCommerce hook in case other Shippo plugins are listening
+            // 2. Trigger ONLY the standard WooCommerce hook - no direct calls to prevent duplicates
+            // TwinTack_Shippo_Integration will handle the API call via this hook
             do_action('woocommerce_order_status_changed', $order_id, 'pending', 'invoiced', $order);
             twintack_manual_payments_log("Direct Shippo Integration: Triggered woocommerce_order_status_changed hook for order #{$order_id}");
-            
-            // 4. Trigger our custom Shippo notification hook as backup
-            do_action('twintack_shippo_status_updated', $order_id, 'Payment Pending', 'invoiced');
-            twintack_manual_payments_log("Direct Shippo Integration: Triggered twintack_shippo_status_updated hook for order #{$order_id}");
             
             // 5. Add order note for tracking
             $order->add_order_note('Shippo integration: Order manually synced as invoiced (Payment Pending)');
@@ -1050,5 +1039,31 @@ class TwinTack_Order_Status_Manager {
         });
         </script>
         <?php
+    }
+    
+    /**
+     * Add email actions for custom order statuses
+     * This enables WooCommerce to send customer emails when orders change to custom statuses
+     */
+    public function add_email_actions_for_custom_statuses($email_actions) {
+        // Add email triggers for transitions TO invoiced status
+        $custom_email_actions = array(
+            'woocommerce_order_status_pending_to_invoiced_notification',
+            'woocommerce_order_status_on-hold_to_invoiced_notification',
+            'woocommerce_order_status_processing_to_invoiced_notification',
+            'woocommerce_order_status_completed_to_invoiced_notification',
+            'woocommerce_order_status_cancelled_to_invoiced_notification',
+            'woocommerce_order_status_refunded_to_invoiced_notification',
+            'woocommerce_order_status_failed_to_invoiced_notification',
+            
+            // Also add transitions FROM invoiced to other statuses
+            'woocommerce_order_status_invoiced_to_processing_notification',
+            'woocommerce_order_status_invoiced_to_completed_notification',
+            'woocommerce_order_status_invoiced_to_cancelled_notification',
+            'woocommerce_order_status_invoiced_to_refunded_notification',
+        );
+        
+        // Merge with existing email actions
+        return array_merge($email_actions, $custom_email_actions);
     }
 } 

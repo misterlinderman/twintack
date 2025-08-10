@@ -28,6 +28,77 @@ require_once get_template_directory() . '/inc/marquee/class-marquee-configuratio
 require_once get_template_directory() . '/inc/team/class-team-member.php';
 
 /**
+ * Mail header enforcement for deliverability
+ * - Force From to a site-owned address
+ * - Set envelope sender (Return-Path) for SPF/DMARC alignment
+ * - Ensure a sane Reply-To fallback
+ */
+function twintack_wp_mail_from($from) {
+    $domain_from = 'support@twintack.com';
+    return $domain_from;
+}
+add_filter('wp_mail_from', 'twintack_wp_mail_from');
+
+function twintack_wp_mail_from_name($name) {
+    return 'TwinTack Support';
+}
+add_filter('wp_mail_from_name', 'twintack_wp_mail_from_name');
+
+function twintack_phpmailer_init($phpmailer) {
+    // Set envelope sender (Return-Path). Use a real mailbox or alias on the domain
+    if (empty($phpmailer->Sender)) {
+        $phpmailer->Sender = 'bounce@twintack.com';
+    }
+
+    // Ensure there is at least one Reply-To. Do not override if already set.
+    if (empty($phpmailer->getReplyToAddresses())) {
+        try {
+            $phpmailer->addReplyTo('support@twintack.com', 'TwinTack Support');
+        } catch (Exception $e) {
+            // Best-effort; avoid fatal on hosts without full PHPMailer
+        }
+    }
+
+    // Optional SMTP override via constants (no plugin required)
+    // Define these in wp-config.php to activate:
+    // define('TWINTACK_SMTP_HOST', 'smtp.postmarkapp.com');
+    // define('TWINTACK_SMTP_PORT', 587);
+    // define('TWINTACK_SMTP_ENCRYPTION', 'tls'); // '', 'tls', or 'ssl'
+    // define('TWINTACK_SMTP_USERNAME', 'YOUR_USERNAME');
+    // define('TWINTACK_SMTP_PASSWORD', 'YOUR_PASSWORD');
+    if (defined('TWINTACK_SMTP_HOST') && TWINTACK_SMTP_HOST) {
+        $phpmailer->isSMTP();
+        $phpmailer->Host       = TWINTACK_SMTP_HOST;
+        $phpmailer->Port       = defined('TWINTACK_SMTP_PORT') ? (int) TWINTACK_SMTP_PORT : 587;
+        $phpmailer->SMTPAuth   = defined('TWINTACK_SMTP_USERNAME') && TWINTACK_SMTP_USERNAME ? true : false;
+        if (defined('TWINTACK_SMTP_ENCRYPTION') && TWINTACK_SMTP_ENCRYPTION) {
+            $phpmailer->SMTPSecure = TWINTACK_SMTP_ENCRYPTION;
+        }
+        if (defined('TWINTACK_SMTP_USERNAME') && TWINTACK_SMTP_USERNAME) {
+            $phpmailer->Username = TWINTACK_SMTP_USERNAME;
+        }
+        if (defined('TWINTACK_SMTP_PASSWORD') && TWINTACK_SMTP_PASSWORD) {
+            $phpmailer->Password = TWINTACK_SMTP_PASSWORD;
+        }
+    }
+
+    // Lightweight debug: log actual From/Sender/To at send time in debug env
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        $toList    = method_exists($phpmailer, 'getToAddresses') ? $phpmailer->getToAddresses() : array();
+        $replyList = method_exists($phpmailer, 'getReplyToAddresses') ? $phpmailer->getReplyToAddresses() : array();
+        error_log('TwinTack Mail Debug → From=' . ($phpmailer->From ?? '') . ' | Sender=' . ($phpmailer->Sender ?? '') . ' | To=' . json_encode($toList) . ' | Reply-To=' . json_encode($replyList));
+        try { $phpmailer->addCustomHeader('X-TT-Debug', '1'); } catch (Exception $e) {}
+    }
+}
+add_action('phpmailer_init', 'twintack_phpmailer_init');
+
+// Optional: default to HTML for nicer templates (leave content to templates)
+function twintack_wp_mail_content_type($content_type) {
+    return 'text/html';
+}
+add_filter('wp_mail_content_type', 'twintack_wp_mail_content_type');
+
+/**
  * Custom debug logging function
  */
 function twintack_log($message) {

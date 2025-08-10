@@ -130,13 +130,25 @@ class TwinTack_Shippo_API_Client {
                  twintack_manual_payments_log("Shippo API: ✅ Successfully created order #{$order_id}, Shippo Order ID: {$response['object_id']}");
                  return true;
              } else {
-                 twintack_manual_payments_log("Shippo API: ❌ Invalid order response format: " . json_encode($response), 'error');
+                 $error_message = "Invalid response format: " . json_encode($response);
+                 twintack_manual_payments_log("Shippo API: ❌ {$error_message}", 'error');
+                 
+                 // Store error in order meta for Simple Manager to access
+                 $order->update_meta_data('_shippo_last_error', $error_message);
+                 $order->save();
+                 
                  return false;
              }
              
          } catch (Exception $e) {
+             $error_message = "Exception: " . $e->getMessage();
              twintack_manual_payments_log("Shippo API: ❌ Exception for order #{$order_id}: " . $e->getMessage(), 'error');
              twintack_manual_payments_log("Shippo API: Exception trace: " . $e->getTraceAsString(), 'error');
+             
+             // Store error in order meta for Simple Manager to access
+             $order->update_meta_data('_shippo_last_error', $error_message);
+             $order->save();
+             
              return false;
          }
      }
@@ -277,12 +289,12 @@ class TwinTack_Shippo_API_Client {
              
              // RECOMMENDED FIELDS
              'order_number' => $order->get_order_number(),
-             'order_status' => $this->map_wc_status_to_shippo_orders($order->get_status()),
+             'order_status' => $this->map_wc_status_to_shippo_orders($order->get_status(), $order),
              
-             // OPTIONAL FIELDS
-             'total_price' => $order->get_total(),
+             // OPTIONAL FIELDS - handle $0 orders specially
+             'total_price' => max($order->get_total(), 0.01), // Minimum $0.01 for Shippo compatibility
              'currency' => $order->get_currency(),
-             'subtotal_price' => ($order->get_total() - $order->get_total_tax() - $order->get_shipping_total()),
+             'subtotal_price' => max(($order->get_total() - $order->get_total_tax() - $order->get_shipping_total()), 0.01),
              'total_tax' => $order->get_total_tax(),
              'shipping_cost' => $order->get_shipping_total(),
              'shipping_cost_currency' => $order->get_currency(),
@@ -324,7 +336,7 @@ class TwinTack_Shippo_API_Client {
      /**
       * Map WooCommerce status to Shippo Orders API status
       */
-     private function map_wc_status_to_shippo_orders($wc_status) {
+     private function map_wc_status_to_shippo_orders($wc_status, $order = null) {
          // Per Shippo documentation: UNKNOWN, AWAITPAY, PAID, REFUNDED, CANCELLED, PARTIALLY_FULFILLED, SHIPPED
          $status_map = array(
              'pending' => 'AWAITPAY',
@@ -336,6 +348,14 @@ class TwinTack_Shippo_API_Client {
              'refunded' => 'REFUNDED',
              'failed' => 'CANCELLED'
          );
+         
+         // Special handling for $0 orders - they should be treated as PAID regardless of status
+         // since no payment is actually required
+         if ($order && floatval($order->get_total()) == 0.00) {
+             if (in_array($wc_status, array('processing', 'invoiced', 'completed'))) {
+                 return 'PAID'; // $0 orders are effectively "paid"
+             }
+         }
          
          return isset($status_map[$wc_status]) ? $status_map[$wc_status] : 'UNKNOWN';
      }
@@ -352,7 +372,7 @@ class TwinTack_Shippo_API_Client {
              $line_item = array(
                  'title' => $item->get_name(),
                  'quantity' => $item->get_quantity(),
-                 'total_price' => $item->get_total(),
+                 'total_price' => max($item->get_total(), 0.01), // Minimum $0.01 per item for Shippo
                  'currency' => $order->get_currency()
              );
              

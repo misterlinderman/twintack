@@ -24,10 +24,11 @@ class TwinTack_Shippo_Integration {
     }
     
     private function __construct() {
-        // Hook into Shippo-related actions
-        add_action('woocommerce_order_status_changed', array($this, 'sync_order_with_shippo'), 20, 4);
-        add_filter('shippo_order_statuses', array($this, 'add_invoiced_status_to_shippo'), 10, 1);
-        add_action('twintack_shippo_status_updated', array($this, 'handle_shippo_status_update'), 10, 3);
+        // DISABLED: Automatic hooks to prevent conflicts with Simple Order Manager
+        // Manual control is now handled via Simple Order Manager
+        // add_action('woocommerce_order_status_changed', array($this, 'sync_order_with_shippo'), 20, 4);
+        // add_filter('shippo_order_statuses', array($this, 'add_invoiced_status_to_shippo'), 10, 1);
+        // add_action('twintack_shippo_status_updated', array($this, 'handle_shippo_status_update'), 10, 3);
         
         // Ensure invoiced orders are recognized by shipping integrations
         add_filter('woocommerce_shipping_packages', array($this, 'include_invoiced_orders_in_shipping'));
@@ -47,7 +48,7 @@ class TwinTack_Shippo_Integration {
         }
         
         // Get the corresponding Shippo status
-        $shippo_status = $this->get_shippo_status_from_wc_status($new_status);
+        $shippo_status = $this->get_shippo_status_from_wc_status($new_status, $order);
         
         if (!$shippo_status) {
             return;
@@ -70,18 +71,28 @@ class TwinTack_Shippo_Integration {
     /**
      * Get Shippo fulfillment status from WooCommerce status
      */
-    private function get_shippo_status_from_wc_status($wc_status) {
+    private function get_shippo_status_from_wc_status($wc_status, $order = null) {
         $status_mapping = array(
             'pending'    => 'Payment Pending',
             'on-hold'    => 'Payment Pending', 
             'invoiced'   => 'Payment Pending', // Key mapping for invoiced orders
-            'processing' => 'Paid',
             'shipped'    => 'Shipped',
             'completed'  => 'Shipped',
             'cancelled'  => 'Cancelled',
             'refunded'   => 'Refunded',
             'failed'     => 'Failed'
         );
+        
+        // Special handling for processing status - depends on order type
+        if ($wc_status === 'processing') {
+            if ($order && $this->is_manual_order($order)) {
+                // Manual orders: Processing = Payment Pending (ready for fulfillment)
+                return 'Payment Pending';
+            } else {
+                // Regular orders: Processing = Paid (customer already paid)
+                return 'Paid';
+            }
+        }
         
         return isset($status_mapping[$wc_status]) ? $status_mapping[$wc_status] : null;
     }
@@ -130,19 +141,31 @@ class TwinTack_Shippo_Integration {
      * Handle payment pending status
      */
     private function handle_payment_pending_status($order) {
-        // For invoiced orders, do NOT put on fulfillment hold
+        // For invoiced orders AND manual processing orders, do NOT put on fulfillment hold
         // Customer requirement: "Payment Pending" orders should still ship immediately
-        if ($order->get_status() === 'invoiced') {
+        if ($order->get_status() === 'invoiced' || ($order->get_status() === 'processing' && $this->is_manual_order($order))) {
             $order->update_meta_data('_shippo_ready_for_fulfillment', 'yes');
             $order->update_meta_data('_shippo_payment_status', 'Payment Pending');
-            $order->update_meta_data('_shippo_fulfillment_note', 'Invoice sent - ship immediately despite pending payment');
+            
+            if ($order->get_status() === 'invoiced') {
+                $order->update_meta_data('_shippo_fulfillment_note', 'Invoice sent - ship immediately despite pending payment');
+            } elseif ($order->get_status() === 'processing' && $this->is_manual_order($order)) {
+                $order->update_meta_data('_shippo_fulfillment_note', 'Manual order - ship immediately');
+            }
             
             // Remove any existing hold flags
             $order->delete_meta_data('_shippo_fulfillment_hold');
             $order->delete_meta_data('_shippo_hold_reason');
             
             if (function_exists('twintack_manual_payments_log')) {
-                twintack_manual_payments_log("Shippo: Order {$order->get_id()} set for immediate fulfillment - invoiced order ships despite pending payment");
+                if ($order->get_status() === 'invoiced') {
+                    $order_type = 'invoiced';
+                } elseif ($this->is_manual_order($order)) {
+                    $order_type = 'manual processing';
+                } else {
+                    $order_type = 'processing (unknown type)';
+                }
+                twintack_manual_payments_log("Shippo: Order {$order->get_id()} set for immediate fulfillment - {$order_type} order ships despite pending payment");
             }
         } else {
             // For other payment pending orders (like on-hold), use standard hold logic
@@ -375,5 +398,42 @@ class TwinTack_Shippo_Integration {
     public function save_shippo_meta_fields($post_id) {
         // This will be called by WooCommerce's save process
         // Additional meta field saving logic can be added here if needed
+    }
+    
+    /**
+     * Determine if an order is a manual order (created by admin) vs regular order (customer-placed)
+     */
+    private function is_manual_order($order) {
+        // SIMPLIFIED: For now, treat ALL processing orders as manual orders needing immediate fulfillment
+        // This ensures backwards compatibility while we debug the detection logic
+        
+        // Basic check - if it's marked as manual by our plugin, it's definitely manual
+        if ($order->get_meta('_twintack_manual_order') === 'yes') {
+            return true;
+        }
+        
+        // For processing orders, be permissive and assume manual for now
+        // Regular customer orders typically go: pending → processing → completed
+        // Manual orders often start at processing
+        $payment_method = $order->get_payment_method();
+        $is_likely_manual = in_array($payment_method, array(
+            'twintack_manual_payment',
+            'twintack_invoice', 
+            'igfw_invoice_gateway',
+            'bacs',
+            'cheque', 
+            'cod',
+            ''  // Empty payment method often indicates manual order
+        ));
+        
+        if (function_exists('twintack_manual_payments_log')) {
+            twintack_manual_payments_log(
+                "Order {$order->get_id()} manual detection: " . 
+                ($is_likely_manual ? 'MANUAL' : 'REGULAR') . 
+                " (Payment Method: '{$payment_method}')"
+            );
+        }
+        
+        return $is_likely_manual;
     }
 } 

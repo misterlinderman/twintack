@@ -3,7 +3,7 @@
  * Plugin Name: TwinTack Manual Order Payments
  * Plugin URI: https://twintack.com
  * Description: Enables Stripe and other payment gateways for manually created WooCommerce orders, with seamless integration with TwinTack Grip Manager. Now includes Stripe Checkout Sessions for customer self-service payments.
- * Version: 2.2.1
+ * Version: 4.1.5
  * Author: TwinTack
  * Author URI: https://twintack.com
  * License: GPL v2 or later
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('TWINTACK_MANUAL_PAYMENTS_VERSION', '2.1.0');
+define('TWINTACK_MANUAL_PAYMENTS_VERSION', '4.1.5');
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_FILE', __FILE__);
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -288,6 +288,16 @@ class TwinTack_Manual_Order_Payments {
                 'class' => 'TwinTack_Shippo_API_Client',
                 'instantiate' => true
             ),
+            'shippo_webhook_handler' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-shippo-webhook-handler.php',
+                'class' => 'TwinTack_Shippo_Webhook_Handler',
+                'instantiate' => true
+            ),
+            'simple_order_manager' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-simple-order-manager.php',
+                'class' => 'TwinTack_Simple_Order_Manager',
+                'instantiate' => true
+            ),
             'debug_tools' => array(
                 'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-debug-tools.php',
                 'class' => 'TwinTack_Debug_Tools',
@@ -296,6 +306,11 @@ class TwinTack_Manual_Order_Payments {
             'admin_enhancements' => array(
                 'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-admin-order-enhancements.php',
                 'class' => 'TwinTack_Admin_Order_Enhancements',
+                'instantiate' => true
+            ),
+            'shippo_tracking_display' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-shippo-tracking-display.php',
+                'class' => 'TwinTack_Shippo_Tracking_Display',
                 'instantiate' => true
             )
         );

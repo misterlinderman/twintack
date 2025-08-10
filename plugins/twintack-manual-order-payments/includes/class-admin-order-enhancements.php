@@ -38,9 +38,10 @@ class TwinTack_Admin_Order_Enhancements {
         $this->init_ajax_handlers();
         
         // Register admin-only hooks if in admin
-        if (is_admin()) {
-            $this->init_admin_hooks();
-        }
+        // DISABLED: Old admin hooks to prevent conflicts with Simple Order Manager
+        // if (is_admin()) {
+        //     $this->init_admin_hooks();
+        // }
         
         if (function_exists('twintack_manual_payments_log')) {
             twintack_manual_payments_log('Admin Order Enhancements: Initialization complete');
@@ -246,8 +247,8 @@ class TwinTack_Admin_Order_Enhancements {
         echo '</div>';
         
         echo '<div style="font-size: 11px; color: #666; line-height: 1.3;">';
-        echo '<div style="margin-bottom: 5px;"><strong>Pay Now:</strong> Sets order to Processing status (Shippo: Paid) - ready for fulfillment</div>';
-        echo '<div><strong>Pay Later:</strong> Sets order to Invoiced status (Shippo: Payment Pending) - customer will receive payment link</div>';
+        echo '<div style="margin-bottom: 5px;"><strong>Pay Now:</strong> Sets order to Processing status (Shippo: Payment Pending) - ready for immediate fulfillment</div>';
+        echo '<div><strong>Pay Later:</strong> Sets order to Invoiced status (Shippo: Payment Pending) - customer will receive payment link, ready for immediate fulfillment</div>';
         echo '</div>';
         
         echo '</div>';
@@ -276,8 +277,8 @@ class TwinTack_Admin_Order_Enhancements {
         // Status explanations
         echo '<div style="font-size: 11px; color: #666; line-height: 1.4; background: #f8f9fa; padding: 10px; border-radius: 3px; margin-bottom: 15px;">';
         echo '<strong>Status Mapping for Shippo Fulfillment:</strong><br>';
-        echo '• <strong>Processing = Paid</strong> (ready for fulfillment)<br>';
-        echo '• <strong>Invoiced = Payment Pending</strong> (awaiting customer payment)<br>';
+        echo '• <strong>Processing = Payment Pending</strong> (manual order - ready for immediate fulfillment)<br>';
+        echo '• <strong>Invoiced = Payment Pending</strong> (invoice sent - ready for immediate fulfillment)<br>';
         echo '• <strong>Completed = Shipped</strong> (order fulfilled and shipped)';
         echo '</div>';
         
@@ -400,7 +401,9 @@ class TwinTack_Admin_Order_Enhancements {
             $order->set_payment_method($payment_method);
             $order->set_payment_method_title($gateway->get_title());
             
-            // Update order status
+            // Mark as manual order and update status
+            $order->update_meta_data('_twintack_manual_order', 'yes');
+            $order->update_meta_data('_twintack_payment_processed', current_time('timestamp'));
             $order->update_status('pending', 'Payment method set for manual processing via TwinTack plugin.');
             
             twintack_manual_payments_log("Payment method set for order {$order->get_id()}: {$payment_method}");
@@ -537,6 +540,10 @@ class TwinTack_Admin_Order_Enhancements {
             // Set payment method to TwinTack Invoice
             $order->set_payment_method('twintack_invoice');
             $order->set_payment_method_title('Invoice Payment (Pay Later)');
+            
+            // Mark as manual order
+            $order->update_meta_data('_twintack_manual_order', 'yes');
+            $order->update_meta_data('_twintack_payment_processed', current_time('timestamp'));
             
             // Set order to invoiced status - this will trigger Shippo status mapping
             $order->update_status('invoiced', 'Order set to Pay Later (Invoice). Customer will receive payment link.');

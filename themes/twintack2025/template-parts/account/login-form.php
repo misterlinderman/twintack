@@ -58,6 +58,14 @@ $password_reset = isset( $_GET['password-reset'] ) && $_GET['password-reset'] ==
 
             <?php do_action( 'woocommerce_login_form' ); ?>
 
+            <?php
+            // Ensure reCAPTCHA fields/scripts are present even if hook order or caching interferes
+            if ( class_exists( 'WPCaptcha_Functions' ) ) {
+                echo WPCaptcha_Functions::captcha_fields( false );
+                echo WPCaptcha_Functions::login_scripts( false );
+            }
+            ?>
+
             <div class="form-row">
                 <?php wp_nonce_field( 'woocommerce-login', 'woocommerce-login-nonce' ); ?>
                 <button type="submit" class="woocommerce-button button woocommerce-form-login__submit" name="login" 
@@ -127,6 +135,14 @@ $password_reset = isset( $_GET['password-reset'] ) && $_GET['password-reset'] ==
                 <?php endif; ?>
 
                 <?php do_action( 'woocommerce_register_form' ); ?>
+
+                <?php
+                // Also ensure reCAPTCHA renders for registration when shown on the same page
+                if ( class_exists( 'WPCaptcha_Functions' ) ) {
+                    echo WPCaptcha_Functions::captcha_fields( false );
+                    echo WPCaptcha_Functions::login_scripts( false );
+                }
+                ?>
 
                 <div class="form-row">
                     <?php wp_nonce_field( 'woocommerce-register', 'woocommerce-register-nonce' ); ?>
