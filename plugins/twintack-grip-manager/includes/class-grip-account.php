@@ -683,7 +683,7 @@ class TwinTack_Grip_Account {
                 'grip-customer-feedback',
                 $js_url,
                 array('jquery'),
-                '1.5.1',
+                '1.6.03',
                 true
             );
             
@@ -711,8 +711,16 @@ class TwinTack_Grip_Account {
      * Handle AJAX customer feedback
      */
     public function handle_ajax_customer_feedback() {
+        if (WP_DEBUG) {
+            error_log('TwinTack Customer Feedback: AJAX handler called');
+            error_log('TwinTack Customer Feedback: POST data: ' . print_r($_POST, true));
+        }
+        
         // Check if required POST data exists
         if (!isset($_POST['security']) || !isset($_POST['grip_id']) || !isset($_POST['feedback_action'])) {
+            if (WP_DEBUG) {
+                error_log('TwinTack Customer Feedback: Missing required data');
+            }
             wp_send_json_error('Missing required data');
             return;
         }
@@ -768,6 +776,10 @@ class TwinTack_Grip_Account {
         update_post_meta($grip_id, '_grip_latest_customer_feedback', $feedback);
         update_post_meta($grip_id, '_grip_latest_customer_action', $action);
         
+        if (WP_DEBUG) {
+            error_log('TwinTack Customer Feedback: About to trigger webhook for grip ID ' . $grip_id . ', action: ' . $action);
+        }
+        
         // Trigger webhook for Make.com integration if needed
         $this->trigger_customer_feedback_webhook($grip_id, $action, $feedback, $new_status);
         
@@ -815,16 +827,36 @@ class TwinTack_Grip_Account {
         $webhook_url = apply_filters('grip_customer_feedback_webhook_url', '');
         
         if (!empty($webhook_url)) {
+            if (WP_DEBUG) {
+                error_log('TwinTack Customer Feedback: Sending webhook to: ' . $webhook_url);
+                error_log('TwinTack Customer Feedback: Webhook data: ' . wp_json_encode($webhook_data));
+            }
+            
             // Send webhook
-            wp_remote_post($webhook_url, array(
+            $response = wp_remote_post($webhook_url, array(
                 'headers' => array(
                     'Content-Type' => 'application/json',
-                    'User-Agent' => 'TwinTack-Grip-Manager/1.5.1'
+                    'User-Agent' => 'TwinTack-Grip-Manager/1.6.03'
                 ),
                 'body' => wp_json_encode($webhook_data),
                 'timeout' => 15,
-                'blocking' => false // Don't wait for response
+                'blocking' => true // Changed to true for debugging
             ));
+            
+            if (WP_DEBUG) {
+                if (is_wp_error($response)) {
+                    error_log('TwinTack Customer Feedback: Webhook error: ' . $response->get_error_message());
+                } else {
+                    $response_code = wp_remote_retrieve_response_code($response);
+                    $response_body = wp_remote_retrieve_body($response);
+                    error_log('TwinTack Customer Feedback: Webhook response code: ' . $response_code);
+                    error_log('TwinTack Customer Feedback: Webhook response body: ' . $response_body);
+                }
+            }
+        } else {
+            if (WP_DEBUG) {
+                error_log('TwinTack Customer Feedback: No webhook URL configured!');
+            }
         }
         
         // WordPress action for custom integrations

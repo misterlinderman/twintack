@@ -437,7 +437,7 @@ class TwinTack_Grip_Form_Handler {
         $response = wp_remote_post($webhook_url, array(
             'headers' => array(
                 'Content-Type' => 'application/json',
-                'User-Agent' => 'TwinTack-Grip-Manager/1.5.19'
+                'User-Agent' => 'TwinTack-Grip-Manager/1.6.03'
             ),
             'body' => wp_json_encode($webhook_data),
             'timeout' => 15,

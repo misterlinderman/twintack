@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Grip Manager
  * Description: Manages custom grip orders with Gravity Forms and WooCommerce integration. Features separate post/artwork status, Monday.com integration, customer dashboard display, and configurable volume pricing.
- * Version: 1.6.01
+ * Version: 1.6.04
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -56,6 +56,7 @@ class TwinTack_Grip_Manager {
         require_once plugin_dir_path(__FILE__) . 'includes/class-grip-account.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-grip-volume-pricing.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-grip-importer.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-grip-email-notifications.php';
         
         // Initialize components - ensure post type is registered first
         $post_type = TwinTack_Grip_Post_Type::get_instance();
@@ -76,8 +77,12 @@ class TwinTack_Grip_Manager {
         
         // Initialize volume pricing system
         TwinTack_Grip_Volume_Pricing::get_instance();
+        
         // Initialize importer (admin UI only appears in dashboard)
         TwinTack_Grip_Importer::get_instance();
+        
+        // Initialize email notifications
+        TwinTack_Grip_Email_Notifications::get_instance();
         
         // Only add template hijacking prevention for frontend
         if (!is_admin()) {
@@ -88,6 +93,14 @@ class TwinTack_Grip_Manager {
         // Add CSS for grip designs
         add_action('wp_enqueue_scripts', array($this, 'enqueue_styles'));
         
+        // Increase upload limits for grip design files
+        add_filter('upload_size_limit', array($this, 'increase_upload_size_limit'));
+        add_filter('wp_max_upload_size', array($this, 'increase_upload_size_limit'));
+        
+        // Add execution time handling for WordPress uploads
+        add_action('wp_handle_upload_prefilter', array($this, 'increase_execution_time_for_uploads'));
+        add_action('add_attachment', array($this, 'increase_execution_time_for_uploads'));
+        
         // Force flush rewrite rules if needed (only once)
         $this->maybe_flush_rules();
     }
@@ -95,7 +108,7 @@ class TwinTack_Grip_Manager {
     private function maybe_flush_rules() {
         $version_option = 'twintack_grip_manager_version';
         $current_version = get_option($version_option);
-        $plugin_version = '1.5.1';
+        $plugin_version = '1.6.04';
         
         if ($current_version !== $plugin_version) {
             // Force flush rewrite rules
@@ -170,8 +183,32 @@ class TwinTack_Grip_Manager {
             'grip-designs',
             plugins_url('assets/css/grip-designs.css', __FILE__),
             array(),
-            '1.5.1'
+            '1.6.03'
         );
+    }
+    
+    /**
+     * Increase upload size limit for grip design files
+     */
+    public function increase_upload_size_limit($size) {
+        // Server already allows 512MB, this ensures WordPress recognizes it
+        $new_size = 512 * 1024 * 1024; // Match server limit
+        
+        // Only increase if current limit is smaller
+        return max($size, $new_size);
+    }
+    
+    /**
+     * Handle file uploads with proper logging
+     */
+    public function increase_execution_time_for_uploads($file = null) {
+        // Server execution time is properly configured via cPanel
+        // Just add logging for upload tracking
+        if (WP_DEBUG && $file) {
+            error_log('TwinTack: Processing file upload - Server limits: 300s execution, 512MB size');
+        }
+        
+        return $file;
     }
 }
 

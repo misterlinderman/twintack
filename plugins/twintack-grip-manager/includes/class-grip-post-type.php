@@ -199,11 +199,16 @@ class TwinTack_Grip_Post_Type {
             // Customer feedback fields for easier Make.com access
             register_rest_field('grip_design', 'customer_feedback_history', array(
                 'get_callback' => function($post) {
-                    return get_post_meta($post['id'], '_grip_customer_feedback', true) ?: array();
+                    $history = get_post_meta($post['id'], '_grip_customer_feedback', true);
+                    // Ensure we return a string that Make.com can parse
+                    if (is_array($history)) {
+                        return json_encode($history);
+                    }
+                    return $history ?: '';
                 },
                 'schema' => array(
-                    'description' => 'Complete customer feedback history array',
-                    'type' => 'array',
+                    'description' => 'Complete customer feedback history as JSON string',
+                    'type' => 'string',
                     'context' => array('view', 'edit'),
                 )
             ));
@@ -260,6 +265,13 @@ class TwinTack_Grip_Post_Type {
     }
 
     public function register_monday_api_endpoint() {
+        // Test endpoint for Make.com connectivity
+        register_rest_route('twintack/v1', '/test', array(
+            'methods' => array('GET', 'POST'),
+            'callback' => array($this, 'test_api_endpoint'),
+            'permission_callback' => '__return_true', // Public for testing
+        ));
+        
         // Existing Monday.com API endpoint
         register_rest_route('twintack/v1', '/grip-design/(?P<id>\d+)/monday', array(
             'methods' => array('POST', 'GET'), // Allow both POST and GET for testing
@@ -317,14 +329,56 @@ class TwinTack_Grip_Post_Type {
         // You can set this in wp-config.php: define('TWINTACK_MONDAY_API_KEY', 'your-secret-key');
         $valid_key = defined('TWINTACK_MONDAY_API_KEY') ? TWINTACK_MONDAY_API_KEY : 'twintack-monday-2024';
         
+        if (WP_DEBUG) {
+            error_log('TwinTack Monday API: Permission check - Key provided: ' . (!empty($api_key) ? 'YES' : 'NO'));
+            error_log('TwinTack Monday API: Using API key: ' . substr($valid_key, 0, 8) . '...');
+        }
+        
         if ($api_key !== $valid_key) {
+            if (WP_DEBUG) {
+                error_log('TwinTack Monday API: Permission denied - Invalid API key');
+            }
             return new WP_Error('rest_forbidden', 'Invalid API key', array('status' => 401));
         }
         
         return true;
     }
     
+    public function test_api_endpoint($request) {
+        $method = $request->get_method();
+        $params = $request->get_params();
+        
+        if (WP_DEBUG) {
+            error_log('TwinTack API Test: Method=' . $method . ', Params=' . json_encode($params));
+        }
+        
+        $response = array(
+            'success' => true,
+            'message' => 'TwinTack API is working correctly',
+            'method' => $method,
+            'timestamp' => current_time('c'),
+            'site_url' => get_site_url(),
+            'api_version' => '1.6.03',
+            'params_received' => count($params),
+            'test_string' => 'hello_world',
+            'test_number' => 123,
+            'test_boolean' => true
+        );
+        
+        return rest_ensure_response($response);
+    }
+    
     public function update_monday_data($request) {
+        // Multiple approaches to increase execution time for file processing
+        @ini_set('max_execution_time', 300); // 5 minutes
+        @ini_set('max_input_time', 300);     // 5 minutes for input processing
+        @set_time_limit(300); // Alternative method
+        
+        // WordPress-specific time limit increase
+        if (function_exists('wp_raise_memory_limit')) {
+            wp_raise_memory_limit('admin');
+        }
+        
         $grip_id = $request->get_param('id');
         
         // Verify the grip design exists
@@ -338,12 +392,10 @@ class TwinTack_Grip_Post_Type {
             $error_response = array(
                 'error' => 'not_found',
                 'message' => 'Grip design not found (ID: ' . $grip_id . ')',
-                'debug_info' => array(
-                    'post_exists' => !empty($post),
-                    'post_type' => $post ? $post->post_type : null,
-                    'expected_type' => 'grip_design',
-                    'timestamp' => current_time('c')
-                ),
+                'post_exists' => !empty($post),
+                'post_type' => $post ? $post->post_type : 'null',
+                'expected_type' => 'grip_design',
+                'timestamp' => current_time('c'),
                 'status' => 404
             );
             
@@ -408,7 +460,7 @@ class TwinTack_Grip_Post_Type {
             }
             
             $updated_fields['monday_feedback'] = $feedback;
-            $updated_fields['monday_feedback_history'] = $feedback_history;
+            $updated_fields['monday_feedback_history'] = json_encode($feedback_history);
         }
         
         // Update Monday.com item ID
@@ -447,6 +499,9 @@ class TwinTack_Grip_Post_Type {
             if ($request->has_param('wordpress_media_id')) {
                 $media_id = intval($request->get_param('wordpress_media_id'));
                 if ($media_id > 0) {
+                    // Increase execution time before image processing
+                    @set_time_limit(300);
+                    
                     $result = set_post_thumbnail($grip_id, $media_id);
                     $updated_fields['featured_image_set'] = $media_id;
                     
@@ -459,6 +514,7 @@ class TwinTack_Grip_Post_Type {
         
         // Update artwork status
         if ($request->has_param('artwork_status')) {
+            $old_status = get_post_meta($grip_id, '_grip_artwork_status', true);
             $artwork_status = $request->get_param('artwork_status');
             $result = update_post_meta($grip_id, '_grip_artwork_status', $artwork_status);
             $updated_fields['artwork_status'] = $artwork_status;
@@ -466,6 +522,11 @@ class TwinTack_Grip_Post_Type {
             
             if (WP_DEBUG) {
                 error_log('Updated artwork_status to ' . $artwork_status . ': ' . ($result ? 'SUCCESS' : 'FAILED'));
+            }
+            
+            // Trigger email notification if status changed
+            if ($result && $old_status !== $artwork_status) {
+                do_action('grip_design_artwork_status_changed', $grip_id, $old_status, $artwork_status);
             }
         }
         
@@ -478,14 +539,12 @@ class TwinTack_Grip_Post_Type {
         $response = array(
             'success' => true,
             'grip_id' => $grip_id,
-            'updated_fields' => $updated_fields,
             'message' => 'Grip design updated successfully',
             'timestamp' => current_time('c'),
-            'debug_info' => array(
-                'post_title' => $post->post_title,
-                'post_status' => $post->post_status,
-                'total_updates' => count($updated_fields)
-            )
+            'post_title' => $post->post_title,
+            'post_status' => $post->post_status,
+            'total_updates' => count($updated_fields),
+            'updated_fields' => json_encode($updated_fields)
         );
         
         return rest_ensure_response($response);
@@ -1288,7 +1347,7 @@ class TwinTack_Grip_Post_Type {
             $response = wp_remote_post($webhook_url, array(
                 'headers' => array(
                     'Content-Type' => 'application/json',
-                    'User-Agent' => 'TwinTack-Grip-Manager/1.5.1'
+                    'User-Agent' => 'TwinTack-Grip-Manager/1.6.03'
                 ),
                 'body' => wp_json_encode($webhook_data),
                 'timeout' => 15,

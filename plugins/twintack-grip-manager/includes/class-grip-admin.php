@@ -22,6 +22,9 @@ class TwinTack_Grip_Admin {
         add_action('admin_menu', array($this, 'add_volume_pricing_menu'));
         add_action('admin_init', array($this, 'register_volume_pricing_settings'));
         
+        // Handle email notification test AJAX
+        add_action('wp_ajax_test_grip_email', array($this, 'handle_test_email_ajax'));
+        
         // Add product meta boxes for volume pricing
         add_action('add_meta_boxes', array($this, 'add_volume_pricing_meta_boxes'));
         add_action('save_post_product', array($this, 'save_volume_pricing_meta'));
@@ -541,6 +544,37 @@ class TwinTack_Grip_Admin {
                 $status = get_post_status($post_id);
                 echo esc_html(get_post_status_object($status)->label);
                 break;
+        }
+    }
+    
+    /**
+     * Handle AJAX test email request
+     */
+    public function handle_test_email_ajax() {
+        // Check permissions
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'test_grip_email')) {
+            wp_die('Invalid nonce');
+        }
+        
+        $email_type = sanitize_text_field($_POST['email_type']);
+        $test_email = sanitize_email($_POST['test_email']);
+        $grip_id = !empty($_POST['grip_id']) ? intval($_POST['grip_id']) : null;
+        
+        // Get email notifications instance
+        $email_notifications = TwinTack_Grip_Email_Notifications::get_instance();
+        
+        // Send test email
+        $success = $email_notifications->send_test_email($email_type, $test_email, $grip_id);
+        
+        if ($success) {
+            wp_send_json_success('Test email sent successfully to ' . $test_email);
+        } else {
+            wp_send_json_error('Failed to send test email');
         }
     }
 }
