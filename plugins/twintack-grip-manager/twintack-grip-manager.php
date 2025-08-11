@@ -55,6 +55,7 @@ class TwinTack_Grip_Manager {
         require_once plugin_dir_path(__FILE__) . 'includes/class-grip-admin.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-grip-account.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-grip-volume-pricing.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-grip-importer.php';
         
         // Initialize components - ensure post type is registered first
         $post_type = TwinTack_Grip_Post_Type::get_instance();
@@ -75,6 +76,8 @@ class TwinTack_Grip_Manager {
         
         // Initialize volume pricing system
         TwinTack_Grip_Volume_Pricing::get_instance();
+        // Initialize importer (admin UI only appears in dashboard)
+        TwinTack_Grip_Importer::get_instance();
         
         // Only add template hijacking prevention for frontend
         if (!is_admin()) {

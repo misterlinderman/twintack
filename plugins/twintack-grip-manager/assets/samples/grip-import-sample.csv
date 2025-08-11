@@ -1,0 +1,4 @@
+legacy_id,customer_email,customer_name,team_name,design_type,design_layout,primary_color,secondary_color,tertiary_color,quantity,artwork_url,artwork_filename,mockup_asset_url,monday_item_id,artwork_status,final_order_id,production_started
+L-1001,jane.doe@example.com,Jane Doe,Lincoln HS Lions,Pattern,Two Tone,Royal,White,,50,https://example.com/artwork/L-1001.png,L-1001.png,https://example.com/mockups/L-1001.jpg,MON12345,customer_approved,WO-4567,2024-02-14T10:30:00Z
+L-1002,john.smith@example.com,John Smith,Evergreen Academy, Solid Color, Solid Color, Black, , ,25, , , , ,artwork_pending, , 
+
