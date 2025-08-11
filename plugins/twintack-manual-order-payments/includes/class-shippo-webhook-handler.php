@@ -191,6 +191,7 @@ class TwinTack_Shippo_Webhook_Handler {
         $shipment_data = $data['data']['object'];
         $tracking_number = isset($shipment_data['tracking_number']) ? $shipment_data['tracking_number'] : null;
         $status = isset($shipment_data['status']) ? $shipment_data['status'] : null;
+        $carrier = isset($shipment_data['carrier']) ? $shipment_data['carrier'] : (isset($shipment_data['tracking_carrier']) ? $shipment_data['tracking_carrier'] : null);
         
         // Look for order references in the shipment data
         $order_reference = null;
@@ -216,6 +217,9 @@ class TwinTack_Shippo_Webhook_Handler {
         // Update tracking information
         if ($tracking_number) {
             $wc_order->update_meta_data('_shippo_tracking_number', $tracking_number);
+            if (!empty($carrier)) {
+                $wc_order->update_meta_data('_shippo_tracking_carrier', $carrier);
+            }
             $wc_order->save();
 
             // If the order is already completed, ensure the completed-order email is sent once tracking is added
@@ -253,6 +257,7 @@ class TwinTack_Shippo_Webhook_Handler {
         $tracking_data = $data['data']['object'];
         $tracking_number = isset($tracking_data['tracking_number']) ? $tracking_data['tracking_number'] : null;
         $tracking_status = isset($tracking_data['tracking_status']) ? $tracking_data['tracking_status'] : null;
+        $carrier = isset($tracking_data['carrier']) ? $tracking_data['carrier'] : (isset($tracking_data['tracking_carrier']) ? $tracking_data['tracking_carrier'] : null);
         
         if (!$tracking_number) {
             return new WP_REST_Response(array('error' => 'Missing tracking number'), 400);
@@ -276,6 +281,9 @@ class TwinTack_Shippo_Webhook_Handler {
         
         // Update tracking status
         $wc_order->update_meta_data('_shippo_tracking_status', $tracking_status);
+        if (!empty($carrier)) {
+            $wc_order->update_meta_data('_shippo_tracking_carrier', $carrier);
+        }
         $wc_order->save();
         
         // Update order status based on tracking status

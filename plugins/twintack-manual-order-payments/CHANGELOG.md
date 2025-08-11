@@ -2,6 +2,10 @@
 
 All notable changes to this plugin will be documented in this file.
 
+## 4.1.6 – 2025-08-11
+- Tracking links now resolve to carrier-specific pages when carrier info is available (USPS/UPS/FedEx/DHL). Falls back to Shippo tracker otherwise.
+- Webhook now stores `_shippo_tracking_carrier` so the front-end can build the correct link.
+
 ## 4.1.5 – 2025-08-10
 - Added tracking display to customer My Account order view and to WooCommerce emails via `TwinTack_Shippo_Tracking_Display`.
 - Completed-order email now triggers when Shippo marks an order completed or when a tracking number is added to an already-completed order.
