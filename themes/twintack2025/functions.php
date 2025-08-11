@@ -47,7 +47,7 @@ add_filter('wp_mail_from_name', 'twintack_wp_mail_from_name');
 function twintack_phpmailer_init($phpmailer) {
     // Set envelope sender (Return-Path). Use a real mailbox or alias on the domain
     if (empty($phpmailer->Sender)) {
-        $phpmailer->Sender = 'bounce@twintack.com';
+        $phpmailer->Sender = 'support@twintack.com';
     }
 
     // Ensure there is at least one Reply-To. Do not override if already set.
