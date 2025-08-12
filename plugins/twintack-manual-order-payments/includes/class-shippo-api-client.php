@@ -381,11 +381,11 @@ class TwinTack_Shippo_API_Client {
                  $line_item['sku'] = $product->get_sku();
              }
              
-             // Add weight if available
-             if ($product && $product->get_weight()) {
-                 $line_item['weight'] = $product->get_weight();
-                 $line_item['weight_unit'] = get_option('woocommerce_weight_unit', 'lb');
-             }
+                         // Add weight if available
+            if ($product && $product->get_weight()) {
+                $line_item['weight'] = $product->get_weight();
+                $line_item['weight_unit'] = $this->map_weight_unit_for_shippo(get_option('woocommerce_weight_unit', 'lb'));
+            }
              
              $line_items[] = $line_item;
          }
@@ -450,7 +450,7 @@ class TwinTack_Shippo_API_Client {
                 'total_price' => $item->get_total(),
                 'currency' => $order->get_currency(),
                 'weight' => $product ? $product->get_weight() : 0,
-                'weight_unit' => get_option('woocommerce_weight_unit', 'lbs')
+                'weight_unit' => $this->map_weight_unit_for_shippo(get_option('woocommerce_weight_unit', 'lb'))
             );
         }
         
