@@ -239,6 +239,17 @@ class TwinTack_Shippo_Integration {
         }
         
         try {
+            // Get physical items that need shipping
+            $physical_items = $this->get_order_items_for_shippo($order);
+            
+            // Skip orders with no physical items
+            if (empty($physical_items)) {
+                if (function_exists('twintack_manual_payments_log')) {
+                    twintack_manual_payments_log("Shippo: Order {$order->get_id()} contains only digital products - skipping Shippo notification");
+                }
+                return;
+            }
+            
             // Prepare order data for Shippo
             $shippo_order_data = array(
                 'order_id' => $order->get_id(),
@@ -257,7 +268,7 @@ class TwinTack_Shippo_Integration {
                     'zip' => $order->get_shipping_postcode(),
                     'country' => $order->get_shipping_country(),
                 ),
-                'items' => $this->get_order_items_for_shippo($order)
+                'items' => $physical_items
             );
             
             // Apply filters to allow other plugins to modify the data
@@ -267,7 +278,7 @@ class TwinTack_Shippo_Integration {
             do_action('twintack_notify_shippo_api', $shippo_order_data, $order);
             
             if (function_exists('twintack_manual_payments_log')) {
-                twintack_manual_payments_log("Shippo API notification sent for order {$order->get_id()}");
+                twintack_manual_payments_log("Shippo API notification sent for order {$order->get_id()} with " . count($physical_items) . " physical item(s)");
             }
             
         } catch (Exception $e) {
@@ -279,24 +290,40 @@ class TwinTack_Shippo_Integration {
     
     /**
      * Get order items formatted for Shippo
+     * Only includes physical products that need shipping
      */
     private function get_order_items_for_shippo($order) {
         $items = array();
         
         foreach ($order->get_items() as $item) {
             $product = $item->get_product();
+            
+            // Skip virtual/digital products - they don't need shipping
+            if (!$product || $product->is_virtual() || $product->is_downloadable()) {
+                if (function_exists('twintack_manual_payments_log')) {
+                    $product_name = $product ? $product->get_name() : $item->get_name();
+                    $product_type = $product ? ($product->is_virtual() ? 'virtual' : 'downloadable') : 'missing product';
+                    twintack_manual_payments_log("Shippo: Skipping {$product_type} product '{$product_name}' - no shipping required");
+                }
+                continue;
+            }
+            
             $items[] = array(
                 'name' => $item->get_name(),
                 'quantity' => $item->get_quantity(),
                 'price' => $item->get_total(),
-                'sku' => $product ? $product->get_sku() : '',
-                'weight' => $product ? $product->get_weight() : '',
-                'dimensions' => $product ? array(
-                    'length' => $product->get_length(),
-                    'width' => $product->get_width(),
-                    'height' => $product->get_height()
-                ) : array()
+                'sku' => $product->get_sku() ?: '',
+                'weight' => $product->get_weight() ?: '',
+                'dimensions' => array(
+                    'length' => $product->get_length() ?: '',
+                    'width' => $product->get_width() ?: '',
+                    'height' => $product->get_height() ?: ''
+                )
             );
+            
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Shippo: Including physical product '{$item->get_name()}' (SKU: {$product->get_sku()})");
+            }
         }
         
         return $items;

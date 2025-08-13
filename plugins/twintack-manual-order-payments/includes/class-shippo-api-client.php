@@ -360,38 +360,46 @@ class TwinTack_Shippo_API_Client {
          return isset($status_map[$wc_status]) ? $status_map[$wc_status] : 'UNKNOWN';
      }
      
-     /**
-      * Format line items for Shippo Orders API
-      */
-     private function format_line_items_for_orders_api($order) {
-         $line_items = array();
-         
-         foreach ($order->get_items() as $item) {
-             $product = $item->get_product();
-             
-             $line_item = array(
-                 'title' => $item->get_name(),
-                 'quantity' => $item->get_quantity(),
-                 'total_price' => max($item->get_total(), 0.01), // Minimum $0.01 per item for Shippo
-                 'currency' => $order->get_currency()
-             );
-             
-             // Add SKU if available
-             if ($product && $product->get_sku()) {
-                 $line_item['sku'] = $product->get_sku();
-             }
-             
-                         // Add weight if available
-            if ($product && $product->get_weight()) {
+         /**
+     * Format line items for Shippo Orders API
+     * Only includes physical products that need shipping
+     */
+    private function format_line_items_for_orders_api($order) {
+        $line_items = array();
+        
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+            
+            // Skip virtual/digital products - they don't need shipping
+            if (!$product || $product->is_virtual() || $product->is_downloadable()) {
+                twintack_manual_payments_log("Shippo API: Skipping virtual/digital product: " . $item->get_name());
+                continue;
+            }
+            
+            $line_item = array(
+                'title' => $item->get_name(),
+                'quantity' => $item->get_quantity(),
+                'total_price' => max($item->get_total(), 0.01), // Minimum $0.01 per item for Shippo
+                'currency' => $order->get_currency()
+            );
+            
+            // Add SKU if available
+            if ($product->get_sku()) {
+                $line_item['sku'] = $product->get_sku();
+            }
+            
+            // Add weight if available
+            if ($product->get_weight()) {
                 $line_item['weight'] = $product->get_weight();
                 $line_item['weight_unit'] = $this->map_weight_unit_for_shippo(get_option('woocommerce_weight_unit', 'lb'));
             }
-             
-             $line_items[] = $line_item;
-         }
-         
-         return $line_items;
-     }
+            
+            $line_items[] = $line_item;
+            twintack_manual_payments_log("Shippo API: Including physical product: " . $item->get_name() . " (SKU: " . $product->get_sku() . ")");
+        }
+        
+        return $line_items;
+    }
     
     /**
      * Map WooCommerce status to Shippo status
