@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Grip Manager
  * Description: Manages custom grip orders with Gravity Forms and WooCommerce integration. Features separate post/artwork status, Monday.com integration, customer dashboard display, and configurable volume pricing.
- * Version: 1.6.04
+ * Version: 1.6.08
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -108,7 +108,7 @@ class TwinTack_Grip_Manager {
     private function maybe_flush_rules() {
         $version_option = 'twintack_grip_manager_version';
         $current_version = get_option($version_option);
-        $plugin_version = '1.6.04';
+        $plugin_version = '1.6.08';
         
         if ($current_version !== $plugin_version) {
             // Force flush rewrite rules

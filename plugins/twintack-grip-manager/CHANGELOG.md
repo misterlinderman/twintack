@@ -1,5 +1,33 @@
 # TwinTack Grip Manager Changelog
 
+## Version 1.6.06 - 2024-12-19
+
+### 🔄 Make.com Revision Detection Fix
+
+#### **Enhanced**
+- **Revision Counter**: Added `_grip_feedback_revision_count` meta field to track each customer feedback submission
+- **Force Post Modified**: Updates `post_modified` timestamp on every customer feedback to ensure Make.com detection
+- **REST API Exposure**: Added `feedback_revision_count` field to REST API for Make.com filtering
+- **Webhook Data**: Included `revision_count` in customer feedback webhook payload
+
+#### **Problem Solved**
+- **Make.com "Watch Posts" Issue**: Both "Watch Posts" and "Watch Posts Updated" were ignoring subsequent customer feedback on the same grip design
+- **Revision Detection**: Make.com now sees each customer feedback as a unique update due to changing revision count and modified timestamp
+- **Guaranteed Triggering**: Every customer feedback (approve/request changes) will now trigger Make.com scenarios
+
+#### **Technical Details**
+- **Automatic Increment**: Revision counter increments on each customer feedback submission
+- **Forced WordPress Update**: Uses `wp_update_post()` to update modified timestamps
+- **REST API Field**: `feedback_revision_count` available at `/wp-json/wp/v2/grip_design/{id}`
+- **Debug Logging**: Enhanced logging for revision tracking and post updates
+
+#### **Updated**
+- **Email Templates**: Fixed logo URL to use correct TwinTack white logo SVG
+- **Logo Path**: Updated to `https://twintack.com/wp-content/uploads/2024/11/twintacklogowhite2.svg`
+- **Dark Theme Styling**: Maintained WooCommerce-matching dark email templates
+
+---
+
 ## Version 1.6.04 - 2024-12-19
 
 ### 🏭 Production Status Email Trigger

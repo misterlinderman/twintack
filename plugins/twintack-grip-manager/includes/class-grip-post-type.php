@@ -212,6 +212,19 @@ class TwinTack_Grip_Post_Type {
                     'context' => array('view', 'edit'),
                 )
             ));
+            
+            // Add revision count field to help Make.com detect unique updates
+            register_rest_field('grip_design', 'feedback_revision_count', array(
+                'get_callback' => function($post) {
+                    $count = get_post_meta($post['id'], '_grip_feedback_revision_count', true);
+                    return (int) $count ?: 0;
+                },
+                'schema' => array(
+                    'description' => 'Number of customer feedback revisions (helps Make.com detect updates)',
+                    'type' => 'integer',
+                    'context' => array('view', 'edit'),
+                )
+            ));
 
             register_rest_field('grip_design', 'latest_customer_feedback', array(
                 'get_callback' => function($post) {

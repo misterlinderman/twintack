@@ -776,9 +776,29 @@ class TwinTack_Grip_Account {
         update_post_meta($grip_id, '_grip_latest_customer_feedback', $feedback);
         update_post_meta($grip_id, '_grip_latest_customer_action', $action);
         
+        // Add revision counter to force Make.com to recognize each feedback as unique
+        $revision_count = (int) get_post_meta($grip_id, '_grip_feedback_revision_count', true);
+        $revision_count++;
+        update_post_meta($grip_id, '_grip_feedback_revision_count', $revision_count);
+        
+        // Force post modified date to update - this is critical for Make.com detection
+        $current_time = current_time('mysql');
+        wp_update_post(array(
+            'ID' => $grip_id,
+            'post_modified' => $current_time,
+            'post_modified_gmt' => current_time('mysql', 1)
+        ));
+        
+        if (WP_DEBUG) {
+            error_log('TwinTack Customer Feedback: Updated post_modified time and revision count (' . $revision_count . ') for grip ID ' . $grip_id);
+        }
+        
         if (WP_DEBUG) {
             error_log('TwinTack Customer Feedback: About to trigger webhook for grip ID ' . $grip_id . ', action: ' . $action);
         }
+        
+        // Always log webhook attempts for debugging
+        error_log('TwinTack Webhook Debug: Triggering webhook for grip ' . $grip_id . ' at ' . current_time('mysql'));
         
         // Trigger webhook for Make.com integration if needed
         $this->trigger_customer_feedback_webhook($grip_id, $action, $feedback, $new_status);
@@ -804,27 +824,34 @@ class TwinTack_Grip_Account {
         $customer_email = get_post_meta($grip_id, '_grip_customer_email', true);
         $team_name = get_post_meta($grip_id, '_grip_team_name', true);
         $quantity = get_post_meta($grip_id, '_grip_quantity', true);
+        $monday_item_id = get_post_meta($grip_id, '_grip_monday_item_id', true);
+        
+        // Get revision count for uniqueness
+        $revision_count = get_post_meta($grip_id, '_grip_feedback_revision_count', true);
         
         // Prepare webhook data
         $webhook_data = array(
             'grip_design_id' => $grip_id,
             'grip_design_title' => $post->post_title,
             'customer_action' => $action,
-            'customer_feedback' => $feedback,
+            'customer_feedback' => $feedback, // Current feedback text
+            'latest_customer_feedback' => $feedback, // For compatibility with previous scenarios
             'artwork_status' => $new_status,
             'customer_name' => $customer_name,
             'customer_email' => $customer_email,
             'team_name' => $team_name,
             'quantity' => $quantity,
+            'monday_item_id' => $monday_item_id,
             'timestamp' => current_time('c'), // ISO 8601 format
+            'revision_count' => (int) $revision_count,
             'webhook_type' => 'customer_feedback'
         );
         
         // Allow filtering of webhook data
         $webhook_data = apply_filters('grip_customer_feedback_webhook_data', $webhook_data, $grip_id);
         
-        // Allow custom webhook URLs
-        $webhook_url = apply_filters('grip_customer_feedback_webhook_url', '');
+        // Direct webhook URL for customer feedback (bypasses Make.com Watch Posts issues)
+        $webhook_url = apply_filters('grip_customer_feedback_webhook_url', 'https://hook.us2.make.com/gcyjyjgpodj6olnbs8oii3ofying0z6w');
         
         if (!empty($webhook_url)) {
             if (WP_DEBUG) {
@@ -832,11 +859,14 @@ class TwinTack_Grip_Account {
                 error_log('TwinTack Customer Feedback: Webhook data: ' . wp_json_encode($webhook_data));
             }
             
+            // Always log webhook sends for debugging
+            error_log('TwinTack Webhook Debug: Sending to ' . $webhook_url . ' at ' . current_time('mysql'));
+            
             // Send webhook
             $response = wp_remote_post($webhook_url, array(
                 'headers' => array(
                     'Content-Type' => 'application/json',
-                    'User-Agent' => 'TwinTack-Grip-Manager/1.6.03'
+                    'User-Agent' => 'TwinTack-Grip-Manager/1.6.06'
                 ),
                 'body' => wp_json_encode($webhook_data),
                 'timeout' => 15,

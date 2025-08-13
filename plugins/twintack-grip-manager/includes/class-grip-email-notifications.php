@@ -170,78 +170,89 @@ class TwinTack_Grip_Email_Notifications {
     public function get_email_template($template_type) {
         $templates = array(
             'artwork_ready' => '
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <div style="background: #0073aa; color: white; padding: 20px; text-align: center;">
-                        <h1 style="margin: 0;">[SITE_NAME]</h1>
-                        <p style="margin: 10px 0 0 0;">Your Custom Grip Design is Ready!</p>
+                <div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen-Sans, Ubuntu, Cantarell, \'Helvetica Neue\', sans-serif; max-width: 600px; margin: 0 auto; background: #000000;">
+                    
+                    <div style="background: #000000; padding: 40px 30px; text-align: center;">
+                        <img src="https://twintack.com/wp-content/uploads/2024/11/twintacklogowhite2.svg" alt="[SITE_NAME]" style="max-width: 200px; height: auto;" />
+                        <h1 style="color: #ffffff; font-size: 28px; margin: 20px 0 10px 0; font-weight: 300;">Good things are heading your way!</h1>
+                        <p style="color: #b3b3b3; margin: 0; font-size: 16px;">Your custom grip design is ready for review</p>
                     </div>
                     
-                    <div style="background: #f9f9f9; padding: 30px; border: 1px solid #ddd;">
-                        <h2 style="color: #333; margin-top: 0;">Hi [CUSTOMER_NAME],</h2>
+                    <div style="background: #1a1a1a; padding: 40px 30px; color: #ffffff;">
+                        <h2 style="color: #ffffff; margin-top: 0; font-size: 20px; font-weight: 400;">Hi [CUSTOMER_NAME],</h2>
                         
-                        <p>Great news! Your custom grip design for <strong>[TEAM_NAME]</strong> is ready for your review.</p>
+                        <p style="color: #b3b3b3; line-height: 1.6; margin: 20px 0;">Great news! Your custom grip design for <strong style="color: #ffffff;">[TEAM_NAME]</strong> is ready for your review.</p>
                         
-                        <p><strong>Design:</strong> [GRIP_TITLE]</p>
-                        
-                        <div style="background: white; padding: 20px; margin: 20px 0; border-radius: 5px; text-align: center;">
-                            <h3 style="margin-top: 0;">Review Your Design</h3>
-                            <p>Click the button below to view your design and provide feedback:</p>
-                            <a href="[REVIEW_URL]" style="display: inline-block; background: #0073aa; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Review Design</a>
+                        <div style="background: #2a2a2a; padding: 25px; margin: 25px 0; border-radius: 8px; border-left: 4px solid #96d233;">
+                            <h3 style="color: #96d233; margin: 0 0 10px 0; font-size: 18px;">Design Details</h3>
+                            <p style="color: #ffffff; margin: 0; font-weight: 500;">[GRIP_TITLE]</p>
                         </div>
                         
-                        <p>You can:</p>
-                        <ul>
-                            <li><strong>Approve</strong> the design to move forward with production</li>
-                            <li><strong>Request changes</strong> with specific feedback for our design team</li>
-                        </ul>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="[REVIEW_URL]" style="display: inline-block; background: #96d233; color: #000000; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Review Your Design</a>
+                        </div>
                         
-                        <p>If you have any questions, please don\'t hesitate to contact us.</p>
+                        <div style="background: #2a2a2a; padding: 20px; margin: 25px 0; border-radius: 8px;">
+                            <h4 style="color: #96d233; margin: 0 0 15px 0; font-size: 16px;">Next Steps:</h4>
+                            <ul style="color: #b3b3b3; margin: 0; padding-left: 20px; line-height: 1.6;">
+                                <li><strong style="color: #ffffff;">Approve</strong> the design to move forward with production</li>
+                                <li><strong style="color: #ffffff;">Request changes</strong> with specific feedback for our design team</li>
+                            </ul>
+                        </div>
                         
-                        <p>Best regards,<br>The TwinTack Team</p>
+                        <p style="color: #b3b3b3; line-height: 1.6; margin: 25px 0 0 0;">If you have any questions, please don\'t hesitate to contact us.</p>
+                        
+                        <p style="color: #b3b3b3; margin: 25px 0 0 0;">Best regards,<br><span style="color: #ffffff;">The TwinTack Team</span></p>
                     </div>
                     
-                    <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
-                        <p>© [SITE_NAME] | <a href="[SITE_URL]">Visit Our Website</a></p>
+                    <div style="background: #000000; text-align: center; padding: 25px; border-top: 1px solid #333333;">
+                        <p style="color: #666666; font-size: 12px; margin: 0;">© [SITE_NAME] | <a href="[SITE_URL]" style="color: #96d233;">Visit Our Website</a></p>
                     </div>
                 </div>
             ',
             
             'production_started' => '
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <div style="background: #28a745; color: white; padding: 20px; text-align: center;">
-                        <h1 style="margin: 0;">[SITE_NAME]</h1>
-                        <p style="margin: 10px 0 0 0;">Your Grips are in Production!</p>
+                <div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen-Sans, Ubuntu, Cantarell, \'Helvetica Neue\', sans-serif; max-width: 600px; margin: 0 auto; background: #000000;">
+                    
+                    <div style="background: #000000; padding: 40px 30px; text-align: center;">
+                        <img src="https://twintack.com/wp-content/uploads/2024/11/twintacklogowhite2.svg" alt="[SITE_NAME]" style="max-width: 200px; height: auto;" />
+                        <h1 style="color: #ffffff; font-size: 28px; margin: 20px 0 10px 0; font-weight: 300;">Good things are heading your way!</h1>
+                        <p style="color: #b3b3b3; margin: 0; font-size: 16px;">Your grips are now in production</p>
                     </div>
                     
-                    <div style="background: #f9f9f9; padding: 30px; border: 1px solid #ddd;">
-                        <h2 style="color: #333; margin-top: 0;">Hi [CUSTOMER_NAME],</h2>
+                    <div style="background: #1a1a1a; padding: 40px 30px; color: #ffffff;">
+                        <h2 style="color: #ffffff; margin-top: 0; font-size: 20px; font-weight: 400;">Hi [CUSTOMER_NAME],</h2>
                         
-                        <p>Excellent! Your custom grips for <strong>[TEAM_NAME]</strong> have been approved and are now in production.</p>
+                        <p style="color: #b3b3b3; line-height: 1.6; margin: 20px 0;">Excellent! Your custom grips for <strong style="color: #ffffff;">[TEAM_NAME]</strong> have been approved and are now in production.</p>
                         
-                        <div style="background: white; padding: 20px; margin: 20px 0; border-radius: 5px;">
-                            <h3 style="margin-top: 0; color: #28a745;">Production Details</h3>
-                            <p><strong>Design:</strong> [GRIP_TITLE]</p>
-                            <p><strong>Quantity:</strong> [QUANTITY] grips</p>
-                            <p><strong>Order Number:</strong> #[ORDER_NUMBER]</p>
+                        <div style="background: #2a2a2a; padding: 25px; margin: 25px 0; border-radius: 8px; border-left: 4px solid #96d233;">
+                            <h3 style="color: #96d233; margin: 0 0 15px 0; font-size: 18px;">Production Details</h3>
+                            <table style="width: 100%; color: #b3b3b3;">
+                                <tr><td style="padding: 5px 0;"><strong style="color: #ffffff;">Design:</strong></td><td style="padding: 5px 0;">[GRIP_TITLE]</td></tr>
+                                <tr><td style="padding: 5px 0;"><strong style="color: #ffffff;">Quantity:</strong></td><td style="padding: 5px 0;">[QUANTITY] grips</td></tr>
+                                <tr><td style="padding: 5px 0;"><strong style="color: #ffffff;">Order #:</strong></td><td style="padding: 5px 0;">#[ORDER_NUMBER]</td></tr>
+                            </table>
                         </div>
                         
-                        <p>Our production team is now creating your custom grips. You\'ll receive a shipping notification with tracking information once your order ships.</p>
+                        <p style="color: #b3b3b3; line-height: 1.6; margin: 25px 0;">Our production team is now creating your custom grips. You\'ll receive a shipping notification with tracking information once your order ships.</p>
                         
-                        <p><strong>What happens next?</strong></p>
-                        <ul>
-                            <li>Your grips will be carefully crafted by our production team</li>
-                            <li>Quality control inspection to ensure perfect results</li>
-                            <li>Secure packaging and shipping</li>
-                            <li>Tracking information sent to your email</li>
-                        </ul>
+                        <div style="background: #2a2a2a; padding: 20px; margin: 25px 0; border-radius: 8px;">
+                            <h4 style="color: #96d233; margin: 0 0 15px 0; font-size: 16px;">What happens next?</h4>
+                            <ul style="color: #b3b3b3; margin: 0; padding-left: 20px; line-height: 1.6;">
+                                <li>Your grips will be carefully crafted by our production team</li>
+                                <li>Quality control inspection to ensure perfect results</li>
+                                <li>Secure packaging and shipping</li>
+                                <li>Tracking information sent to your email</li>
+                            </ul>
+                        </div>
                         
-                        <p>Thank you for choosing TwinTack for your custom grip needs!</p>
+                        <p style="color: #b3b3b3; line-height: 1.6; margin: 25px 0;">Thank you for choosing TwinTack for your custom grip needs!</p>
                         
-                        <p>Best regards,<br>The TwinTack Team</p>
+                        <p style="color: #b3b3b3; margin: 25px 0 0 0;">Best regards,<br><span style="color: #ffffff;">The TwinTack Team</span></p>
                     </div>
                     
-                    <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
-                        <p>© [SITE_NAME] | <a href="[SITE_URL]">Visit Our Website</a></p>
+                    <div style="background: #000000; text-align: center; padding: 25px; border-top: 1px solid #333333;">
+                        <p style="color: #666666; font-size: 12px; margin: 0;">© [SITE_NAME] | <a href="[SITE_URL]" style="color: #96d233;">Visit Our Website</a></p>
                     </div>
                 </div>
             '
