@@ -38,10 +38,9 @@ class TwinTack_Admin_Order_Enhancements {
         $this->init_ajax_handlers();
         
         // Register admin-only hooks if in admin
-        // DISABLED: Old admin hooks to prevent conflicts with Simple Order Manager
-        // if (is_admin()) {
-        //     $this->init_admin_hooks();
-        // }
+        if (is_admin()) {
+            $this->init_admin_hooks();
+        }
         
         if (function_exists('twintack_manual_payments_log')) {
             twintack_manual_payments_log('Admin Order Enhancements: Initialization complete');
@@ -69,8 +68,14 @@ class TwinTack_Admin_Order_Enhancements {
      * Initialize admin-only hooks
      */
     private function init_admin_hooks() {
-        // Add payment processing section to order edit pages
-        add_action('woocommerce_admin_order_data_after_billing_address', array($this, 'add_payment_section'), 10, 1);
+        // TEMPORARILY DISABLE the new mark as paid section to fix broken order pages
+        // TODO: Re-enable after fixing the redundant navigation issue
+        
+        // Add payment processing section to order edit pages (keeping this for now)
+        // add_action('woocommerce_admin_order_data_after_billing_address', array($this, 'add_payment_section'), 10, 1);
+        
+        // DISABLED: Add prominent "Mark as Paid" section - causing redundant navigation
+        // add_action('woocommerce_admin_order_data_after_order_details', array($this, 'add_mark_as_paid_section_safe'), 5, 1);
         
         // Enqueue admin scripts
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
@@ -86,7 +91,7 @@ class TwinTack_Admin_Order_Enhancements {
         
         // Log hook registration
         if (function_exists('twintack_manual_payments_log')) {
-            twintack_manual_payments_log('Admin Order Enhancements: Admin hooks registered');
+            twintack_manual_payments_log('Admin Order Enhancements: Admin hooks registered (UI sections temporarily disabled)');
         }
     }
     
@@ -300,6 +305,258 @@ class TwinTack_Admin_Order_Enhancements {
         
         // Add JavaScript for all button handlers
         $this->add_payment_buttons_javascript();
+    }
+    
+    /**
+     * Add prominent "Mark as Paid" section to order actions area
+     */
+    public function add_mark_as_paid_section($order) {
+        // Enhanced safety checks
+        if (!$order || !is_object($order)) {
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log('Admin Enhancement: add_mark_as_paid_section called with invalid order object', 'error');
+            }
+            return;
+        }
+        
+        // Check if this is actually a WooCommerce order
+        if (!method_exists($order, 'get_id') || !method_exists($order, 'get_status')) {
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log('Admin Enhancement: Object is not a valid WooCommerce order', 'error');
+            }
+            return;
+        }
+        
+        // Check if manual payments are enabled
+        if (!function_exists('twintack_is_manual_payments_enabled') || !twintack_is_manual_payments_enabled()) {
+            return;
+        }
+        
+        // Don't show for completed orders or orders that are already processing/completed
+        try {
+            $status = $order->get_status();
+            if (in_array($status, array('completed', 'processing', 'shipped'))) {
+                return;
+            }
+        } catch (Exception $e) {
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log('Admin Enhancement: Error getting order status: ' . $e->getMessage(), 'error');
+            }
+            return;
+        }
+        
+        try {
+            $order_id = $order->get_id();
+            $current_status = $order->get_status();
+            $order_total = $order->get_total();
+        } catch (Exception $e) {
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log('Admin Enhancement: Error getting order data: ' . $e->getMessage(), 'error');
+            }
+            return;
+        }
+        
+        ?>
+        <div class="twintack-mark-paid-section" style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                <span style="font-size: 24px; margin-right: 10px;">💳</span>
+                <h3 style="margin: 0; color: #856404; font-size: 18px;">Quick Payment Processing</h3>
+            </div>
+            
+            <div style="margin-bottom: 15px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 5px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <strong>Order #<?php echo esc_html($order->get_order_number()); ?></strong><br>
+                        <span style="color: #666;">Status: <?php echo esc_html(ucfirst($current_status)); ?></span><br>
+                        <span style="color: #666;">Total: <?php echo wp_kses_post(wc_price($order_total)); ?></span>
+                    </div>
+                    <div style="text-align: right;">
+                        <?php if ($order->get_billing_email()): ?>
+                            <small style="color: #666;">Customer: <?php echo esc_html($order->get_billing_email()); ?></small>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                <!-- Primary Action: Mark as Paid -->
+                <button type="button" 
+                        id="twintack-quick-mark-paid" 
+                        data-order-id="<?php echo esc_attr($order_id); ?>" 
+                        class="button button-primary button-large"
+                        style="background: #28a745; border-color: #28a745; color: white; font-weight: bold; padding: 10px 25px; font-size: 14px;">
+                    ✅ Mark as Paid & Ready to Ship
+                </button>
+                
+                <!-- Secondary Action: Set to Invoice -->
+                <?php if ($current_status !== 'invoiced' && $order->get_billing_email()): ?>
+                <button type="button" 
+                        id="twintack-quick-set-invoice" 
+                        data-order-id="<?php echo esc_attr($order_id); ?>" 
+                        class="button button-secondary"
+                        style="background: #ff9800; border-color: #ff9800; color: white; font-weight: bold; padding: 10px 20px;">
+                    📄 Set to Invoice (Send Payment Link)
+                </button>
+                <?php endif; ?>
+                
+                <!-- Status indicator -->
+                <div style="margin-left: auto; padding: 8px 15px; background: #e1ecf4; border-radius: 20px; font-size: 13px; font-weight: bold; color: #0073aa;">
+                    <?php 
+                    $status_text = 'Ready for Payment Processing';
+                    $status_color = '#0073aa';
+                    
+                    if ($current_status === 'invoiced') {
+                        $status_text = 'Awaiting Customer Payment';
+                        $status_color = '#ff9800';
+                    } elseif (in_array($current_status, array('on-hold', 'pending'))) {
+                        $status_text = 'Payment Required';
+                        $status_color = '#dc3545';
+                    }
+                    ?>
+                    <span style="color: <?php echo esc_attr($status_color); ?>;">⚡ <?php echo esc_html($status_text); ?></span>
+                </div>
+            </div>
+            
+            <!-- Help text -->
+            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 3px; font-size: 12px; color: #666;">
+                <strong>💡 Quick Actions:</strong>
+                <ul style="margin: 5px 0 0 20px; line-height: 1.4;">
+                    <li><strong>Mark as Paid:</strong> Sets order to "Processing" status - ready for immediate fulfillment and Shippo sync</li>
+                    <?php if ($order->get_billing_email()): ?>
+                    <li><strong>Set to Invoice:</strong> Sets order to "Invoiced" status and sends payment link to customer</li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+            
+            <!-- Messages area -->
+            <div id="twintack-quick-messages" style="margin-top: 15px;"></div>
+        </div>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            var nonce = '<?php echo wp_create_nonce('twintack_payment_processing'); ?>';
+            
+            // Quick Mark as Paid
+            $('#twintack-quick-mark-paid').on('click', function() {
+                var button = $(this);
+                var orderId = button.data('order-id');
+                var originalText = button.text();
+                
+                if (!confirm('Are you sure you want to mark this order as paid? This will set the order to Processing status and trigger fulfillment.')) {
+                    return;
+                }
+                
+                button.prop('disabled', true).text('⏳ Processing...');
+                
+                $.post(ajaxurl, {
+                    action: 'twintack_mark_paid',
+                    order_id: orderId,
+                    payment_method: 'twintack_manual',
+                    nonce: nonce
+                }, function(response) {
+                    if (response.success) {
+                        showQuickMessage('✅ Order marked as paid successfully! Page will reload...', 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        showQuickMessage('❌ Error: ' + (response.data.message || 'Unknown error'), 'error');
+                        button.prop('disabled', false).text(originalText);
+                    }
+                }).fail(function() {
+                    showQuickMessage('❌ Connection error occurred', 'error');
+                    button.prop('disabled', false).text(originalText);
+                });
+            });
+            
+            // Quick Set to Invoice
+            $('#twintack-quick-set-invoice').on('click', function() {
+                var button = $(this);
+                var orderId = button.data('order-id');
+                var originalText = button.text();
+                
+                if (!confirm('Set this order to Invoice status? A payment link will be sent to the customer.')) {
+                    return;
+                }
+                
+                button.prop('disabled', true).text('⏳ Creating Invoice...');
+                
+                $.post(ajaxurl, {
+                    action: 'twintack_set_pay_later',
+                    order_id: orderId,
+                    nonce: nonce
+                }, function(response) {
+                    if (response.success) {
+                        showQuickMessage('✅ Order set to Invoice status! Page will reload...', 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        showQuickMessage('❌ Error: ' + (response.data.message || 'Unknown error'), 'error');
+                        button.prop('disabled', false).text(originalText);
+                    }
+                }).fail(function() {
+                    showQuickMessage('❌ Connection error occurred', 'error');
+                    button.prop('disabled', false).text(originalText);
+                });
+            });
+            
+            function showQuickMessage(message, type) {
+                var messageClass = 'notice-info';
+                var bgColor = '#e3f2fd';
+                var borderColor = '#2196f3';
+                
+                if (type === 'success') {
+                    messageClass = 'notice-success';
+                    bgColor = '#d4edda';
+                    borderColor = '#28a745';
+                } else if (type === 'error') {
+                    messageClass = 'notice-error';
+                    bgColor = '#f8d7da';
+                    borderColor = '#dc3545';
+                }
+                
+                var messageHtml = '<div style="background: ' + bgColor + '; border: 2px solid ' + borderColor + '; color: #333; padding: 12px; border-radius: 5px; font-weight: bold;">' + message + '</div>';
+                $('#twintack-quick-messages').html(messageHtml);
+                
+                if (type === 'success') {
+                    setTimeout(function() {
+                        $('#twintack-quick-messages').fadeOut();
+                    }, 5000);
+                }
+            }
+        });
+        </script>
+        <?php
+    }
+    
+    /**
+     * Safer wrapper for add_mark_as_paid_section
+     */
+    public function add_mark_as_paid_section_safe($order) {
+        try {
+            // Only proceed if we're in admin and on the right page
+            if (!is_admin() || !function_exists('get_current_screen')) {
+                return;
+            }
+            
+            $screen = get_current_screen();
+            if (!$screen || (strpos($screen->id, 'shop_order') === false && strpos($screen->id, 'wc-orders') === false)) {
+                return;
+            }
+            
+            // Call the main function
+            $this->add_mark_as_paid_section($order);
+            
+        } catch (Exception $e) {
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log('Admin Enhancement: Critical error in add_mark_as_paid_section_safe: ' . $e->getMessage(), 'error');
+                twintack_manual_payments_log('Stack trace: ' . $e->getTraceAsString(), 'error');
+            }
+            
+            // Display a safe fallback message instead of breaking the page
+            echo '<div class="notice notice-error" style="margin: 20px 0; padding: 15px;"><p><strong>TwinTack Manual Payments:</strong> Payment processing section temporarily unavailable. Please check error logs.</p></div>';
+        }
     }
     
     /**
