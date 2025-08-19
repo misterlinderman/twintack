@@ -69,12 +69,12 @@ class TwinTack_Simple_Order_Manager {
                 
                 <button type="button" class="button" onclick="twintackSimpleSetStatus(<?php echo $order->get_id(); ?>, 'invoiced', 'Payment Pending')" 
                         style="margin-right: 10px; background: #ffc107; border-color: #ffc107; color: black;">
-                    📄 Set to Invoice (Payment Pending)
+                    💳 Set to Invoice (Send Payment Link)
                 </button>
                 
                 <button type="button" class="button" onclick="twintackSimpleSetStatus(<?php echo $order->get_id(); ?>, 'completed', 'Shipped')" 
                         style="margin-right: 10px; background: #17a2b8; border-color: #17a2b8; color: white;">
-                    📦 Mark as Shipped
+                    📦 Mark as Shipped (Order Complete)
                 </button>
             </div>
             
@@ -84,13 +84,13 @@ class TwinTack_Simple_Order_Manager {
                 
                 <button type="button" class="button button-secondary" onclick="twintackSimpleSyncOrder(<?php echo $order->get_id(); ?>)" 
                         style="margin-right: 10px;">
-                    🚢 Force Sync to Shippo
+                    🚢 Sync with Shippo (Create Shipping Label)
                 </button>
                 
                 <label>
                     <input type="checkbox" id="shippo-ready-<?php echo $order->get_id(); ?>" 
                            <?php checked($order->get_meta('_shippo_ready_for_fulfillment'), 'yes'); ?>>
-                    Ready for Fulfillment (skip payment hold)
+                    Ready for Shipment (override payment status)
                 </label>
             </div>
             
@@ -315,6 +315,9 @@ class TwinTack_Simple_Order_Manager {
             wp_send_json_error(array('message' => 'Order not found'));
         }
         
+        // Preserve wholesale pricing before status change
+        $this->preserve_wholesale_pricing($order);
+        
         // Update WooCommerce status
         $order->update_status($wc_status, "Status manually set via TwinTack Simple Manager: {$wc_status}");
         
@@ -323,6 +326,12 @@ class TwinTack_Simple_Order_Manager {
         $order->update_meta_data('_shippo_ready_for_fulfillment', 'yes');
         $order->update_meta_data('_twintack_manual_order', 'yes');
         $order->save();
+        
+        // Auto-send order confirmation email based on status change
+        $this->auto_send_order_confirmation($order, $wc_status);
+        
+        // Restore wholesale pricing if it was disrupted by status change
+        $this->restore_wholesale_pricing($order_id);
         
         // Force Shippo sync
         if (class_exists('TwinTack_Shippo_API_Client')) {
@@ -612,5 +621,261 @@ class TwinTack_Simple_Order_Manager {
             'details' => $debug_data,
             'issues' => $issues
         ));
+    }
+    
+    /**
+     * Auto-send order confirmation email based on status change
+     */
+    private function auto_send_order_confirmation($order, $new_status) {
+        try {
+            $customer_email = $order->get_billing_email();
+            
+            if (!is_email($customer_email)) {
+                twintack_manual_payments_log("Simple Manager: Invalid email address for order {$order->get_id()}: {$customer_email}");
+                return false;
+            }
+            
+            // Get WooCommerce mailer
+            $mailer = WC()->mailer();
+            $emails = $mailer->get_emails();
+            
+            $email_sent = false;
+            $email_type = '';
+            
+            // Send appropriate email based on status
+            switch ($new_status) {
+                case 'processing':
+                    // Send processing order email
+                    if (isset($emails['WC_Email_Customer_Processing_Order'])) {
+                        $emails['WC_Email_Customer_Processing_Order']->trigger($order->get_id(), $order);
+                        $email_type = 'processing order confirmation';
+                        $email_sent = true;
+                    }
+                    break;
+                    
+                case 'completed':
+                    // Send completed order email
+                    if (isset($emails['WC_Email_Customer_Completed_Order'])) {
+                        $emails['WC_Email_Customer_Completed_Order']->trigger($order->get_id(), $order);
+                        $email_type = 'order completion notification';
+                        $email_sent = true;
+                    }
+                    break;
+                    
+                case 'invoiced':
+                    // Send custom invoice/payment request email
+                    $customer_name = trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name());
+                    if (empty($customer_name)) {
+                        $customer_name = 'Valued Customer';
+                    }
+                    
+                    $payment_url = $order->get_checkout_payment_url();
+                    $subject = sprintf('Payment Required for Order #%s - %s', $order->get_order_number(), get_bloginfo('name'));
+                    
+                    $message = sprintf("
+Dear %s,
+
+Thank you for your order! We have received your order and it's ready for payment.
+
+Order Details:
+- Order Number: #%s
+- Order Date: %s
+- Total Amount: %s
+
+Please complete your payment using the secure link below:
+%s
+
+Once payment is received, we'll begin processing your order immediately.
+
+If you have any questions, please don't hesitate to contact us.
+
+Best regards,
+%s Team
+
+---
+This is an automated message from your order management system.
+                    ",
+                        $customer_name,
+                        $order->get_order_number(),
+                        $order->get_date_created()->format('F j, Y'),
+                        wc_price($order->get_total()),
+                        $payment_url,
+                        get_bloginfo('name')
+                    );
+                    
+                    $headers = array(
+                        'Content-Type: text/plain; charset=UTF-8',
+                        'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
+                    );
+                    
+                    $email_sent = wp_mail($customer_email, $subject, $message, $headers);
+                    $email_type = 'invoice/payment request';
+                    break;
+            }
+            
+            if ($email_sent) {
+                $order->add_order_note("Auto-sent {$email_type} email to customer: {$customer_email}");
+                twintack_manual_payments_log("Simple Manager: Auto-sent {$email_type} email to {$customer_email} for order {$order->get_id()}");
+            } else {
+                twintack_manual_payments_log("Simple Manager: Failed to auto-send email for order {$order->get_id()} status {$new_status}");
+            }
+            
+            return $email_sent;
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Simple Manager: Error auto-sending email for order {$order->get_id()}: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Preserve wholesale pricing data during status changes
+     */
+    private function preserve_wholesale_pricing($order) {
+        try {
+            // Check if this is a wholesale order
+            $customer_id = $order->get_customer_id();
+            $is_wholesale = false;
+            
+            if ($customer_id) {
+                $user = get_user_by('id', $customer_id);
+                if ($user) {
+                    $user_roles = $user->roles;
+                    foreach ($user_roles as $role) {
+                        if (strpos($role, 'wholesale') !== false) {
+                            $is_wholesale = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (!$is_wholesale) {
+                return; // Not a wholesale order, no action needed
+            }
+            
+            twintack_manual_payments_log("Simple Manager: Preserving wholesale pricing for order {$order->get_id()}");
+            
+            // Store original pricing data
+            $original_subtotal = $order->get_subtotal();
+            $original_total = $order->get_total();
+            $original_discount = $order->get_total_discount();
+            
+            // Preserve line item wholesale pricing
+            foreach ($order->get_items() as $item_id => $item) {
+                // Backup current wholesale pricing meta
+                $wholesale_price = $item->get_meta('_wwp_wholesale_price');
+                $wholesale_role = $item->get_meta('_wwp_wholesale_role');
+                $line_subtotal = $item->get_subtotal();
+                $line_total = $item->get_total();
+                
+                if ($wholesale_price) {
+                    // Store backup of wholesale data
+                    $item->update_meta_data('_twintack_backup_wwp_wholesale_price', $wholesale_price);
+                    $item->update_meta_data('_twintack_backup_wwp_wholesale_role', $wholesale_role);
+                    $item->update_meta_data('_twintack_backup_line_subtotal', $line_subtotal);
+                    $item->update_meta_data('_twintack_backup_line_total', $line_total);
+                    
+                    twintack_manual_payments_log("Simple Manager: Backed up wholesale pricing for item {$item_id}: $" . $wholesale_price);
+                }
+            }
+            
+            // Store order-level backup data
+            $order->update_meta_data('_twintack_backup_subtotal', $original_subtotal);
+            $order->update_meta_data('_twintack_backup_total', $original_total);
+            $order->update_meta_data('_twintack_backup_discount', $original_discount);
+            $order->update_meta_data('_twintack_wholesale_preserved', 'yes');
+            
+            $order->save();
+            
+            twintack_manual_payments_log("Simple Manager: Wholesale pricing backup completed for order {$order->get_id()}");
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Simple Manager: Error preserving wholesale pricing for order {$order->get_id()}: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Restore wholesale pricing if it got disrupted
+     */
+    public function restore_wholesale_pricing($order_id) {
+        try {
+            $order = wc_get_order($order_id);
+            if (!$order) {
+                return false;
+            }
+            
+            // Check if we have backup data
+            $has_backup = $order->get_meta('_twintack_wholesale_preserved');
+            if (!$has_backup) {
+                return false;
+            }
+            
+            twintack_manual_payments_log("Simple Manager: Restoring wholesale pricing for order {$order_id}");
+            
+            $pricing_changed = false;
+            
+            // Restore line item pricing
+            foreach ($order->get_items() as $item_id => $item) {
+                $backup_price = $item->get_meta('_twintack_backup_wwp_wholesale_price');
+                $backup_role = $item->get_meta('_twintack_backup_wwp_wholesale_role');
+                $backup_subtotal = $item->get_meta('_twintack_backup_line_subtotal');
+                $backup_total = $item->get_meta('_twintack_backup_line_total');
+                
+                if ($backup_price) {
+                    // Restore wholesale meta if missing
+                    if (!$item->get_meta('_wwp_wholesale_price')) {
+                        $item->update_meta_data('_wwp_wholesale_price', $backup_price);
+                        $pricing_changed = true;
+                    }
+                    
+                    if (!$item->get_meta('_wwp_wholesale_role')) {
+                        $item->update_meta_data('_wwp_wholesale_role', $backup_role);
+                    }
+                    
+                    // Check if line totals need restoration
+                    if ($backup_subtotal && abs($item->get_subtotal() - $backup_subtotal) > 0.01) {
+                        $item->set_subtotal($backup_subtotal);
+                        $pricing_changed = true;
+                    }
+                    
+                    if ($backup_total && abs($item->get_total() - $backup_total) > 0.01) {
+                        $item->set_total($backup_total);
+                        $pricing_changed = true;
+                    }
+                    
+                    $item->save();
+                    
+                    twintack_manual_payments_log("Simple Manager: Restored wholesale pricing for item {$item_id}");
+                }
+            }
+            
+            // Restore order totals if needed
+            $backup_subtotal = $order->get_meta('_twintack_backup_subtotal');
+            $backup_total = $order->get_meta('_twintack_backup_total');
+            
+            if ($backup_subtotal && abs($order->get_subtotal() - $backup_subtotal) > 0.01) {
+                $order->set_subtotal($backup_subtotal);
+                $pricing_changed = true;
+            }
+            
+            if ($backup_total && abs($order->get_total() - $backup_total) > 0.01) {
+                $order->set_total($backup_total);
+                $pricing_changed = true;
+            }
+            
+            if ($pricing_changed) {
+                $order->save();
+                $order->add_order_note('TwinTack: Restored wholesale pricing after status change');
+                twintack_manual_payments_log("Simple Manager: Successfully restored wholesale pricing for order {$order_id}");
+                return true;
+            }
+            
+            return false;
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Simple Manager: Error restoring wholesale pricing for order {$order_id}: " . $e->getMessage());
+            return false;
+        }
     }
 }

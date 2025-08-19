@@ -3,7 +3,7 @@
  * Plugin Name: TwinTack Manual Order Payments
  * Plugin URI: https://twintack.com
  * Description: Enables Stripe and other payment gateways for manually created WooCommerce orders, with seamless integration with TwinTack Grip Manager. Now includes Stripe Checkout Sessions for customer self-service payments.
- * Version: 4.2.0
+ * Version: 4.3.0
  * Author: TwinTack
  * Author URI: https://twintack.com
  * License: GPL v2 or later
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('TWINTACK_MANUAL_PAYMENTS_VERSION', '4.2.0');
+define('TWINTACK_MANUAL_PAYMENTS_VERSION', '4.3.1');
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_FILE', __FILE__);
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -316,6 +316,11 @@ class TwinTack_Manual_Order_Payments {
             'bulk_invoice_manager' => array(
                 'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-bulk-invoice-manager.php',
                 'class' => 'TwinTack_Bulk_Invoice_Manager',
+                'instantiate' => true
+            ),
+            'shippo_sync_admin' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-shippo-sync-admin.php',
+                'class' => 'TwinTack_Shippo_Sync_Admin',
                 'instantiate' => true
             )
         );

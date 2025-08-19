@@ -69,6 +69,7 @@ class TwinTack_Bulk_Invoice_Manager {
     public function add_bulk_actions($actions) {
         $actions['twintack_mark_paid'] = __('Mark as Paid (TwinTack)', 'twintack-manual-payments');
         $actions['twintack_set_invoiced'] = __('Set to Invoiced (TwinTack)', 'twintack-manual-payments');
+        $actions['twintack_mark_shipped_paid'] = __('Mark Shipped Orders as Paid (TwinTack)', 'twintack-manual-payments');
         $actions['twintack_export_selected'] = __('Export Selected (CSV)', 'twintack-manual-payments');
         
         return $actions;
@@ -78,7 +79,7 @@ class TwinTack_Bulk_Invoice_Manager {
      * Handle bulk actions
      */
     public function handle_bulk_actions($redirect_to, $action, $post_ids) {
-        if (!in_array($action, array('twintack_mark_paid', 'twintack_set_invoiced', 'twintack_export_selected'))) {
+        if (!in_array($action, array('twintack_mark_paid', 'twintack_set_invoiced', 'twintack_mark_shipped_paid', 'twintack_export_selected'))) {
             return $redirect_to;
         }
         
@@ -117,6 +118,22 @@ class TwinTack_Bulk_Invoice_Manager {
                 
                 $redirect_to = add_query_arg(array(
                     'twintack_bulk_action' => 'set_invoiced',
+                    'processed' => $processed,
+                    'errors' => $errors
+                ), $redirect_to);
+                break;
+                
+            case 'twintack_mark_shipped_paid':
+                foreach ($post_ids as $order_id) {
+                    if ($this->mark_shipped_order_as_paid($order_id)) {
+                        $processed++;
+                    } else {
+                        $errors++;
+                    }
+                }
+                
+                $redirect_to = add_query_arg(array(
+                    'twintack_bulk_action' => 'mark_shipped_paid',
                     'processed' => $processed,
                     'errors' => $errors
                 ), $redirect_to);
@@ -203,6 +220,52 @@ class TwinTack_Bulk_Invoice_Manager {
         } catch (Exception $e) {
             twintack_manual_payments_log("Bulk action: Error marking order {$order_id} as paid: " . $e->getMessage(), 'error');
             twintack_manual_payments_log("Bulk action: Exception trace: " . $e->getTraceAsString(), 'error');
+            return false;
+        }
+    }
+    
+    /**
+     * Mark shipped (unpaid) order as paid (completed)
+     */
+    private function mark_shipped_order_as_paid($order_id) {
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            twintack_manual_payments_log("Bulk action: Order {$order_id} not found", 'error');
+            return false;
+        }
+        
+        $current_status = $order->get_status();
+        twintack_manual_payments_log("Bulk action: Processing shipped order {$order_id} with current status: {$current_status}");
+        
+        // Only process shipped-unpaid orders
+        if ($current_status !== 'shipped-unpaid') {
+            twintack_manual_payments_log("Bulk action: Order {$order_id} is not shipped-unpaid (current: {$current_status}), skipping");
+            return false;
+        }
+        
+        try {
+            // Mark as completed - payment received
+            $order->update_status('completed', 'Payment received for shipped order via TwinTack bulk action.');
+            $order->update_meta_data('_date_completed', current_time('timestamp'));
+            $order->update_meta_data('_twintack_bulk_processed', current_time('timestamp'));
+            $order->save();
+            
+            // Send completion email
+            try {
+                $mailer = WC()->mailer();
+                $emails = $mailer->get_emails();
+                if (isset($emails['WC_Email_Customer_Completed_Order'])) {
+                    $emails['WC_Email_Customer_Completed_Order']->trigger($order_id, $order);
+                }
+            } catch (Exception $e) {
+                // Email failed, but continue
+            }
+            
+            twintack_manual_payments_log("Bulk action: Shipped order {$order_id} marked as completed (paid)");
+            return true;
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Bulk action: Error marking shipped order {$order_id} as paid: " . $e->getMessage(), 'error');
             return false;
         }
     }
@@ -308,6 +371,15 @@ class TwinTack_Bulk_Invoice_Manager {
             case 'set_invoiced':
                 if ($processed > 0) {
                     $messages[] = sprintf(__('%d orders set to invoiced successfully.', 'twintack-manual-payments'), $processed);
+                }
+                if ($errors > 0) {
+                    $messages[] = sprintf(__('%d orders failed to process.', 'twintack-manual-payments'), $errors);
+                }
+                break;
+                
+            case 'mark_shipped_paid':
+                if ($processed > 0) {
+                    $messages[] = sprintf(__('%d shipped orders marked as paid successfully.', 'twintack-manual-payments'), $processed);
                 }
                 if ($errors > 0) {
                     $messages[] = sprintf(__('%d orders failed to process.', 'twintack-manual-payments'), $errors);

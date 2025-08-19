@@ -80,6 +80,15 @@ class TwinTack_Order_Status_Manager {
             'show_in_admin_status_list' => true,
             'label_count'               => _n_noop('Invoiced <span class="count">(%s)</span>', 'Invoiced <span class="count">(%s)</span>', 'twintack-manual-payments')
         ));
+        
+        register_post_status('wc-shipped-unpaid', array(
+            'label'                     => _x('Shipped (Unpaid)', 'Order status', 'twintack-manual-payments'),
+            'public'                    => true,
+            'exclude_from_search'       => false,
+            'show_in_admin_all_list'    => true,
+            'show_in_admin_status_list' => true,
+            'label_count'               => _n_noop('Shipped (Unpaid) <span class="count">(%s)</span>', 'Shipped (Unpaid) <span class="count">(%s)</span>', 'twintack-manual-payments')
+        ));
     }
     
     /**
@@ -96,16 +105,22 @@ class TwinTack_Order_Status_Manager {
             if ('wc-pending' === $key) {
                 $new_order_statuses['wc-invoiced'] = _x('Invoiced', 'Order status', 'twintack-manual-payments');
             }
+            
+            // Add shipped (unpaid) status after processing
+            if ('wc-processing' === $key) {
+                $new_order_statuses['wc-shipped-unpaid'] = _x('Shipped (Unpaid)', 'Order status', 'twintack-manual-payments');
+            }
         }
         
         return $new_order_statuses;
     }
     
     /**
-     * Add invoiced status to valid statuses for payment
+     * Add custom statuses to valid statuses for payment
      */
     public function add_valid_statuses_for_payment($statuses) {
         $statuses[] = 'invoiced';
+        $statuses[] = 'shipped-unpaid';  // Allow payment for shipped but unpaid orders
         return $statuses;
     }
     
@@ -305,6 +320,18 @@ class TwinTack_Order_Status_Manager {
         }
         .widefat .column-order_status mark.invoiced {
             background: #ff9800;
+            color: white;
+        }
+        .order-status.status-shipped-unpaid {
+            background: #17a2b8;
+            color: white;
+            border-radius: 3px;
+            padding: 3px 8px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .widefat .column-order_status mark.shipped-unpaid {
+            background: #17a2b8;
             color: white;
         }
         </style>

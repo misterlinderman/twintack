@@ -233,13 +233,14 @@ class TwinTack_Shippo_Webhook_Handler {
         }
         
         // Update order status based on shipment status
-        if ($status === 'SUCCESS' && $wc_order->get_status() !== 'completed') {
-            $wc_order->update_status('completed', 'Shipment successful - updated via Shippo webhook');
-            // Trigger completed email when moving to completed from webhook
-            $this->maybe_trigger_completed_email($wc_order->get_id(), $wc_order);
+        if ($status === 'SUCCESS' && !in_array($wc_order->get_status(), array('completed', 'shipped-unpaid'))) {
+            $wc_order->update_status('shipped-unpaid', 'Shipment successful - updated via Shippo webhook. Payment may still be pending.');
+            
+            // Send shipment notification email for shipped-unpaid orders
+            $this->maybe_trigger_shipment_email($wc_order->get_id(), $wc_order);
             
             if (function_exists('twintack_manual_payments_log')) {
-                twintack_manual_payments_log("Shippo Webhook: Marked order {$wc_order->get_id()} as completed - shipment successful");
+                twintack_manual_payments_log("Shippo Webhook: Marked order {$wc_order->get_id()} as shipped-unpaid - shipment successful but payment may be pending");
             }
         }
         
@@ -321,8 +322,8 @@ class TwinTack_Shippo_Webhook_Handler {
     private function map_shippo_status_to_wc($shippo_status) {
         $status_mapping = array(
             'PAID' => 'processing',
-            'SHIPPED' => 'completed',
-            'DELIVERED' => 'completed',
+            'SHIPPED' => 'shipped-unpaid',  // NEW: Shipped but payment may still be pending
+            'DELIVERED' => 'shipped-unpaid', // Keep as shipped-unpaid until manual payment confirmation
             'CANCELLED' => 'cancelled',
             'REFUNDED' => 'refunded',
         );
@@ -330,6 +331,30 @@ class TwinTack_Shippo_Webhook_Handler {
         return isset($status_mapping[$shippo_status]) ? $status_mapping[$shippo_status] : null;
     }
 
+    /**
+     * Trigger shipment notification email for shipped-unpaid orders
+     */
+    private function maybe_trigger_shipment_email($order_id, $order) {
+        try {
+            $mailer = WC()->mailer();
+            $emails = $mailer->get_emails();
+            
+            // Send a processing order email with tracking info (acts as shipment notification)
+            if (isset($emails['WC_Email_Customer_Processing_Order'])) {
+                $emails['WC_Email_Customer_Processing_Order']->trigger($order_id, $order);
+                
+                if (function_exists('twintack_manual_payments_log')) {
+                    twintack_manual_payments_log("Shippo Webhook: Sent shipment notification email for order {$order_id}");
+                }
+            }
+            
+        } catch (Exception $e) {
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Shippo Webhook: Error sending shipment email for order {$order_id}: " . $e->getMessage(), 'error');
+            }
+        }
+    }
+    
     /**
      * Trigger the customer completed-order email safely.
      */

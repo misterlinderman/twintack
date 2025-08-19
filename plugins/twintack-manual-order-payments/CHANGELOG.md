@@ -2,6 +2,29 @@
 
 All notable changes to this plugin will be documented in this file.
 
+## 4.3.0 – 2025-01-08
+### Added
+- **New Custom Order Status**: "Shipped (Unpaid)" for orders that have been shipped but payment is still pending
+- **Enhanced Shippo Integration**: Webhook handler now properly maps shipped orders to "Shipped (Unpaid)" status
+- **Shippo Sync Admin Page**: WooCommerce → Shippo Sync for syncing existing shipped orders from Shippo
+- **Manual Tracking Interface**: Dedicated tracking information section on order admin pages
+  - Add/edit tracking numbers and carriers manually
+  - Send tracking notification emails to customers
+  - Real-time AJAX updates with visual feedback
+- **New Bulk Action**: "Mark Shipped Orders as Paid (TwinTack)" for completing the payment workflow
+- **Automatic Email Notifications**: Shipment emails sent when orders transition to "Shipped (Unpaid)"
+
+### Enhanced
+- Webhook simulation system for syncing orders that were shipped in Shippo but not reflected in WooCommerce
+- Age filtering criteria for sync operations (now includes orders ≥1 day old)
+- Improved status mapping between Shippo and WooCommerce for better workflow tracking
+- Email notification system that works with existing "Send Status Email" buttons
+
+### Fixed
+- Payment workflow disconnect where shipped orders weren't properly reflected in WooCommerce
+- Tracking information display for manually updated orders
+- Enhanced webhook handler to properly process shipment status updates
+
 ## 4.2.0 – 2025-01-08
 ### Added
 - **Bulk Invoice Manager**: Complete bulk operations system for managing invoiced orders

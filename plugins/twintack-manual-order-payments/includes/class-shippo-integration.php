@@ -34,9 +34,9 @@ class TwinTack_Shippo_Integration {
         add_filter('woocommerce_shipping_packages', array($this, 'include_invoiced_orders_in_shipping'));
         add_action('woocommerce_checkout_order_processed', array($this, 'process_order_for_shippo'), 10, 1);
         
-        // Add custom meta fields for Shippo tracking
-        add_action('add_meta_boxes', array($this, 'add_shippo_meta_box'));
-        add_action('save_post', array($this, 'save_shippo_meta_fields'));
+        // DISABLED: Meta box conflicts with TwinTack Order Control - use Simple Order Manager instead
+        // add_action('add_meta_boxes', array($this, 'add_shippo_meta_box'));
+        // add_action('save_post', array($this, 'save_shippo_meta_fields'));
     }
     
     /**

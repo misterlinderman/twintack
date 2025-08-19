@@ -57,6 +57,8 @@ class TwinTack_Admin_Order_Enhancements {
         add_action('wp_ajax_twintack_send_payment_link', array($this, 'handle_send_payment_link'));
         add_action('wp_ajax_twintack_set_pay_later', array($this, 'handle_set_pay_later'));
         add_action('wp_ajax_twintack_force_shippo_sync', array($this, 'handle_force_shippo_sync'));
+        add_action('wp_ajax_twintack_update_tracking', array($this, 'handle_update_tracking'));
+        add_action('wp_ajax_twintack_send_tracking_email', array($this, 'handle_send_tracking_email'));
         
         // Log AJAX registration
         if (function_exists('twintack_manual_payments_log')) {
@@ -76,6 +78,9 @@ class TwinTack_Admin_Order_Enhancements {
         
         // DISABLED: Add prominent "Mark as Paid" section - causing redundant navigation
         // add_action('woocommerce_admin_order_data_after_order_details', array($this, 'add_mark_as_paid_section_safe'), 5, 1);
+        
+        // Add tracking information section
+        add_action('woocommerce_admin_order_data_after_order_details', array($this, 'add_tracking_section'), 10, 1);
         
         // Enqueue admin scripts
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
@@ -1539,5 +1544,282 @@ This is an automated message. Please do not reply to this email.
         });
         </script>
         <?php
+    }
+    
+    /**
+     * Add tracking information section to order admin page
+     */
+    public function add_tracking_section($order) {
+        if (!$order instanceof WC_Order) {
+            return;
+        }
+        
+        $order_id = $order->get_id();
+        $current_tracking = $order->get_meta('_shippo_tracking_number');
+        $current_carrier = $order->get_meta('_shippo_tracking_carrier');
+        $current_status = $order->get_meta('_shippo_tracking_status');
+        
+        // Only show for shipped orders or orders that need tracking
+        $order_status = $order->get_status();
+        if (!in_array($order_status, array('shipped-unpaid', 'processing', 'completed'))) {
+            return;
+        }
+        
+        ?>
+        <div class="twintack-tracking-section" style="margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px;">
+            <h3 style="margin-top: 0;">📦 Shipment Tracking Information</h3>
+            
+            <table class="form-table" style="margin: 0;">
+                <tr>
+                    <th style="width: 150px;">
+                        <label for="twintack_tracking_number">Tracking Number:</label>
+                    </th>
+                    <td>
+                        <input type="text" 
+                               id="twintack_tracking_number" 
+                               name="twintack_tracking_number" 
+                               value="<?php echo esc_attr($current_tracking); ?>" 
+                               style="width: 300px;" 
+                               placeholder="Enter tracking number">
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        <label for="twintack_tracking_carrier">Carrier:</label>
+                    </th>
+                    <td>
+                        <select id="twintack_tracking_carrier" name="twintack_tracking_carrier" style="width: 300px;">
+                            <option value="">Select Carrier</option>
+                            <option value="USPS" <?php selected($current_carrier, 'USPS'); ?>>USPS</option>
+                            <option value="UPS" <?php selected($current_carrier, 'UPS'); ?>>UPS</option>
+                            <option value="FedEx" <?php selected($current_carrier, 'FedEx'); ?>>FedEx</option>
+                            <option value="DHL" <?php selected($current_carrier, 'DHL'); ?>>DHL</option>
+                            <option value="Other" <?php selected($current_carrier, 'Other'); ?>>Other</option>
+                        </select>
+                    </td>
+                </tr>
+                <?php if ($current_status): ?>
+                <tr>
+                    <th>Current Status:</th>
+                    <td><strong><?php echo esc_html($current_status); ?></strong></td>
+                </tr>
+                <?php endif; ?>
+            </table>
+            
+            <div style="margin-top: 15px;">
+                <button type="button" 
+                        id="update-tracking-btn" 
+                        class="button button-primary"
+                        data-order-id="<?php echo $order_id; ?>">
+                    Update Tracking Info
+                </button>
+                
+                <?php if ($current_tracking): ?>
+                <button type="button" 
+                        id="send-tracking-email-btn" 
+                        class="button"
+                        data-order-id="<?php echo $order_id; ?>"
+                        style="margin-left: 10px;">
+                    📧 Send Tracking Email
+                </button>
+                <?php endif; ?>
+            </div>
+            
+            <div id="tracking-result" style="margin-top: 10px;"></div>
+        </div>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            $('#update-tracking-btn').on('click', function() {
+                var button = $(this);
+                var orderId = button.data('order-id');
+                var trackingNumber = $('#twintack_tracking_number').val();
+                var carrier = $('#twintack_tracking_carrier').val();
+                var resultDiv = $('#tracking-result');
+                
+                if (!trackingNumber.trim()) {
+                    alert('Please enter a tracking number');
+                    return;
+                }
+                
+                button.prop('disabled', true).text('Updating...');
+                resultDiv.html('');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'twintack_update_tracking',
+                        order_id: orderId,
+                        tracking_number: trackingNumber,
+                        carrier: carrier,
+                        nonce: '<?php echo wp_create_nonce('twintack_tracking_' . $order_id); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            resultDiv.html('<div style="color: green; padding: 8px; background: #d4f6d4; border-radius: 3px;">✅ ' + response.data.message + '</div>');
+                            
+                            // Show send email button if tracking was added
+                            if (trackingNumber && !$('#send-tracking-email-btn').length) {
+                                button.after('<button type="button" id="send-tracking-email-btn" class="button" data-order-id="' + orderId + '" style="margin-left: 10px;">📧 Send Tracking Email</button>');
+                            }
+                            
+                            // Reload page after 2 seconds to show updated info
+                            setTimeout(function() {
+                                location.reload();
+                            }, 2000);
+                        } else {
+                            resultDiv.html('<div style="color: red; padding: 8px; background: #f8d7da; border-radius: 3px;">❌ ' + response.data + '</div>');
+                        }
+                    },
+                    error: function() {
+                        resultDiv.html('<div style="color: red; padding: 8px; background: #f8d7da; border-radius: 3px;">❌ Request failed</div>');
+                    },
+                    complete: function() {
+                        button.prop('disabled', false).text('Update Tracking Info');
+                    }
+                });
+            });
+            
+            // Handle send tracking email button
+            $(document).on('click', '#send-tracking-email-btn', function() {
+                var button = $(this);
+                var orderId = button.data('order-id');
+                var resultDiv = $('#tracking-result');
+                
+                button.prop('disabled', true).text('Sending...');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'twintack_send_tracking_email',
+                        order_id: orderId,
+                        nonce: '<?php echo wp_create_nonce('twintack_tracking_email_' . $order_id); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            resultDiv.html('<div style="color: green; padding: 8px; background: #d4f6d4; border-radius: 3px;">✅ Tracking email sent!</div>');
+                        } else {
+                            resultDiv.html('<div style="color: red; padding: 8px; background: #f8d7da; border-radius: 3px;">❌ ' + response.data + '</div>');
+                        }
+                    },
+                    complete: function() {
+                        button.prop('disabled', false).text('📧 Send Tracking Email');
+                    }
+                });
+            });
+        });
+        </script>
+        <?php
+    }
+    
+    /**
+     * Handle AJAX request to update tracking information
+     */
+    public function handle_update_tracking() {
+        // Check nonce
+        $order_id = intval($_POST['order_id']);
+        if (!wp_verify_nonce($_POST['nonce'], 'twintack_tracking_' . $order_id)) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Check permissions
+        if (!current_user_can('edit_shop_orders')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        $tracking_number = sanitize_text_field($_POST['tracking_number']);
+        $carrier = sanitize_text_field($_POST['carrier']);
+        
+        if (empty($tracking_number)) {
+            wp_send_json_error('Tracking number is required');
+        }
+        
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            wp_send_json_error('Order not found');
+        }
+        
+        try {
+            // Update tracking meta fields
+            $order->update_meta_data('_shippo_tracking_number', $tracking_number);
+            if ($carrier) {
+                $order->update_meta_data('_shippo_tracking_carrier', $carrier);
+            }
+            $order->update_meta_data('_shippo_tracking_status', 'SHIPPED');
+            $order->update_meta_data('_tracking_updated_manually', current_time('timestamp'));
+            
+            $order->save();
+            
+            // Add order note
+            $note = 'Tracking information updated manually:' . "\n";
+            $note .= 'Tracking Number: ' . $tracking_number;
+            if ($carrier) {
+                $note .= "\n" . 'Carrier: ' . $carrier;
+            }
+            $order->add_order_note($note);
+            
+            twintack_manual_payments_log("Tracking updated for order {$order_id}: {$tracking_number} ({$carrier})");
+            
+            wp_send_json_success(array(
+                'message' => 'Tracking information updated successfully!',
+                'tracking_number' => $tracking_number,
+                'carrier' => $carrier
+            ));
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Error updating tracking for order {$order_id}: " . $e->getMessage(), 'error');
+            wp_send_json_error('Error updating tracking: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Handle AJAX request to send tracking email
+     */
+    public function handle_send_tracking_email() {
+        // Check nonce
+        $order_id = intval($_POST['order_id']);
+        if (!wp_verify_nonce($_POST['nonce'], 'twintack_tracking_email_' . $order_id)) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Check permissions
+        if (!current_user_can('edit_shop_orders')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            wp_send_json_error('Order not found');
+        }
+        
+        $tracking_number = $order->get_meta('_shippo_tracking_number');
+        if (!$tracking_number) {
+            wp_send_json_error('No tracking number available');
+        }
+        
+        try {
+            // Send a processing order email (which includes tracking info)
+            $mailer = WC()->mailer();
+            $emails = $mailer->get_emails();
+            
+            if (isset($emails['WC_Email_Customer_Processing_Order'])) {
+                $emails['WC_Email_Customer_Processing_Order']->trigger($order_id, $order);
+                
+                // Add order note
+                $order->add_order_note('Tracking notification email sent to customer: ' . $order->get_billing_email() . ' (Tracking: ' . $tracking_number . ')');
+                
+                twintack_manual_payments_log("Tracking email sent for order {$order_id} to " . $order->get_billing_email());
+                
+                wp_send_json_success('Tracking email sent successfully!');
+            } else {
+                wp_send_json_error('Email system not available');
+            }
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Error sending tracking email for order {$order_id}: " . $e->getMessage(), 'error');
+            wp_send_json_error('Error sending email: ' . $e->getMessage());
+        }
     }
 } 

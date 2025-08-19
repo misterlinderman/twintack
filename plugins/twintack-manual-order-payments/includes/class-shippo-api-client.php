@@ -291,12 +291,12 @@ class TwinTack_Shippo_API_Client {
              'order_number' => $order->get_order_number(),
              'order_status' => $this->map_wc_status_to_shippo_orders($order->get_status(), $order),
              
-             // OPTIONAL FIELDS - handle $0 orders specially
-             'total_price' => max($order->get_total(), 0.01), // Minimum $0.01 for Shippo compatibility
-             'currency' => $order->get_currency(),
-             'subtotal_price' => max(($order->get_total() - $order->get_total_tax() - $order->get_shipping_total()), 0.01),
-             'total_tax' => $order->get_total_tax(),
-             'shipping_cost' => $order->get_shipping_total(),
+                         // OPTIONAL FIELDS - handle $0 orders specially
+            'total_price' => number_format(max($order->get_total(), 0.01), 2, '.', ''), // Minimum $0.01, max 2 decimals
+            'currency' => $order->get_currency(),
+            'subtotal_price' => number_format(max(($order->get_total() - $order->get_total_tax() - $order->get_shipping_total()), 0.01), 2, '.', ''), // Format to 2 decimals
+            'total_tax' => number_format($order->get_total_tax(), 2, '.', ''),
+            'shipping_cost' => number_format($order->get_shipping_total(), 2, '.', ''),
              'shipping_cost_currency' => $order->get_currency(),
              'shop_app' => 'WooCommerce',
              'line_items' => $this->format_line_items_for_orders_api($order)
