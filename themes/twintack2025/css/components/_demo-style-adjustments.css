@@ -939,7 +939,9 @@ form.woocommerce-ResetPassword .woocommerce-Input, .input-text
     transition: border-color 0.2s ease;
 }
 
-
+.woocommerce-variation-description {
+    color: var(--color-text-muted);
+}
 
 
 /* Manual Checkout Styles */
