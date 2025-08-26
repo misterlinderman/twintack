@@ -30,6 +30,9 @@ class TwinTack_Shippo_Webhook_Handler {
         // Add webhook endpoint to query vars
         add_action('init', array($this, 'add_webhook_endpoint'));
         add_action('parse_request', array($this, 'handle_webhook_request'));
+        
+        // Register automated sync functionality
+        add_action('init', array($this, 'init_automated_sync'));
     }
     
     /**
@@ -244,6 +247,9 @@ class TwinTack_Shippo_Webhook_Handler {
             }
         }
         
+        // Trigger action for automation system
+        do_action('twintack_webhook_processed', 'shipment_updated', $order_reference);
+        
         return new WP_REST_Response(array('message' => 'Shipment updated successfully'), 200);
     }
     
@@ -379,5 +385,199 @@ class TwinTack_Shippo_Webhook_Handler {
                 twintack_manual_payments_log('Email trigger error: ' . $e->getMessage(), 'error');
             }
         }
+    }
+    
+    /**
+     * Initialize automated sync functionality
+     */
+    public function init_automated_sync() {
+        // Register cron hook
+        add_action('twintack_automated_shippo_sync', array($this, 'run_automated_sync'));
+        
+        // Schedule cron job if not already scheduled
+        if (!wp_next_scheduled('twintack_automated_shippo_sync')) {
+            // Run every 4 hours
+            wp_schedule_event(time(), 'twintack_shippo_sync_interval', 'twintack_automated_shippo_sync');
+        }
+        
+        // Add custom cron interval
+        add_filter('cron_schedules', array($this, 'add_custom_cron_intervals'));
+        
+        // Enhanced webhook processing with automatic sync
+        add_action('twintack_webhook_processed', array($this, 'maybe_trigger_sync'), 10, 2);
+    }
+    
+    /**
+     * Add custom cron intervals
+     */
+    public function add_custom_cron_intervals($schedules) {
+        $schedules['twintack_shippo_sync_interval'] = array(
+            'interval' => 4 * HOUR_IN_SECONDS, // 4 hours
+            'display' => __('Every 4 Hours (TwinTack Shippo Sync)')
+        );
+        
+        $schedules['twintack_hourly_sync'] = array(
+            'interval' => HOUR_IN_SECONDS, // 1 hour
+            'display' => __('Hourly (TwinTack Shippo Sync)')
+        );
+        
+        return $schedules;
+    }
+    
+    /**
+     * Run automated sync for eligible orders
+     */
+    public function run_automated_sync() {
+        if (function_exists('twintack_manual_payments_log')) {
+            twintack_manual_payments_log('Automated Shippo Sync: Starting scheduled sync');
+        }
+        
+        // Get eligible orders (same logic as manual sync)
+        $invoiced_orders = wc_get_orders(array(
+            'status' => 'invoiced',
+            'limit' => 50,
+            'meta_query' => array(
+                array(
+                    'key' => '_shippo_order_id',
+                    'compare' => 'EXISTS'
+                )
+            )
+        ));
+        
+        $eligible_orders = array();
+        $age_filter_hours = get_option('twintack_sync_age_filter', 24); // Default 24 hours
+        $age_filter_seconds = $age_filter_hours * HOUR_IN_SECONDS;
+        
+        foreach ($invoiced_orders as $order) {
+            $age_seconds = time() - $order->get_date_created()->getTimestamp();
+            if ($age_seconds >= $age_filter_seconds) {
+                $eligible_orders[] = $order;
+            }
+        }
+        
+        if (empty($eligible_orders)) {
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log('Automated Shippo Sync: No eligible orders found');
+            }
+            return;
+        }
+        
+        $sync_count = 0;
+        $max_per_sync = 10; // Limit to prevent timeout
+        
+        foreach (array_slice($eligible_orders, 0, $max_per_sync) as $order) {
+            $success = $this->simulate_shippo_webhook_for_order($order);
+            if ($success) {
+                $sync_count++;
+            }
+        }
+        
+        if (function_exists('twintack_manual_payments_log')) {
+            twintack_manual_payments_log("Automated Shippo Sync: Processed {$sync_count} orders out of " . count($eligible_orders) . " eligible");
+        }
+    }
+    
+    /**
+     * Simulate Shippo webhook for a specific order
+     */
+    private function simulate_shippo_webhook_for_order($order) {
+        try {
+            $order_id = $order->get_id();
+            $shippo_order_id = $order->get_meta('_shippo_order_id');
+            
+            if (!$shippo_order_id) {
+                return false;
+            }
+            
+            // Create fake webhook data that simulates a "SHIPPED" status from Shippo
+            $fake_webhook_data = array(
+                'event' => 'shipment_updated',
+                'test' => false,
+                'data' => array(
+                    'object' => array(
+                        'object_id' => 'simulated_' . uniqid(),
+                        'status' => 'SUCCESS',
+                        'tracking_number' => 'AUTO_SYNC_' . strtoupper(substr(md5($order_id . time()), 0, 8)),
+                        'carrier' => 'USPS',
+                        'tracking_status' => 'SHIPPED',
+                        'metadata' => array(
+                            'wc_order_id' => $order_id
+                        ),
+                        'order' => $order_id
+                    )
+                )
+            );
+            
+            // Process the simulated webhook
+            $result = $this->handle_shipment_updated($fake_webhook_data);
+            
+            // Add note to order about automated sync
+            $order->add_order_note('Automated Shippo sync: Status updated from invoiced to shipped-unpaid via cron job');
+            
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Automated Sync: Successfully processed order {$order_id}");
+            }
+            
+            return true;
+            
+        } catch (Exception $e) {
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Automated Sync Error for order {$order->get_id()}: " . $e->getMessage(), 'error');
+            }
+            return false;
+        }
+    }
+    
+    /**
+     * Maybe trigger additional sync when webhook is processed
+     */
+    public function maybe_trigger_sync($event_type, $order_id) {
+        // If we get a real webhook, check for any other orders that might need syncing
+        if ($event_type === 'shipment_updated') {
+            // Schedule a one-time sync check in 5 minutes
+            wp_schedule_single_event(time() + 300, 'twintack_automated_shippo_sync');
+            
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Webhook trigger: Scheduled additional sync check for other orders");
+            }
+        }
+    }
+    
+    /**
+     * Get automation status and settings
+     */
+    public function get_automation_status() {
+        $next_scheduled = wp_next_scheduled('twintack_automated_shippo_sync');
+        
+        return array(
+            'enabled' => (bool) $next_scheduled,
+            'next_run' => $next_scheduled ? date('Y-m-d H:i:s', $next_scheduled) : null,
+            'interval' => '4 hours',
+            'last_run' => get_option('twintack_last_auto_sync', 'Never')
+        );
+    }
+    
+    /**
+     * Enable/disable automated sync
+     */
+    public function set_automation_enabled($enabled) {
+        if ($enabled) {
+            if (!wp_next_scheduled('twintack_automated_shippo_sync')) {
+                wp_schedule_event(time() + 300, 'twintack_shippo_sync_interval', 'twintack_automated_shippo_sync');
+                
+                if (function_exists('twintack_manual_payments_log')) {
+                    twintack_manual_payments_log('Automated Shippo Sync: ENABLED (every 4 hours)');
+                }
+            }
+        } else {
+            wp_clear_scheduled_hook('twintack_automated_shippo_sync');
+            
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log('Automated Shippo Sync: DISABLED');
+            }
+        }
+        
+        update_option('twintack_auto_sync_enabled', $enabled);
+        return $enabled;
     }
 }

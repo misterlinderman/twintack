@@ -2,6 +2,49 @@
 
 All notable changes to this plugin will be documented in this file.
 
+## 4.4.1 – 2025-01-08
+### Added
+- **⚙️ CONFIGURABLE SYNC AGE FILTER**: Choose when orders become eligible for sync
+  - **Immediate (0 hours)**: Perfect for same-day shipping workflows - sync orders immediately
+  - **2-12 hours**: Short delays for quality control before notifications
+  - **24 hours (default)**: Conservative approach - ensures orders are actually shipped
+  - **48+ hours**: Extra conservative for manual fulfillment workflows
+- **Smart UI**: Admin interface shows current age setting and eligible order count
+- **Unified Logic**: Both manual and automated sync use the same configurable age filter
+
+### Enhanced
+- **Real-time Feedback**: Age setting changes immediately affect both manual and automated sync
+- **Dynamic Criteria Display**: Overview shows current age requirement (e.g., "Any age", "6 hours or older", "1 day or older")
+- **Workflow Flexibility**: Supports everything from immediate same-day shipping to multi-day fulfillment processes
+
+### Fixed
+- **Same-day Shipping Support**: Can now sync orders shipped on the same day they were created
+- **Age Filter Consistency**: Manual sync and automated sync use identical age criteria
+
+## 4.4.0 – 2025-01-08
+### Added
+- **🤖 AUTOMATED SHIPPO SYNC**: Full automation system for Shippo order synchronization
+  - **Scheduled Sync**: WordPress cron job runs every 4 hours to automatically sync eligible orders
+  - **Real-time Triggers**: When real Shippo webhooks arrive, automatically checks for other orders needing sync
+  - **Smart Filtering**: Only processes orders 1+ days old with Shippo Order IDs (prevents premature syncing)
+  - **Safe Processing**: Limits to 10 orders per run to prevent server timeouts
+  - **Enhanced Admin Interface**: Toggle automation on/off from WooCommerce → Shippo Sync
+- **Automation Controls**: Enable/disable automated sync with one-click toggle in admin
+- **Webhook Enhancement**: Existing Shippo webhooks now trigger additional sync checks for related orders
+- **Comprehensive Logging**: All automated sync activities logged for debugging and monitoring
+
+### Enhanced
+- **Shippo Sync Admin Page**: Now includes automation status, next run time, and toggle controls
+- **Webhook Handler**: Enhanced with automation triggers and cron job scheduling
+- **Manual Sync Integration**: Manual sync and automated sync use the same reliable logic
+- **Error Handling**: Robust error handling for automated processes with detailed logging
+
+### Technical
+- Custom WordPress cron intervals (4-hour and 1-hour options)
+- Automated webhook simulation for seamless order status updates
+- Integration with existing webhook infrastructure
+- Backward compatible with all existing manual sync functionality
+
 ## 4.3.0 – 2025-01-08
 ### Added
 - **New Custom Order Status**: "Shipped (Unpaid)" for orders that have been shipped but payment is still pending

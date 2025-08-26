@@ -23,6 +23,8 @@ class TwinTack_Shippo_Sync_Admin {
     private function __construct() {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('wp_ajax_twintack_simulate_shippo_webhooks', array($this, 'ajax_simulate_webhooks'));
+        add_action('wp_ajax_twintack_toggle_auto_sync', array($this, 'ajax_toggle_auto_sync'));
+        add_action('wp_ajax_twintack_save_age_filter', array($this, 'ajax_save_age_filter'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
     }
     
@@ -103,6 +105,8 @@ class TwinTack_Shippo_Sync_Admin {
                 <p>It will update them to "Shipped (Unpaid)" status and send tracking notifications to customers.</p>
             </div>
             
+            <?php $this->show_automation_controls(); ?>
+            
             <?php $this->show_overview(); ?>
             
             <div class="card">
@@ -147,9 +151,12 @@ class TwinTack_Shippo_Sync_Admin {
         $eligible_orders = array();
         $total_invoiced = count($invoiced_orders);
         
+        $age_filter_hours = get_option('twintack_sync_age_filter', 24); // Default 24 hours
+        $age_filter_seconds = $age_filter_hours * HOUR_IN_SECONDS;
+        
         foreach ($invoiced_orders as $order) {
-            $days_old = round((time() - $order->get_date_created()->getTimestamp()) / DAY_IN_SECONDS, 1);
-            if ($days_old >= 1) { // Orders 1 day or older
+            $age_seconds = time() - $order->get_date_created()->getTimestamp();
+            if ($age_seconds >= $age_filter_seconds) {
                 $eligible_orders[] = $order;
             }
         }
@@ -169,7 +176,13 @@ class TwinTack_Shippo_Sync_Admin {
                     </tr>
                     <tr>
                         <td><strong>Criteria:</strong></td>
-                        <td>Invoiced status + Has Shippo Order ID + 1 day or older</td>
+                        <td>Invoiced status + Has Shippo Order ID + <?php 
+                            echo $age_filter_hours === 0 ? 'Any age (immediate sync)' : 
+                                 ($age_filter_hours === 1 ? '1 hour or older' : 
+                                  ($age_filter_hours < 24 ? "{$age_filter_hours} hours or older" : 
+                                   ($age_filter_hours === 24 ? '1 day or older' : 
+                                    round($age_filter_hours / 24, 1) . ' days or older')));
+                        ?></td>
                     </tr>
                 </tbody>
             </table>
@@ -234,11 +247,14 @@ class TwinTack_Shippo_Sync_Admin {
             )
         ));
         
-        // Filter to eligible orders (older than 1 day)
+        // Filter to eligible orders using configurable age
+        $age_filter_hours = get_option('twintack_sync_age_filter', 24); // Default 24 hours
+        $age_filter_seconds = $age_filter_hours * HOUR_IN_SECONDS;
+        
         $target_orders = array();
         foreach ($all_invoiced_orders as $order) {
-            $days_old = round((time() - $order->get_date_created()->getTimestamp()) / DAY_IN_SECONDS, 1);
-            if ($days_old >= 1) {
+            $age_seconds = time() - $order->get_date_created()->getTimestamp();
+            if ($age_seconds >= $age_filter_seconds) {
                 $target_orders[] = $order;
             }
         }
@@ -339,6 +355,236 @@ class TwinTack_Shippo_Sync_Admin {
         $output .= '</div>';
         
         return $output;
+    }
+    
+    /**
+     * Show automation controls
+     */
+    private function show_automation_controls() {
+        // Get webhook handler instance for automation status
+        $webhook_handler = TwinTack_Shippo_Webhook_Handler::get_instance();
+        $automation_status = $webhook_handler->get_automation_status();
+        
+        ?>
+        <div class="card" style="margin-bottom: 20px;">
+            <h2>🤖 Automated Sync</h2>
+            
+            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
+                <div>
+                    <strong>Status:</strong> 
+                    <span style="color: <?php echo $automation_status['enabled'] ? 'green' : 'red'; ?>; font-weight: bold;">
+                        <?php echo $automation_status['enabled'] ? '✅ ENABLED' : '❌ DISABLED'; ?>
+                    </span>
+                </div>
+                
+                <?php if ($automation_status['enabled']): ?>
+                <div>
+                    <strong>Next Run:</strong> <?php echo $automation_status['next_run']; ?>
+                </div>
+                <div>
+                    <strong>Interval:</strong> Every <?php echo $automation_status['interval']; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                <h4>🚀 How Automation Works:</h4>
+                <ul style="margin: 0;">
+                    <li><strong>🕐 Scheduled Sync:</strong> Runs every 4 hours to check for orders that need syncing</li>
+                    <li><strong>⚡ Real-time Triggers:</strong> When real Shippo webhooks arrive, checks for other orders that might need updating</li>
+                    <li><strong>🎯 Smart Filtering:</strong> Configurable age filter (default: 1+ days old) and must have Shippo Order IDs</li>
+                    <li><strong>🛡️ Safe Processing:</strong> Limits to 10 orders per run to prevent timeouts</li>
+                    <li><strong>📧 Automatic Emails:</strong> Sends tracking notifications when orders are updated</li>
+                </ul>
+            </div>
+            
+            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
+                <h4>⚙️ Sync Settings:</h4>
+                <label for="sync-age-filter" style="display: block; margin-bottom: 10px;">
+                    <strong>Minimum Order Age for Sync:</strong>
+                </label>
+                <select id="sync-age-filter" style="margin-bottom: 10px;">
+                    <?php $current_age = get_option('twintack_sync_age_filter', 24); ?>
+                    <option value="0" <?php selected($current_age, 0); ?>>Immediate (0 hours) - Sync same-day orders</option>
+                    <option value="2" <?php selected($current_age, 2); ?>>2 hours old</option>
+                    <option value="6" <?php selected($current_age, 6); ?>>6 hours old</option>
+                    <option value="12" <?php selected($current_age, 12); ?>>12 hours old</option>
+                    <option value="24" <?php selected($current_age, 24); ?>>24 hours (1 day) old - DEFAULT</option>
+                    <option value="48" <?php selected($current_age, 48); ?>>48 hours (2 days) old</option>
+                </select>
+                <button type="button" id="save-age-filter" class="button" style="margin-left: 10px;">Save Setting</button>
+                <br>
+                <small style="color: #666;">
+                    <strong>Immediate:</strong> Good if orders are shipped same-day<br>
+                    <strong>24 hours:</strong> Safer, ensures orders are actually shipped before notification
+                </small>
+            </div>
+            
+            <button type="button" 
+                    id="toggle-automation-btn" 
+                    class="button <?php echo $automation_status['enabled'] ? 'button-secondary' : 'button-primary'; ?>"
+                    data-current-state="<?php echo $automation_status['enabled'] ? 'enabled' : 'disabled'; ?>">
+                <?php echo $automation_status['enabled'] ? '🛑 Disable Automation' : '🚀 Enable Automation'; ?>
+            </button>
+            
+            <div id="automation-result" style="margin-top: 10px;"></div>
+        </div>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Handle age filter saving
+            $('#save-age-filter').on('click', function() {
+                var button = $(this);
+                var ageValue = $('#sync-age-filter').val();
+                
+                button.prop('disabled', true).text('Saving...');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'twintack_save_age_filter',
+                        age_hours: ageValue,
+                        nonce: '<?php echo wp_create_nonce('twintack_age_filter'); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            button.text('✅ Saved!');
+                            setTimeout(function() {
+                                button.text('Save Setting');
+                            }, 2000);
+                        } else {
+                            button.text('❌ Error');
+                            setTimeout(function() {
+                                button.text('Save Setting');
+                            }, 2000);
+                        }
+                    },
+                    complete: function() {
+                        button.prop('disabled', false);
+                    }
+                });
+            });
+            
+            $('#toggle-automation-btn').on('click', function() {
+                var button = $(this);
+                var currentState = button.data('current-state');
+                var newState = currentState === 'enabled' ? 'disabled' : 'enabled';
+                var resultDiv = $('#automation-result');
+                
+                button.prop('disabled', true).text('⏳ Updating...');
+                resultDiv.html('');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'twintack_toggle_auto_sync',
+                        enable: newState === 'enabled' ? '1' : '0',
+                        nonce: '<?php echo wp_create_nonce('twintack_auto_sync'); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            var message = newState === 'enabled' ? 
+                                '✅ Automation enabled! Sync will run every 4 hours.' : 
+                                '🛑 Automation disabled. Manual sync only.';
+                                
+                            resultDiv.html('<div style="color: green; padding: 8px; background: #d4f6d4; border-radius: 3px;">' + message + '</div>');
+                            
+                            // Update button state
+                            button.data('current-state', newState);
+                            if (newState === 'enabled') {
+                                button.removeClass('button-primary').addClass('button-secondary').text('🛑 Disable Automation');
+                            } else {
+                                button.removeClass('button-secondary').addClass('button-primary').text('🚀 Enable Automation');
+                            }
+                            
+                            // Reload page after 3 seconds to show updated status
+                            setTimeout(function() {
+                                location.reload();
+                            }, 3000);
+                        } else {
+                            resultDiv.html('<div style="color: red; padding: 8px; background: #f8d7da; border-radius: 3px;">❌ ' + response.data + '</div>');
+                        }
+                    },
+                    error: function() {
+                        resultDiv.html('<div style="color: red; padding: 8px; background: #f8d7da; border-radius: 3px;">❌ Request failed</div>');
+                    },
+                    complete: function() {
+                        button.prop('disabled', false);
+                    }
+                });
+            });
+        });
+        </script>
+        <?php
+    }
+    
+    /**
+     * Handle AJAX request to toggle automation
+     */
+    public function ajax_toggle_auto_sync() {
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'twintack_auto_sync')) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Check permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        $enable = isset($_POST['enable']) && $_POST['enable'] === '1';
+        
+        try {
+            $webhook_handler = TwinTack_Shippo_Webhook_Handler::get_instance();
+            $result = $webhook_handler->set_automation_enabled($enable);
+            
+            $message = $enable ? 
+                'Automated sync enabled! Will run every 4 hours.' : 
+                'Automated sync disabled.';
+                
+            wp_send_json_success($message);
+            
+        } catch (Exception $e) {
+            wp_send_json_error('Error updating automation: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Handle AJAX request to save age filter setting
+     */
+    public function ajax_save_age_filter() {
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'twintack_age_filter')) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Check permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        $age_hours = intval($_POST['age_hours']);
+        
+        // Validate age range
+        $allowed_ages = array(0, 2, 6, 12, 24, 48);
+        if (!in_array($age_hours, $allowed_ages)) {
+            wp_send_json_error('Invalid age setting');
+        }
+        
+        try {
+            update_option('twintack_sync_age_filter', $age_hours);
+            
+            $message = $age_hours === 0 ? 
+                'Sync age filter set to immediate (same-day orders will be synced)' : 
+                "Sync age filter set to {$age_hours} hours";
+                
+            wp_send_json_success($message);
+            
+        } catch (Exception $e) {
+            wp_send_json_error('Error saving setting: ' . $e->getMessage());
+        }
     }
 }
 
