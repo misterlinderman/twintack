@@ -22,6 +22,10 @@ class TwinTack_Grip_Admin {
         add_action('admin_menu', array($this, 'add_volume_pricing_menu'));
         add_action('admin_init', array($this, 'register_volume_pricing_settings'));
         
+        // Add admin menu for webhook settings
+        add_action('admin_menu', array($this, 'add_webhook_settings_menu'));
+        add_action('admin_init', array($this, 'register_webhook_settings'));
+        
         // Handle email notification test AJAX
         add_action('wp_ajax_test_grip_email', array($this, 'handle_test_email_ajax'));
         
@@ -51,6 +55,174 @@ class TwinTack_Grip_Admin {
         register_setting('grip_volume_pricing_settings', 'grip_volume_pricing_product_id');
         register_setting('grip_volume_pricing_settings', 'grip_volume_pricing_enabled');
         register_setting('grip_volume_pricing_settings', 'grip_volume_pricing_settings');
+    }
+
+    /**
+     * Add webhook settings admin menu
+     */
+    public function add_webhook_settings_menu() {
+        add_submenu_page(
+            'edit.php?post_type=grip_design',
+            'Webhook Settings',
+            'Webhook Settings',
+            'manage_options',
+            'grip-webhook-settings',
+            array($this, 'webhook_settings_page')
+        );
+    }
+
+    /**
+     * Register webhook settings
+     */
+    public function register_webhook_settings() {
+        register_setting('grip_webhook_settings', 'twintack_customer_feedback_webhook_url');
+        register_setting('grip_webhook_settings', 'twintack_production_approval_webhook_url');
+        register_setting('grip_webhook_settings', 'twintack_legacy_reorder_webhook_url');
+    }
+
+    /**
+     * Webhook settings page
+     */
+    public function webhook_settings_page() {
+        $customer_feedback_url = get_option('twintack_customer_feedback_webhook_url', '');
+        $production_approval_url = get_option('twintack_production_approval_webhook_url', '');
+        $legacy_reorder_url = get_option('twintack_legacy_reorder_webhook_url', '');
+        ?>
+        <div class="wrap">
+            <h1>TwinTack Grip Manager - Webhook Settings</h1>
+            
+            <p>Configure Make.com webhook URLs for different grip design events. These webhooks send data to your Make.com scenarios for Monday.com integration.</p>
+            
+            <form method="post" action="options.php">
+                <?php settings_fields('grip_webhook_settings'); ?>
+                
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">Customer Feedback Webhook</th>
+                        <td>
+                            <input type="url" name="twintack_customer_feedback_webhook_url" 
+                                   value="<?php echo esc_attr($customer_feedback_url); ?>" 
+                                   class="regular-text" placeholder="https://hook.us2.make.com/..." />
+                            <p class="description">
+                                Triggered when customers approve or request changes to their designs.<br>
+                                <strong>Webhook Type:</strong> <code>customer_feedback</code>
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row">Production Approval Webhook</th>
+                        <td>
+                            <input type="url" name="twintack_production_approval_webhook_url" 
+                                   value="<?php echo esc_attr($production_approval_url); ?>" 
+                                   class="regular-text" placeholder="https://hook.us2.make.com/..." />
+                            <p class="description">
+                                Triggered when grip designs are approved for production (after payment).<br>
+                                <strong>Webhook Type:</strong> <code>production_approval</code>
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row">Legacy Grip Reorder Webhook</th>
+                        <td>
+                            <input type="url" name="twintack_legacy_reorder_webhook_url" 
+                                   value="<?php echo esc_attr($legacy_reorder_url); ?>" 
+                                   class="regular-text" placeholder="https://hook.us2.make.com/..." />
+                            <p class="description">
+                                Triggered when customers reorder legacy grip designs (imported via CSV).<br>
+                                <strong>Webhook Type:</strong> <code>legacy_grip_reorder</code><br>
+                                <em>New in v1.6.08 - Use this for legacy grip Monday.com integration.</em>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <?php submit_button(); ?>
+            </form>
+            
+            <hr>
+            
+            <h2>Webhook Event Types</h2>
+            <div class="webhook-docs">
+                <h3>Customer Feedback (<code>customer_feedback</code>)</h3>
+                <p>Sent when customers approve or request changes to their designs from their account area.</p>
+                <details>
+                    <summary>View sample payload</summary>
+                    <pre style="background: #f5f5f5; padding: 10px; overflow-x: auto;"><code>{
+  "grip_design_id": 1234,
+  "grip_design_title": "Team Eagles - Custom Grip",
+  "customer_action": "request_changes",
+  "customer_feedback": "Please make the logo bigger",
+  "artwork_status": "customer_requested_changes",
+  "customer_name": "John Doe",
+  "customer_email": "john@example.com",
+  "team_name": "Team Eagles",
+  "quantity": 25,
+  "monday_item_id": "7654321098",
+  "timestamp": "2024-12-20T10:30:00+00:00",
+  "webhook_type": "customer_feedback"
+}</code></pre>
+                </details>
+                
+                <h3>Production Approval (<code>production_approval</code>)</h3>
+                <p>Sent when grip designs move to "approved for production" status after order completion.</p>
+                <details>
+                    <summary>View sample payload</summary>
+                    <pre style="background: #f5f5f5; padding: 10px; overflow-x: auto;"><code>{
+  "grip_design_id": 1234,
+  "grip_design_title": "Team Eagles - Custom Grip",
+  "order_id": "5678",
+  "artwork_status": "approved_for_production",
+  "monday_item_id": "7654321098",
+  "timestamp": "2024-12-20T10:30:00+00:00",
+  "webhook_type": "production_approval"
+}</code></pre>
+                </details>
+                
+                <h3>Legacy Grip Reorder (<code>legacy_grip_reorder</code>)</h3>
+                <p>Sent when customers reorder legacy grip designs that were imported via CSV.</p>
+                <details>
+                    <summary>View sample payload</summary>
+                    <pre style="background: #f5f5f5; padding: 10px; overflow-x: auto;"><code>{
+  "grip_design_id": 1234,
+  "grip_design_title": "Legacy - Lincoln HS Lions #L-1001",
+  "legacy_id": "L-1001",
+  "is_legacy_reorder": true,
+  "customer_name": "Jane Doe",
+  "customer_email": "jane.doe@example.com",
+  "team_name": "Lincoln HS Lions",
+  "design_type": "Pattern",
+  "quantity": 50,
+  "order_id": "WO-4567",
+  "monday_item_id": "MON12345",
+  "artwork_url": "https://example.com/artwork/L-1001.png",
+  "mockup_asset_url": "https://example.com/mockups/L-1001.jpg",
+  "artwork_status": "approved_for_production",
+  "timestamp": "2024-12-20T10:30:00+00:00",
+  "webhook_type": "legacy_grip_reorder"
+}</code></pre>
+                </details>
+            </div>
+            
+            <hr>
+            
+            <h2>Testing Webhooks</h2>
+            <p>To test your webhook URLs:</p>
+            <ol>
+                <li>Enable <strong>WP_DEBUG</strong> in your wp-config.php</li>
+                <li>Trigger the relevant event (customer feedback, order completion, etc.)</li>
+                <li>Check your debug.log for webhook transmission logs</li>
+                <li>Verify the webhook was received in your Make.com scenario execution history</li>
+            </ol>
+            
+            <?php if (WP_DEBUG): ?>
+                <div class="notice notice-info">
+                    <p><strong>Debug Mode Active:</strong> Webhook transmissions will be logged to your debug.log file.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php
     }
     
     /**

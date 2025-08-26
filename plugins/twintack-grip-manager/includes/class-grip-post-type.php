@@ -1312,8 +1312,11 @@ class TwinTack_Grip_Post_Type {
                     error_log('TwinTack: Updated grip design ' . $grip_id . ' to approved_for_production');
                 }
 
-                // Trigger webhook for Make.com
-                $this->trigger_production_approval_webhook($grip_id, $order_id);
+                        // Trigger webhook for Make.com
+        $this->trigger_production_approval_webhook($grip_id, $order_id);
+        
+        // Check if this is a legacy grip reorder and trigger special webhook
+        $this->trigger_legacy_reorder_webhook($grip_id, $order_id);
             }
         }
     }
@@ -1408,5 +1411,109 @@ class TwinTack_Grip_Post_Type {
         
         // Fallback to option
         return get_option('twintack_production_approval_webhook_url', '');
+    }
+
+    /**
+     * Get the webhook URL for legacy grip reorders
+     */
+    public function get_legacy_reorder_webhook_url() {
+        // Try to get from constant first
+        if (defined('TWINTACK_LEGACY_REORDER_WEBHOOK_URL')) {
+            return TWINTACK_LEGACY_REORDER_WEBHOOK_URL;
+        }
+        
+        // Fallback to option
+        return get_option('twintack_legacy_reorder_webhook_url', '');
+    }
+
+    /**
+     * Trigger webhook for Make.com when legacy grip is reordered
+     */
+    private function trigger_legacy_reorder_webhook($grip_id, $order_id) {
+        // Check if this is a legacy grip
+        $legacy_id = get_post_meta($grip_id, '_grip_legacy_id', true);
+        if (empty($legacy_id)) {
+            return; // Not a legacy grip, skip
+        }
+
+        if (WP_DEBUG) {
+            error_log('TwinTack: Triggering legacy reorder webhook - Grip ID: ' . $grip_id . ', Legacy ID: ' . $legacy_id . ', Order ID: ' . $order_id);
+        }
+
+        // Get the webhook URL
+        $webhook_url = $this->get_legacy_reorder_webhook_url();
+        if (empty($webhook_url)) {
+            if (WP_DEBUG) {
+                error_log('TwinTack: No legacy reorder webhook URL configured');
+            }
+            return;
+        }
+
+        // Get grip design details
+        $post = get_post($grip_id);
+        $monday_item_id = get_post_meta($grip_id, '_grip_monday_item_id', true);
+        
+        // Prepare comprehensive webhook data
+        $webhook_data = array(
+            'grip_design_id' => $grip_id,
+            'grip_design_title' => $post->post_title,
+            'legacy_id' => $legacy_id,
+            'is_legacy_reorder' => true,
+            'customer_name' => get_post_meta($grip_id, '_grip_customer_name', true),
+            'customer_email' => get_post_meta($grip_id, '_grip_customer_email', true),
+            'team_name' => get_post_meta($grip_id, '_grip_team_name', true),
+            'design_type' => get_post_meta($grip_id, '_grip_design_type', true),
+            'design_layout' => get_post_meta($grip_id, '_grip_design_layout', true),
+            'primary_color' => get_post_meta($grip_id, '_grip_primary_color', true),
+            'secondary_color' => get_post_meta($grip_id, '_grip_secondary_color', true),
+            'tertiary_color' => get_post_meta($grip_id, '_grip_tertiary_color', true),
+            'quantity' => get_post_meta($grip_id, '_grip_quantity', true),
+            'original_quantity' => get_post_meta($grip_id, '_grip_quantity', true), // For legacy, these are the same
+            'order_id' => $order_id,
+            'monday_item_id' => $monday_item_id,
+            'artwork_url' => get_post_meta($grip_id, '_grip_artwork_url', true),
+            'artwork_filename' => get_post_meta($grip_id, '_grip_artwork_filename', true),
+            'mockup_asset_url' => get_post_meta($grip_id, '_grip_mockup_asset_url', true),
+            'mockup_asset_id' => get_post_meta($grip_id, '_grip_mockup_asset_id', true),
+            'artwork_status' => 'approved_for_production',
+            'final_order_id' => $order_id,
+            'production_started' => current_time('c'),
+            'timestamp' => current_time('c'),
+            'webhook_type' => 'legacy_grip_reorder',
+            'site_url' => get_site_url()
+        );
+        
+        if (WP_DEBUG) {
+            error_log('TwinTack: Legacy reorder webhook data: ' . print_r($webhook_data, true));
+        }
+
+        // Allow filtering of webhook data
+        $webhook_data = apply_filters('grip_legacy_reorder_webhook_data', $webhook_data, $grip_id, $order_id);
+        
+        if (WP_DEBUG) {
+            error_log('TwinTack: Sending legacy reorder webhook to: ' . $webhook_url);
+        }
+
+        // Send webhook
+        $response = wp_remote_post($webhook_url, array(
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'User-Agent' => 'TwinTack-Grip-Manager/1.6.08'
+            ),
+            'body' => wp_json_encode($webhook_data),
+            'timeout' => 15,
+            'blocking' => false // Don't wait for response
+        ));
+
+        if (WP_DEBUG) {
+            if (is_wp_error($response)) {
+                error_log('TwinTack: Legacy reorder webhook error: ' . $response->get_error_message());
+            } else {
+                error_log('TwinTack: Legacy reorder webhook sent successfully');
+            }
+        }
+        
+        // WordPress action for custom integrations
+        do_action('grip_legacy_reorder', $grip_id, $order_id, $webhook_data);
     }
 }
