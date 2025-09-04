@@ -2,6 +2,31 @@
 
 All notable changes to this plugin will be documented in this file.
 
+## 4.5.0 – 2025-01-08
+### Added
+- **📄 PDF INVOICE GENERATION**: Professional PDF invoices with complete order details and TwinTack branding
+  - **Smart PDF Library Detection**: Automatically detects TCPDF availability with HTML fallback
+  - **Professional Layout**: Comprehensive invoice format with company header, billing info, itemized list, and totals
+  - **PO Number Integration**: Customer Purchase Order numbers prominently displayed on invoices
+  - **Direct Download**: One-click PDF generation and download from order admin pages
+- **🏢 TWINTACK ORDER CONTROL PANEL**: Dedicated section on order pages for manual order management
+  - **PO Number Field**: Add and save customer Purchase Order numbers with real-time validation
+  - **PDF Invoice Button**: Generate professional invoices with all order details and PO information
+  - **Smart UI**: Visual indicators showing PO status and invoice readiness
+  - **AJAX Integration**: Real-time saving and generation without page reloads
+
+### Enhanced
+- **Order Management Workflow**: Centralized control panel for all manual order processing tasks
+- **Invoice Customization**: Branded invoices with company information and professional styling
+- **Order Documentation**: Automatic logging of PDF generation and PO number updates in order notes
+- **Fallback Support**: Works with or without TCPDF library - HTML invoices when PDF unavailable
+
+### Technical
+- New `TwinTack_PDF_Invoice_Generator` class with TCPDF integration
+- Order meta field `_twintack_po_number` for storing customer PO numbers
+- Enhanced admin interface with professional styling and user experience
+- Comprehensive error handling and logging for PDF generation process
+
 ## 4.4.1 – 2025-01-08
 ### Added
 - **⚙️ CONFIGURABLE SYNC AGE FILTER**: Choose when orders become eligible for sync

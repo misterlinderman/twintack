@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('TWINTACK_MANUAL_PAYMENTS_VERSION', '4.4.1');
+define('TWINTACK_MANUAL_PAYMENTS_VERSION', '4.5.0');
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_FILE', __FILE__);
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TWINTACK_MANUAL_PAYMENTS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -322,6 +322,11 @@ class TwinTack_Manual_Order_Payments {
                 'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-shippo-sync-admin.php',
                 'class' => 'TwinTack_Shippo_Sync_Admin',
                 'instantiate' => true
+            ),
+            'pdf_invoice_generator' => array(
+                'file' => TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-pdf-invoice-generator.php',
+                'class' => 'TwinTack_PDF_Invoice_Generator',
+                'instantiate' => false  // Only instantiate when needed
             )
         );
         

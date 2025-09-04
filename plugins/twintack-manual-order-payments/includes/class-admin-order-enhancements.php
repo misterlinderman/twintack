@@ -59,6 +59,8 @@ class TwinTack_Admin_Order_Enhancements {
         add_action('wp_ajax_twintack_force_shippo_sync', array($this, 'handle_force_shippo_sync'));
         add_action('wp_ajax_twintack_update_tracking', array($this, 'handle_update_tracking'));
         add_action('wp_ajax_twintack_send_tracking_email', array($this, 'handle_send_tracking_email'));
+        add_action('wp_ajax_twintack_save_po_number', array($this, 'handle_save_po_number'));
+        add_action('wp_ajax_twintack_generate_pdf_invoice', array($this, 'handle_generate_pdf_invoice'));
         
         // Log AJAX registration
         if (function_exists('twintack_manual_payments_log')) {
@@ -81,6 +83,9 @@ class TwinTack_Admin_Order_Enhancements {
         
         // Add tracking information section
         add_action('woocommerce_admin_order_data_after_order_details', array($this, 'add_tracking_section'), 10, 1);
+        
+        // Add TwinTack Order Control section with PO Number and PDF Invoice
+        add_action('woocommerce_admin_order_data_after_order_details', array($this, 'add_twintack_order_control_section'), 15, 1);
         
         // Enqueue admin scripts
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
@@ -1820,6 +1825,290 @@ This is an automated message. Please do not reply to this email.
         } catch (Exception $e) {
             twintack_manual_payments_log("Error sending tracking email for order {$order_id}: " . $e->getMessage(), 'error');
             wp_send_json_error('Error sending email: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Add TwinTack Order Control section with PO Number and PDF Invoice
+     */
+    public function add_twintack_order_control_section($order) {
+        if (!$order instanceof WC_Order) {
+            return;
+        }
+        
+        $order_id = $order->get_id();
+        $current_po_number = $order->get_meta('_twintack_po_number');
+        
+        ?>
+        <div class="twintack-order-control-section" style="margin: 20px 0; padding: 20px; background: #fff; border: 2px solid #0073aa; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <span style="font-size: 24px; margin-right: 12px;">🏢</span>
+                <h3 style="margin: 0; color: #0073aa; font-size: 20px;">TwinTack Order Control</h3>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
+                <!-- PO Number Section -->
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; border: 1px solid #ddd;">
+                    <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px;">📋 Purchase Order Information</h4>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label for="twintack_po_number" style="display: block; margin-bottom: 8px; font-weight: bold; color: #555;">
+                            Original PO Number:
+                        </label>
+                        <input type="text" 
+                               id="twintack_po_number" 
+                               name="twintack_po_number" 
+                               value="<?php echo esc_attr($current_po_number); ?>" 
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 3px; font-size: 14px;" 
+                               placeholder="Enter customer PO number">
+                        <small style="color: #666; font-style: italic;">This PO number will appear on the PDF invoice</small>
+                    </div>
+                    
+                    <button type="button" 
+                            id="save-po-number-btn" 
+                            class="button button-primary"
+                            data-order-id="<?php echo $order_id; ?>"
+                            style="background: #28a745; border-color: #28a745;">
+                        💾 Save PO Number
+                    </button>
+                </div>
+                
+                <!-- PDF Invoice Section -->
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; border: 1px solid #ddd;">
+                    <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px;">📄 Invoice Generation</h4>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <p style="margin: 0 0 10px 0; color: #666; line-height: 1.5;">
+                            Generate a professional invoice for this order including all order details, customer information, and PO number.
+                        </p>
+                        
+                        <?php
+                        // Check PDF availability
+                        if (!class_exists('TwinTack_PDF_Invoice_Generator')) {
+                            require_once TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-pdf-invoice-generator.php';
+                        }
+                        $pdf_generator = TwinTack_PDF_Invoice_Generator::get_instance();
+                        $pdf_available = $pdf_generator->is_pdf_available();
+                        ?>
+                        
+                        <div style="background: <?php echo $pdf_available ? '#e8f5e8' : '#fff8e1'; ?>; padding: 8px; border-radius: 3px; border: 1px solid <?php echo $pdf_available ? '#4caf50' : '#ff9800'; ?>; margin-bottom: 10px;">
+                            <small style="color: <?php echo $pdf_available ? '#2e7d32' : '#e65100'; ?>;">
+                                <strong><?php echo $pdf_available ? '📄 PDF' : '📋 HTML'; ?> Format:</strong> 
+                                <?php echo $pdf_available ? 'Professional PDF will be generated' : 'Printable HTML will be generated (TCPDF not available)'; ?>
+                            </small>
+                        </div>
+                        
+                        <?php if ($current_po_number): ?>
+                        <div style="background: #d4edda; padding: 10px; border-radius: 3px; border: 1px solid #c3e6cb; margin-bottom: 10px;">
+                            <small style="color: #155724;">
+                                <strong>✅ PO Number:</strong> <?php echo esc_html($current_po_number); ?> will be included in the invoice
+                            </small>
+                        </div>
+                        <?php else: ?>
+                        <div style="background: #fff3cd; padding: 10px; border-radius: 3px; border: 1px solid #ffeaa7; margin-bottom: 10px;">
+                            <small style="color: #856404;">
+                                <strong>⚠️ Note:</strong> No PO number set. Add one above for complete invoice.
+                            </small>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <button type="button" 
+                            id="generate-pdf-invoice-btn" 
+                            class="button button-secondary"
+                            data-order-id="<?php echo $order_id; ?>"
+                            style="background: #dc3545; border-color: #dc3545; color: white; font-weight: bold;">
+                        <?php echo $pdf_available ? '📄 Generate PDF Invoice' : '📋 Generate HTML Invoice'; ?>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="twintack-control-result" style="margin-top: 20px;"></div>
+        </div>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Save PO Number
+            $('#save-po-number-btn').on('click', function() {
+                var button = $(this);
+                var orderId = button.data('order-id');
+                var poNumber = $('#twintack_po_number').val().trim();
+                var resultDiv = $('#twintack-control-result');
+                
+                button.prop('disabled', true).text('💾 Saving...');
+                resultDiv.html('');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'twintack_save_po_number',
+                        order_id: orderId,
+                        po_number: poNumber,
+                        nonce: '<?php echo wp_create_nonce('twintack_po_number_' . $order_id); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            resultDiv.html('<div style="color: green; padding: 12px; background: #d4f6d4; border-radius: 5px; border: 1px solid #28a745;">✅ ' + response.data.message + '</div>');
+                            
+                            // Update the PO display in PDF section
+                            if (poNumber) {
+                                $('.pdf-po-status').html('<div style="background: #d4edda; padding: 10px; border-radius: 3px; border: 1px solid #c3e6cb; margin-bottom: 10px;"><small style="color: #155724;"><strong>✅ PO Number:</strong> ' + poNumber + ' will be included in the invoice</small></div>');
+                            }
+                            
+                            // Reload page after 2 seconds to show updated info
+                            setTimeout(function() {
+                                location.reload();
+                            }, 2000);
+                        } else {
+                            resultDiv.html('<div style="color: red; padding: 12px; background: #f8d7da; border-radius: 5px; border: 1px solid #dc3545;">❌ ' + response.data + '</div>');
+                        }
+                    },
+                    error: function() {
+                        resultDiv.html('<div style="color: red; padding: 12px; background: #f8d7da; border-radius: 5px; border: 1px solid #dc3545;">❌ Request failed</div>');
+                    },
+                    complete: function() {
+                        button.prop('disabled', false).text('💾 Save PO Number');
+                    }
+                });
+            });
+            
+            // Generate PDF Invoice
+            $('#generate-pdf-invoice-btn').on('click', function() {
+                var button = $(this);
+                var orderId = button.data('order-id');
+                var resultDiv = $('#twintack-control-result');
+                
+                if (!confirm('Generate PDF invoice for Order #' + orderId + '?')) {
+                    return;
+                }
+                
+                button.prop('disabled', true).text('📄 Generating...');
+                resultDiv.html('<div style="color: #0073aa; padding: 12px; background: #e3f2fd; border-radius: 5px; border: 1px solid #2196f3;">⏳ Generating invoice... This may take a moment.</div>');
+                
+                // Create a form to submit for PDF download
+                var form = $('<form>', {
+                    'method': 'POST',
+                    'action': ajaxurl,
+                    'target': '_blank'
+                }).append(
+                    $('<input>', {'type': 'hidden', 'name': 'action', 'value': 'twintack_generate_pdf_invoice'}),
+                    $('<input>', {'type': 'hidden', 'name': 'order_id', 'value': orderId}),
+                    $('<input>', {'type': 'hidden', 'name': 'nonce', 'value': '<?php echo wp_create_nonce('twintack_pdf_invoice_' . $order_id); ?>'})
+                );
+                
+                $('body').append(form);
+                form.submit();
+                form.remove();
+                
+                // Reset button and show success message
+                setTimeout(function() {
+                    button.prop('disabled', false).text(button.text().replace('Generating...', button.text().includes('PDF') ? 'Generate PDF Invoice' : 'Generate HTML Invoice'));
+                    resultDiv.html('<div style="color: green; padding: 12px; background: #d4f6d4; border-radius: 5px; border: 1px solid #28a745;">✅ Invoice generated! Check the new tab that opened.</div>');
+                    
+                    setTimeout(function() {
+                        resultDiv.fadeOut();
+                    }, 5000);
+                }, 2000);
+            });
+        });
+        </script>
+        <?php
+    }
+    
+    /**
+     * Handle AJAX request to save PO number
+     */
+    public function handle_save_po_number() {
+        // Check nonce
+        $order_id = intval($_POST['order_id']);
+        if (!wp_verify_nonce($_POST['nonce'], 'twintack_po_number_' . $order_id)) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Check permissions
+        if (!current_user_can('edit_shop_orders')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        $po_number = sanitize_text_field($_POST['po_number']);
+        
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            wp_send_json_error('Order not found');
+        }
+        
+        try {
+            // Update PO number meta field
+            $order->update_meta_data('_twintack_po_number', $po_number);
+            $order->save();
+            
+            // Add order note
+            if (!empty($po_number)) {
+                $note = 'PO Number updated: ' . $po_number;
+            } else {
+                $note = 'PO Number cleared';
+            }
+            $order->add_order_note($note);
+            
+            twintack_manual_payments_log("PO number updated for order {$order_id}: '{$po_number}'");
+            
+            wp_send_json_success(array(
+                'message' => !empty($po_number) ? 'PO Number saved successfully!' : 'PO Number cleared successfully!',
+                'po_number' => $po_number
+            ));
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Error updating PO number for order {$order_id}: " . $e->getMessage(), 'error');
+            wp_send_json_error('Error saving PO number: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Handle AJAX request to generate PDF invoice
+     */
+    public function handle_generate_pdf_invoice() {
+        // Check nonce
+        $order_id = intval($_POST['order_id']);
+        if (!wp_verify_nonce($_POST['nonce'], 'twintack_pdf_invoice_' . $order_id)) {
+            wp_die('Invalid nonce');
+        }
+        
+        // Check permissions
+        if (!current_user_can('edit_shop_orders')) {
+            wp_die('Insufficient permissions');
+        }
+        
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            wp_die('Order not found');
+        }
+        
+        try {
+            // Load PDF generator
+            if (!class_exists('TwinTack_PDF_Invoice_Generator')) {
+                require_once TWINTACK_MANUAL_PAYMENTS_PLUGIN_DIR . 'includes/class-pdf-invoice-generator.php';
+            }
+            
+            $pdf_generator = TwinTack_PDF_Invoice_Generator::get_instance();
+            
+            // Add order note
+            $current_user = wp_get_current_user();
+            $user_name = $current_user->display_name ? $current_user->display_name : $current_user->user_login;
+            $order->add_order_note('PDF invoice generated by admin user: ' . $user_name);
+            
+            twintack_manual_payments_log("PDF invoice generated for order {$order_id} by user " . get_current_user_id());
+            
+            // Generate and download PDF
+            $result = $pdf_generator->generate_invoice($order_id, true);
+            
+            if (is_wp_error($result)) {
+                wp_die('Error generating PDF: ' . $result->get_error_message());
+            }
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Error generating PDF invoice for order {$order_id}: " . $e->getMessage(), 'error');
+            wp_die('Error generating PDF invoice: ' . $e->getMessage());
         }
     }
 } 
