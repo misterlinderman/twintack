@@ -57,7 +57,7 @@
 						<a href="/my-account/orders/">Orders</a>
 						<a href="/my-account/edit-address/">Addresses</a>
 						<a href="/my-account/edit-account/">Account Details</a>
-						<a href="/my-account/customer-logout/">Log out</a>
+						                                              <a href="<?php echo esc_url( twintack_get_logout_url() ); ?>" rel="nofollow" data-no-prefetch data-no-instant>Log out</a>
 					<?php else : ?>
 						<a href="/login">Login/Register</a>
 					<?php endif; ?>

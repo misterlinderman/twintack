@@ -707,6 +707,12 @@ add_filter( 'woocommerce_login_redirect', 'twintack_login_redirect', 10, 2 );
 
 // Process the user type selection during registration
 function twintack_process_registration( $customer_id, $new_customer_data, $password_generated ) {
+    // Debug logging
+    if (WP_DEBUG === true) {
+        error_log('TwinTack Registration: Processing customer ' . $customer_id . ', password_generated: ' . ($password_generated ? 'true' : 'false'));
+        error_log('TwinTack Registration: POST data: ' . print_r($_POST, true));
+    }
+    
     // Check if account_type was submitted
     if ( isset( $_POST['account_type'] ) ) {
         $account_type = sanitize_text_field( $_POST['account_type'] );
@@ -734,8 +740,8 @@ function twintack_process_registration( $customer_id, $new_customer_data, $passw
                 break;
         }
         
-        // Force password generation if it wasn't generated
-        if ( !$password_generated ) {
+        // Only force password generation if it wasn't generated AND this is NOT a checkout registration
+        if ( !$password_generated && !isset($_POST['createaccount']) ) {
             // Generate a password
             $password = wp_generate_password();
             
@@ -746,8 +752,73 @@ function twintack_process_registration( $customer_id, $new_customer_data, $passw
             wp_new_user_notification( $customer_id, null, 'user' );
         }
     }
+    
+    // Handle checkout account creation specifically
+    if ( isset($_POST['createaccount']) && $_POST['createaccount'] == '1' ) {
+        // For checkout registrations, let WooCommerce handle the password generation
+        // We just need to ensure the user gets the proper role
+        if (WP_DEBUG === true) {
+            error_log('TwinTack Registration: Checkout account creation detected, letting WooCommerce handle password');
+        }
+    }
 }
 add_action( 'woocommerce_created_customer', 'twintack_process_registration', 10, 3 );
+
+// Handle checkout account creation redirect
+function twintack_checkout_registration_redirect( $redirect_url, $user ) {
+    // Check if this is a checkout registration
+    if ( isset( $_POST['createaccount'] ) && $_POST['createaccount'] == '1' && !wp_doing_ajax() ) {
+        if (WP_DEBUG === true) {
+            error_log('TwinTack Checkout: Account created during checkout, redirecting to My Account');
+        }
+        // Redirect to My Account page after checkout completion
+        return wc_get_page_permalink( 'myaccount' );
+    }
+    return $redirect_url;
+}
+add_filter( 'woocommerce_registration_redirect', 'twintack_checkout_registration_redirect', 20, 2 );
+
+// Fix WooCommerce email header image path
+function twintack_fix_email_header_image( $img ) {
+    // If the image path is broken or contains Google proxy URLs, use our local logo
+    if ( empty( $img ) || strpos( $img, 'googleusercontent.com' ) !== false || strpos( $img, 'ci3.googleusercontent.com' ) !== false ) {
+        // Use the correct logo path - check if the logo exists
+        $logo_path = get_template_directory_uri() . '/images/twintacklogowhite2.svg';
+        
+        // Fallback to uploads directory if the theme logo doesn't exist
+        if ( !file_exists( get_template_directory() . '/images/twintacklogowhite2.svg' ) ) {
+            $logo_path = wp_upload_dir()['baseurl'] . '/2024/11/twintacklogowhite2.svg';
+        }
+        
+        if (WP_DEBUG === true) {
+            error_log('TwinTack Email: Fixed broken email header image. Original: ' . $img . ' | Fixed: ' . $logo_path);
+        }
+        
+        return $logo_path;
+    }
+    return $img;
+}
+add_filter( 'woocommerce_email_header_image', 'twintack_fix_email_header_image' );
+
+// Include test script for checkout fixes (only for admins)
+if (is_admin() || (current_user_can('manage_options') && isset($_GET['test_checkout_fixes']))) {
+    include_once get_template_directory() . '/../../checkout-account-creation-test.php';
+}
+
+// Ensure new checkout accounts are properly logged in after order completion
+function twintack_auto_login_checkout_customer( $customer_id, $new_customer_data, $password_generated ) {
+    // Only for checkout registrations
+    if ( isset( $_POST['createaccount'] ) && $_POST['createaccount'] == '1' && !is_user_logged_in() ) {
+        // Log the user in automatically
+        wp_set_current_user( $customer_id );
+        wp_set_auth_cookie( $customer_id, true );
+        
+        if (WP_DEBUG === true) {
+            error_log('TwinTack Checkout: Auto-logged in customer ' . $customer_id . ' after checkout account creation');
+        }
+    }
+}
+add_action( 'woocommerce_created_customer', 'twintack_auto_login_checkout_customer', 15, 3 );
 
 // Update login styles to include the password reset forms
 function twintack_login_styles() {
@@ -1557,10 +1628,15 @@ add_action('init', 'twintack_register_woocommerce_endpoints');
  * This ensures account endpoint URLs are properly constructed
  */
 function twintack_fix_account_endpoints($url, $endpoint, $value, $permalink) {
+    // Don't modify logout URLs - they need proper WooCommerce nonce handling
+    if ($endpoint === 'customer-logout') {
+        return $url;
+    }
+    
     // Check if the URL incorrectly contains /login/ for account endpoints
     if (strpos($url, '/login/') !== false && 
         in_array($endpoint, ['orders', 'view-order', 'downloads', 'edit-account', 'edit-address', 
-                             'payment-methods', 'customer-logout', 'add-payment-method', 'grip-designs'])) {
+                             'payment-methods', 'add-payment-method', 'grip-designs'])) {
         
         // Get the my account page URL
         $my_account_url = wc_get_page_permalink('myaccount');
@@ -1611,6 +1687,11 @@ function twintack_force_correct_account_urls() {
     add_filter('woocommerce_get_endpoint_url', function($url, $endpoint, $value, $permalink) use ($account_page_url) {
         // Don't modify lost-password endpoint as that's handled by custom login
         if ($endpoint === 'lost-password') {
+            return $url;
+        }
+        
+        // Don't modify logout URLs - they need proper WooCommerce nonce handling
+        if ($endpoint === 'customer-logout') {
             return $url;
         }
         
@@ -1781,15 +1862,11 @@ function twintack_fix_account_links_js() {
                 // If we found an endpoint, rebuild the URL
                 if (endpoint) {
                     if (endpoint === 'customer-logout') {
-                        // Special case for logout - keep WC nonce
-                        var logoutUrl = href;
-                        if (logoutUrl.indexOf('?') !== -1) {
-                            // Keep the query string (contains the nonce)
-                            var queryString = logoutUrl.split('?')[1];
-                            link.setAttribute('href', correctAccountBaseUrl + 'customer-logout/?' + queryString);
-                        } else {
-                            link.setAttribute('href', correctAccountBaseUrl + 'customer-logout/');
-                        }
+                        // Special case for logout - preserve the original URL with nonce
+                        // Don't modify logout URLs as they need proper WooCommerce nonce handling
+                        // The footer now uses twintack_get_logout_url() which generates the correct URL
+                        console.log('TwinTack: Skipping logout URL modification to preserve nonce');
+                        return; // Don't modify logout links
                     } else {
                         // Regular endpoints
                         link.setAttribute('href', correctAccountBaseUrl + endpoint + '/');
@@ -1807,6 +1884,47 @@ function twintack_fix_account_links_js() {
     <?php
 }
 add_action('wp_footer', 'twintack_fix_account_links_js');
+
+// Removed complex prefetch blocking - the real issue was security plugin misidentifying logout as checkout
+
+// Removed server-level prefetch blocking - not needed since we fixed the root cause
+
+
+/**
+ * Get proper logout URL - tries to use WooCommerce function if available, falls back to WordPress
+ * This ensures we always have a working logout URL regardless of loading order
+ */
+if (!function_exists('twintack_get_logout_url')) {
+    function twintack_get_logout_url($redirect_url = '') {
+        // First, try to ensure WooCommerce template functions are loaded
+        if (class_exists('WooCommerce') && !function_exists('wc_logout_url')) {
+            $wc_template_functions = WP_PLUGIN_DIR . '/woocommerce/includes/wc-template-functions.php';
+            if (file_exists($wc_template_functions)) {
+                include_once $wc_template_functions;
+            }
+        }
+        
+        // If WooCommerce logout function is available, use it
+        if (function_exists('wc_logout_url')) {
+            return wc_logout_url($redirect_url);
+        }
+        
+        // Fallback to WordPress logout with proper redirect
+        if (empty($redirect_url)) {
+            $redirect_url = home_url();
+            
+            // If WooCommerce is active, redirect to My Account page
+            if (function_exists('wc_get_page_permalink')) {
+                $myaccount_page = wc_get_page_permalink('myaccount');
+                if ($myaccount_page) {
+                    $redirect_url = $myaccount_page;
+                }
+            }
+        }
+        
+        return wp_logout_url($redirect_url);
+    }
+}
 
 /**
  * Function to flush rewrite rules when needed

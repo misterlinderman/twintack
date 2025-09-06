@@ -52,7 +52,7 @@ class TwinTack_Security_Core {
         
         // WooCommerce registration hooks
         add_action('woocommerce_register_post', array($this, 'validate_woo_registration'), 10, 3);
-        add_filter('woocommerce_registration_errors', array($this, 'validate_woo_registration_errors'), 10, 4);
+        add_filter('woocommerce_registration_errors', array($this, 'validate_woo_registration_errors'), 10, 3);
         
         // Comment hooks (optional protection)
         add_filter('pre_comment_approved', array($this, 'validate_comment'), 10, 2);
@@ -157,6 +157,14 @@ class TwinTack_Security_Core {
             return;
         }
 
+        // Skip validation for checkout registrations
+        if ($this->is_checkout_registration()) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('TwinTack Security: BYPASSING woocommerce_register_post validation for checkout');
+            }
+            return;
+        }
+
         $validation_result = $this->validate_user_data($username, $email);
         
         if (is_wp_error($validation_result)) {
@@ -184,15 +192,38 @@ class TwinTack_Security_Core {
      * @param WP_Error $errors Registration errors
      * @param string $username Username
      * @param string $password Password
-     * @param string $email Email
+     * @param string $email Email (optional - may not be passed by all WooCommerce hooks)
      * @return WP_Error
      */
-    public function validate_woo_registration_errors($errors, $username, $password, $email) {
+    public function validate_woo_registration_errors($errors, $username, $password, $email = '') {
         if (!$this->is_security_enabled()) {
             return $errors;
         }
 
-        $validation_result = $this->validate_user_data($username, $email);
+        // Handle different parameter patterns from WooCommerce
+        // Sometimes email is passed as the 3rd parameter instead of password
+        if (empty($email) && is_email($password)) {
+            $email = $password;
+        }
+
+        // Skip rate limiting for checkout registrations to avoid blocking legitimate customers
+        $is_checkout = $this->is_checkout_registration();
+        
+        // Debug logging
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('TwinTack Security: WooCommerce registration validation - Is checkout: ' . ($is_checkout ? 'Yes' : 'No'));
+            error_log('TwinTack Security: Username: ' . $username . ' | Email: ' . $email);
+        }
+        
+        // Skip security validation for legitimate checkout registrations
+        if ($is_checkout) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('TwinTack Security: Allowing checkout registration to proceed without security validation');
+            }
+            return $errors;
+        }
+        
+        $validation_result = $this->validate_user_data($username, $email, $is_checkout);
         
         if (is_wp_error($validation_result)) {
             $errors->add(
@@ -205,19 +236,74 @@ class TwinTack_Security_Core {
     }
 
     /**
+     * Check if this is a checkout registration (not a regular registration form)
+     *
+     * @return bool
+     */
+    private function is_checkout_registration() {
+        // FIRST: Exclude logout requests - they should never be treated as checkout registrations
+        if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'customer-logout') !== false) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('TwinTack Security: Logout request detected - NOT checkout registration');
+            }
+            return false;
+        }
+        
+        // Multiple detection methods for checkout registration
+        
+        // Method 1: WooCommerce AJAX checkout
+        if (isset($_POST['wc-ajax']) && $_POST['wc-ajax'] === 'checkout') {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('TwinTack Security: Detected checkout via wc-ajax parameter');
+            }
+            return true;
+        }
+        
+        // Method 2: Check for checkout-specific fields
+        if (isset($_POST['createaccount']) && $_POST['createaccount'] == '1') {
+            return true;
+        }
+        
+        // Method 3: Check referrer/current page (but exclude logout)
+        if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'checkout') !== false) {
+            return true;
+        }
+        
+        // Method 4: Check for WooCommerce checkout nonce (but be more specific)
+        if (isset($_POST['woocommerce-process-checkout-nonce'])) {
+            return true;
+        }
+        
+        // Method 5: Check action parameter
+        if (isset($_POST['action']) && $_POST['action'] === 'woocommerce_checkout') {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
      * Core validation logic for user data
      *
      * @param string $username Username
      * @param string $email Email
+     * @param bool $skip_rate_limit Skip rate limiting (for checkout registrations)
      * @return bool|WP_Error True if valid, WP_Error if blocked
      */
-    private function validate_user_data($username, $email) {
-        // Rate limiting check
-        if ($this->is_rate_limited()) {
+    private function validate_user_data($username, $email, $skip_rate_limit = false) {
+        // Rate limiting check (skip for checkout registrations)
+        if (!$skip_rate_limit && $this->is_rate_limited()) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('TwinTack Security: Rate limiting triggered - blocking registration attempt');
+            }
             return new WP_Error(
                 'rate_limited',
                 'Too many registration attempts. Please try again later.'
             );
+        } elseif ($skip_rate_limit) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('TwinTack Security: Rate limiting SKIPPED for checkout registration');
+            }
         }
 
         // SMS gateway email blocking
