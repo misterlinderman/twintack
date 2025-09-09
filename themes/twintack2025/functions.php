@@ -7,6 +7,8 @@
  * @package twintack2025
  */
 
+// REMOVED: Temporary checkout error logger (issue found and fixed)
+
 if ( ! defined( '_S_VERSION' ) ) {
 	// Replace the version number of the theme on each release.
 	define( '_S_VERSION', '1.0.0' );
@@ -765,7 +767,7 @@ function twintack_process_registration( $customer_id, $new_customer_data, $passw
 add_action( 'woocommerce_created_customer', 'twintack_process_registration', 10, 3 );
 
 // Handle checkout account creation redirect
-function twintack_checkout_registration_redirect( $redirect_url, $user ) {
+function twintack_checkout_registration_redirect( $redirect_url, $user = null ) {
     // Check if this is a checkout registration
     if ( isset( $_POST['createaccount'] ) && $_POST['createaccount'] == '1' && !wp_doing_ajax() ) {
         if (WP_DEBUG === true) {
@@ -776,7 +778,7 @@ function twintack_checkout_registration_redirect( $redirect_url, $user ) {
     }
     return $redirect_url;
 }
-add_filter( 'woocommerce_registration_redirect', 'twintack_checkout_registration_redirect', 20, 2 );
+add_filter( 'woocommerce_registration_redirect', 'twintack_checkout_registration_redirect', 20, 1 );
 
 // Fix WooCommerce email header image path
 function twintack_fix_email_header_image( $img ) {
@@ -800,10 +802,7 @@ function twintack_fix_email_header_image( $img ) {
 }
 add_filter( 'woocommerce_email_header_image', 'twintack_fix_email_header_image' );
 
-// Include test script for checkout fixes (only for admins)
-if (is_admin() || (current_user_can('manage_options') && isset($_GET['test_checkout_fixes']))) {
-    include_once get_template_directory() . '/../../checkout-account-creation-test.php';
-}
+// Include test script for checkout fixes (only for admins) - REMOVED: File no longer exists
 
 // Ensure new checkout accounts are properly logged in after order completion
 function twintack_auto_login_checkout_customer( $customer_id, $new_customer_data, $password_generated ) {
@@ -1451,8 +1450,21 @@ add_action( 'template_redirect', 'twintack_redirect_account_page' );
 
 // Add registration success redirection
 function twintack_registration_redirect( $redirect_to ) {
-    // Modify only if this is a registration
+    // Only modify if this is a registration
     if ( isset( $_POST['register'] ) ) {
+        // Check if there's a specific redirect_to parameter
+        if ( isset( $_REQUEST['redirect_to'] ) && ! empty( $_REQUEST['redirect_to'] ) ) {
+            $redirect_url = $_REQUEST['redirect_to'];
+            // Make sure it's a safe URL (on the same domain)
+            if ( wp_validate_redirect( $redirect_url ) ) {
+                if (WP_DEBUG === true) {
+                    error_log('TwinTack Registration: Using redirect_to parameter: ' . $redirect_url);
+                }
+                return $redirect_url;
+            }
+        }
+        
+        // Default fallback - redirect to login with success message
         return add_query_arg( 'registered', 'success', site_url( '/login/' ) );
     }
     

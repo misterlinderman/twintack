@@ -43,7 +43,10 @@ class TwinTack_Security_Email_Validator {
     }
 
     /**
-     * Comprehensive email validation
+     * Comprehensive email validation (Updated to be less aggressive)
+     * 
+     * This validation is now focused primarily on blocking phone-number related
+     * emails and obvious spam patterns, rather than being overly broad.
      *
      * @param string $email Email address to validate
      * @param string $username Username (optional)
@@ -61,11 +64,17 @@ class TwinTack_Security_Email_Validator {
 
         // Check for numeric-only email username (phone numbers)
         if ($this->is_numeric_email($email)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("TwinTack Security: Blocked numeric email pattern: $email");
+            }
             return new WP_Error('numeric_email_blocked', 'Numeric email addresses are not allowed');
         }
 
         // Check for suspicious patterns
         if ($this->has_suspicious_patterns($email)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("TwinTack Security: Blocked suspicious email pattern: $email");
+            }
             return new WP_Error('suspicious_pattern', 'Email pattern not allowed');
         }
 
@@ -100,17 +109,19 @@ class TwinTack_Security_Email_Validator {
 
         $local_part = $email_parts[0];
 
-        // Check for purely numeric local part (10-15 digits for phone numbers)
+        // Only block if it's clearly a phone number pattern
+        // Be more specific to avoid blocking legitimate numeric usernames
+
+        // Check for purely numeric local part that looks like a phone number (10-15 digits)
         if (preg_match('/^\d{10,15}$/', $local_part)) {
             return true;
         }
 
-        // Check for phone number patterns with common separators
+        // Check for obvious phone number patterns with separators
         $phone_patterns = array(
-            '/^\d{3}[-.]?\d{3}[-.]?\d{4}$/',     // 123-456-7890, 123.456.7890, 1234567890
-            '/^\d{3}\s?\d{3}\s?\d{4}$/',        // 123 456 7890
-            '/^\+?1[-.]?\d{3}[-.]?\d{3}[-.]?\d{4}$/', // +1-123-456-7890
-            '/^\(\d{3}\)\s?\d{3}[-.]?\d{4}$/',  // (123) 456-7890
+            '/^\d{3}[-.]?\d{3}[-.]?\d{4}$/',     // 123-456-7890, 123.456.7890, 1234567890 (US format)
+            '/^\+1[-.]?\d{3}[-.]?\d{3}[-.]?\d{4}$/', // +1-123-456-7890 (US with country code)
+            '/^\(\d{3}\)\s?\d{3}[-.]?\d{4}$/',  // (123) 456-7890 (US with parentheses)
         );
 
         foreach ($phone_patterns as $pattern) {
@@ -119,11 +130,13 @@ class TwinTack_Security_Email_Validator {
             }
         }
 
+        // Don't block shorter numeric strings or mixed alphanumeric
+        // This allows legitimate usernames like "user123" or "john2024"
         return false;
     }
 
     /**
-     * Check for suspicious email patterns
+     * Check for suspicious email patterns (focused on phone-related patterns only)
      *
      * @param string $email Email address
      * @return bool
@@ -137,30 +150,38 @@ class TwinTack_Security_Email_Validator {
         $local_part = $email_parts[0];
         $domain = $email_parts[1];
 
-        // Pattern 1: Very short local parts with numbers (likely auto-generated)
-        if (strlen($local_part) <= 3 && preg_match('/\d/', $local_part)) {
+        // ONLY block patterns that are clearly phone-number related or SMS gateways
+        // This is much more targeted than the previous version
+
+        // Pattern 1: Very short local parts that are purely numeric (likely phone fragments)
+        if (strlen($local_part) <= 4 && preg_match('/^\d+$/', $local_part)) {
             return true;
         }
 
-        // Pattern 2: Local part is purely random characters (common in spam)
-        if (preg_match('/^[a-z0-9]{20,}$/', $local_part)) {
+        // Pattern 2: Extremely long random alphanumeric strings (30+ chars, likely auto-generated)
+        if (preg_match('/^[a-z0-9]{30,}$/', $local_part)) {
             return true;
         }
 
-        // Pattern 3: Repetitive patterns
-        if (preg_match('/(.)\1{4,}/', $local_part)) { // Same character repeated 5+ times
-            return true;
+        // Pattern 3: Obvious phone number patterns in local part
+        $phone_patterns = array(
+            '/^\d{10}$/',           // Exactly 10 digits (US phone number)
+            '/^\d{11}$/',           // Exactly 11 digits (US phone with country code)
+            '/^\+1\d{10}$/',        // +1 followed by 10 digits
+            '/^\d{3}-?\d{3}-?\d{4}$/', // Standard US phone format
+        );
+
+        foreach ($phone_patterns as $pattern) {
+            if (preg_match($pattern, $local_part)) {
+                return true;
+            }
         }
 
-        // Pattern 4: Common spam patterns
+        // Pattern 4: Only block extremely obvious spam/test patterns
         $spam_patterns = array(
-            '/^(test|temp|fake|spam|dummy|example)\d*$/',
+            '/^(test|temp|fake|spam|dummy)\d*$/',  // Removed 'example' as it's too broad
             '/^no[-_]?reply$/',
             '/^donotreply$/',
-            '/^bounce$/',
-            '/^postmaster$/',
-            '/^abuse$/',
-            '/^(admin|administrator)\d*$/',
         );
 
         foreach ($spam_patterns as $pattern) {
@@ -169,20 +190,14 @@ class TwinTack_Security_Email_Validator {
             }
         }
 
-        // Pattern 5: Check for suspicious domain patterns
+        // Pattern 5: Only block domains that are clearly temporary/disposable
+        // Removed most patterns to be less aggressive - these will be handled by disposable email check
         $suspicious_domain_patterns = array(
-            '/^temp/',
-            '/^fake/',
-            '/^spam/',
-            '/\.tmp$/',
-            '/\.temp$/',
-            '/\.test$/',
-            '/example\.com$/',
-            '/mailinator/',
-            '/guerrillamail/',
-            '/10minutemail/',
-            '/disposable/',
-            '/throwaway/'
+            '/^temp\./',            // temp.domain.com
+            '/^fake\./',            // fake.domain.com  
+            '/\.tmp$/',             // domain.tmp
+            '/\.temp$/',            // domain.temp
+            '/example\.com$/',      // Keep example.com as it's a reserved domain
         );
 
         foreach ($suspicious_domain_patterns as $pattern) {
@@ -270,14 +285,18 @@ class TwinTack_Security_Email_Validator {
     private function is_disposable_email_domain($domain) {
         $disposable_domains = $this->get_disposable_email_domains();
         
-        // Check exact match
+        // Check exact match only - be more conservative
         if (in_array($domain, $disposable_domains, true)) {
             return true;
         }
 
-        // Check for subdomain matches
+        // Only check for very specific subdomain patterns to avoid false positives
+        // Be much more careful with substring matches
         foreach ($disposable_domains as $disposable_domain) {
-            if (strpos($domain, $disposable_domain) !== false) {
+            // Only match if it ends with the disposable domain (proper subdomain)
+            if ($domain !== $disposable_domain && 
+                (strpos($domain, '.' . $disposable_domain) !== false && 
+                 substr($domain, -(strlen($disposable_domain) + 1)) === '.' . $disposable_domain)) {
                 return true;
             }
         }
