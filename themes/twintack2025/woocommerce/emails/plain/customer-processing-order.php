@@ -32,7 +32,7 @@ if ( $email_improvements_enabled ) {
 	echo esc_html__( 'Here's a reminder of what you've ordered:', 'woocommerce' ) . "\n\n";
 } else {
 	/* translators: %s: Order number */
-	echo sprintf( esc_html__( 'Just to let you know &mdash; we\'ve received your order #%s, and it is now being processed:', 'woocommerce' ), esc_html( $order->get_order_number() ) ) . "\n\n";
+	echo sprintf( esc_html__( 'Just to let you know &mdash; we have received your order #%s, and it is now being processed:', 'woocommerce' ), esc_html( $order->get_order_number() ) ) . "\n\n";
 }
 
 /*

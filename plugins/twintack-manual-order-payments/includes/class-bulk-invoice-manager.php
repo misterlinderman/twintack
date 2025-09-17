@@ -523,8 +523,10 @@ class TwinTack_Bulk_Invoice_Manager {
             'Billing Address',
             'Shipping Address',
             'Payment Method',
+            'Order Subtotal',
+            'Order Tax',
             'Order Total',
-            'Items',
+            'Items with Actual Prices',
             'Shippo Status',
             'Tracking Number',
             'Notes'
@@ -574,12 +576,45 @@ class TwinTack_Bulk_Invoice_Manager {
             $order->get_shipping_country()
         )));
         
-        // Get items
+        // Get items with actual charged prices (not MSRP)
         $items = array();
         foreach ($order->get_items() as $item) {
             $product_name = $item->get_name();
             $quantity = $item->get_quantity();
-            $items[] = $quantity > 1 ? "{$product_name} (×{$quantity})" : $product_name;
+            
+            // Get the actual price charged to customer (wholesale/dropship rate)
+            $line_total = $item->get_total(); // This is the actual amount charged
+            $line_subtotal = $item->get_subtotal(); // Before discounts
+            $unit_price = $quantity > 0 ? ($line_total / $quantity) : 0;
+            
+            // Format the item with actual pricing
+            $item_string = $product_name;
+            if ($quantity > 1) {
+                $item_string .= " (×{$quantity})";
+            }
+            $item_string .= " - $" . number_format($unit_price, 2) . " each";
+            if ($line_total != $line_subtotal) {
+                $item_string .= " (Line Total: $" . number_format($line_total, 2) . ")";
+            } else {
+                $item_string .= " (Total: $" . number_format($line_total, 2) . ")";
+            }
+            
+            // Add any item meta (variations, custom options, etc.)
+            $meta_data = $item->get_meta_data();
+            if (!empty($meta_data)) {
+                $meta_info = array();
+                foreach ($meta_data as $meta) {
+                    // Skip internal meta fields
+                    if (!in_array($meta->key, array('_qty', '_product_id', '_variation_id', '_line_subtotal', '_line_total', '_line_tax'))) {
+                        $meta_info[] = $meta->display_key . ': ' . $meta->display_value;
+                    }
+                }
+                if (!empty($meta_info)) {
+                    $item_string .= ' [' . implode(', ', $meta_info) . ']';
+                }
+            }
+            
+            $items[] = $item_string;
         }
         $items_string = implode('; ', $items);
         
@@ -614,8 +649,10 @@ class TwinTack_Bulk_Invoice_Manager {
             $billing_address,
             $shipping_address,
             $order->get_payment_method_title(),
-            $order->get_total(),
-            $items_string,
+            wc_format_decimal($order->get_subtotal(), 2), // Subtotal (before tax/shipping)
+            wc_format_decimal($order->get_total_tax(), 2), // Tax amount
+            wc_format_decimal($order->get_total(), 2), // Final total (actual amount charged)
+            $items_string, // Items with actual charged prices (wholesale/dropship rates)
             $shippo_status,
             $tracking_number,
             $notes

@@ -35,7 +35,7 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 <p><?php printf( esc_html__( 'Hi %s,', 'woocommerce' ), esc_html( $user_login ) ); ?></p>
 <?php if ( $email_improvements_enabled ) : ?>
 	<?php /* translators: %s: Site title */ ?>
-	<p><?php printf( esc_html__( 'Thanks for creating an account on %s. Here\'s a copy of your user details.', 'woocommerce' ), esc_html( $blogname ) ); ?></p>
+	<p><?php printf( esc_html__( 'Thanks for creating an account on %s. Here is a copy of your user details.', 'woocommerce' ), esc_html( $blogname ) ); ?></p>
 	<div class="hr hr-top"></div>
 	<?php /* translators: %s: Username */ ?>
 	<p><?php echo wp_kses( sprintf( __( 'Username: <b>%s</b>', 'woocommerce' ), esc_html( $user_login ) ), array( 'b' => array() ) ); ?></p>

@@ -34,7 +34,7 @@ $email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improveme
 <p><?php printf( esc_html__( 'Someone has requested a new password for the following account on %s:', 'woocommerce' ), esc_html( wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES ) ) ); ?></p>
 <?php /* translators: %s: Customer username */ ?>
 <p><?php printf( esc_html__( 'Username: %s', 'woocommerce' ), esc_html( $user_login ) ); ?></p>
-<p><?php esc_html_e( 'If you didn\'t make this request, just ignore this email. If you\'d like to proceed:', 'woocommerce' ); ?></p>
+<p><?php esc_html_e( 'If you did not make this request, just ignore this email. If you would like to proceed:', 'woocommerce' ); ?></p>
 <p>
 	<a class="link" href="<?php echo esc_url( add_query_arg( array( 'key' => $reset_key, 'id' => $user_id, 'login' => rawurlencode( $user_login ) ), wc_get_endpoint_url( 'lost-password', '', wc_get_page_permalink( 'myaccount' ) ) ) ); ?>"><?php // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound ?>
 		<?php esc_html_e( 'Click here to reset your password', 'woocommerce' ); ?>

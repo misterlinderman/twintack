@@ -2,6 +2,19 @@
 
 All notable changes to this plugin will be documented in this file.
 
+## 4.5.1 – 2025-01-08
+### Fixed
+- **💰 CSV EXPORT PRICING FIX**: CSV exports now show actual charged prices (wholesale/dropship rates) instead of MSRP
+  - **Enhanced Item Details**: Each item now shows unit price and line total as actually charged to customer
+  - **Separated Pricing Columns**: Added separate columns for Order Subtotal, Tax, and Total for better clarity
+  - **Accurate Financial Reporting**: CSV exports now reflect true revenue and pricing for accounting purposes
+  - **Product Variations**: Includes all product meta data (variations, custom options) in item descriptions
+
+### Enhanced
+- **Improved CSV Structure**: More detailed financial breakdown with subtotal, tax, and total columns
+- **Better Item Formatting**: Items show quantity, unit price, line total, and any custom attributes
+- **Financial Accuracy**: All pricing data reflects actual amounts charged, not catalog/MSRP prices
+
 ## 4.5.0 – 2025-01-08
 ### Added
 - **📄 PDF INVOICE GENERATION**: Professional PDF invoices with complete order details and TwinTack branding
