@@ -49,6 +49,25 @@ PHP Parse error: syntax error, unexpected identifier "ve", expecting ")"
 - **Before:** `'If you didn\'t make this request, just ignore this email. If you\'d like to proceed:'`
 - **After:** `'If you did not make this request, just ignore this email. If you would like to proceed:'`
 
+### 7. `themes/twintack2025/woocommerce/emails/customer-invoice.php`
+**Line 59:**
+- **Before:** `'An order has been created for you on %1$s. Your order details are below, with a link to make payment when you\'re ready: %2$s'`
+- **After:** `'An order has been created for you on %1$s. Your order details are below, with a link to make payment when you are ready: %2$s'`
+
+### 8. `themes/twintack2025/woocommerce/emails/plain/customer-failed-order.php`
+**Lines 26 & 28:**
+- **Before:** `'Unfortunately, we couldn\'t complete your order due to an issue with your payment method.'`
+- **After:** `'Unfortunately, we could not complete your order due to an issue with your payment method.'`
+- **Before:** `'If you\'d like to continue with your purchase, please return to %s and try a different method of payment.'`
+- **After:** `'If you would like to continue with your purchase, please return to %s and try a different method of payment.'`
+
+### 9. `themes/twintack2025/woocommerce/emails/customer-failed-order.php`
+**Lines 37 & 39:**
+- **Before:** `'Unfortunately, we couldn\'t complete your order due to an issue with your payment method.'`
+- **After:** `'Unfortunately, we could not complete your order due to an issue with your payment method.'`
+- **Before:** `'If you\'d like to continue with your purchase, please return to %s and try a different method of payment.'`
+- **After:** `'If you would like to continue with your purchase, please return to %s and try a different method of payment.'`
+
 ## Fix Strategy
 Instead of trying to fix the escaping (which can be complex and error-prone), I replaced the contractions with their full forms:
 - `we've` → `we have`
@@ -56,6 +75,8 @@ Instead of trying to fix the escaping (which can be complex and error-prone), I 
 - `You've` → `You have`
 - `didn't` → `did not`
 - `you'd` → `you would`
+- `you're` → `you are`
+- `couldn't` → `could not`
 
 ## Verification
 - ✅ No linter errors found after fixes

@@ -58,14 +58,6 @@ $password_reset = isset( $_GET['password-reset'] ) && $_GET['password-reset'] ==
 
             <?php do_action( 'woocommerce_login_form' ); ?>
 
-            <?php
-            // Ensure reCAPTCHA fields/scripts are present even if hook order or caching interferes
-            if ( class_exists( 'WPCaptcha_Functions' ) ) {
-                echo WPCaptcha_Functions::captcha_fields( false );
-                echo WPCaptcha_Functions::login_scripts( false );
-            }
-            ?>
-
             <div class="form-row">
                 <?php wp_nonce_field( 'woocommerce-login', 'woocommerce-login-nonce' ); ?>
                 <button type="submit" class="woocommerce-button button woocommerce-form-login__submit" name="login" 
@@ -136,14 +128,6 @@ $password_reset = isset( $_GET['password-reset'] ) && $_GET['password-reset'] ==
 
                 <?php do_action( 'woocommerce_register_form' ); ?>
 
-                <?php
-                // Also ensure reCAPTCHA renders for registration when shown on the same page
-                if ( class_exists( 'WPCaptcha_Functions' ) ) {
-                    echo WPCaptcha_Functions::captcha_fields( false );
-                    echo WPCaptcha_Functions::login_scripts( false );
-                }
-                ?>
-
                 <div class="form-row">
                     <?php wp_nonce_field( 'woocommerce-register', 'woocommerce-register-nonce' ); ?>
                     <button type="submit" class="woocommerce-Button button" name="register" 
@@ -171,5 +155,38 @@ jQuery(document).ready(function($) {
         });
         $(this).toggleClass('active');
     });
+    
+    // Ensure reCAPTCHA is properly initialized
+    // Wait for reCAPTCHA API to be available
+    function initializeRecaptcha() {
+        if (typeof grecaptcha !== 'undefined' && typeof wpcaptcha_captcha === 'function') {
+            // For reCAPTCHA v3, ensure the token is generated before form submission
+            $('form.woocommerce-form-login').on('submit', function(e) {
+                var $form = $(this);
+                var $response = $form.find('input[name="g-recaptcha-response"]');
+                
+                // If reCAPTCHA v3 response field exists but is empty, generate token first
+                if ($response.length && !$response.val()) {
+                    e.preventDefault();
+                    
+                    // Call the reCAPTCHA function and then submit
+                    wpcaptcha_captcha();
+                    
+                    // Wait a moment for token to be set, then submit
+                    setTimeout(function() {
+                        if ($response.val()) {
+                            $form.off('submit').submit();
+                        }
+                    }, 500);
+                }
+            });
+        } else {
+            // Retry initialization after a short delay
+            setTimeout(initializeRecaptcha, 500);
+        }
+    }
+    
+    // Start initialization
+    initializeRecaptcha();
 });
 </script> 

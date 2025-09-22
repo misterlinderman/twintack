@@ -111,7 +111,7 @@ class TwinTack_Grip_Configurator {
                    !document.querySelector('.twintack-grip-login-prompt-wrapper') && 
                    !document.querySelector('.twintack-account-required-wrapper')) {
                     // Create the registration prompt
-                    var registrationHtml = <?php echo json_encode($this->get_registration_html()); ?>;
+                    var registrationHtml = <?php echo wp_json_encode($this->get_registration_html(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
                     
                     // Insert after the target element
                     if (accountRequiredElements[0]) {

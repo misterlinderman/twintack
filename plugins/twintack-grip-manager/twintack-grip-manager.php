@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Grip Manager
  * Description: Manages custom grip orders with Gravity Forms and WooCommerce integration. Features separate post/artwork status, Monday.com integration, customer dashboard display, and configurable volume pricing.
- * Version: 1.6.08
+ * Version: 1.6.11
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -84,6 +84,9 @@ class TwinTack_Grip_Manager {
         // Initialize email notifications
         TwinTack_Grip_Email_Notifications::get_instance();
         
+        // Fix Gravity Forms 2.9.18+ compatibility issues
+        $this->fix_gravity_forms_compatibility();
+        
         // Only add template hijacking prevention for frontend
         if (!is_admin()) {
             // Prevent theme template from hijacking our endpoint
@@ -108,7 +111,7 @@ class TwinTack_Grip_Manager {
     private function maybe_flush_rules() {
         $version_option = 'twintack_grip_manager_version';
         $current_version = get_option($version_option);
-        $plugin_version = '1.6.08';
+        $plugin_version = '1.6.11';
         
         if ($current_version !== $plugin_version) {
             // Force flush rewrite rules
@@ -209,6 +212,151 @@ class TwinTack_Grip_Manager {
         }
         
         return $file;
+    }
+    
+    /**
+     * Fix Gravity Forms 2.9.18+ compatibility issues
+     * Addresses gform object initialization and script loading problems
+     */
+    private function fix_gravity_forms_compatibility() {
+        if (!class_exists('GFForms')) {
+            return;
+        }
+        
+        // Force proper script loading on grip configurator pages
+        add_action('wp_enqueue_scripts', function() {
+            if (is_page() && (
+                strpos($_SERVER['REQUEST_URI'], 'grip-configurator') !== false ||
+                strpos($_SERVER['REQUEST_URI'], 'twintack-custom-grips') !== false ||
+                strpos($_SERVER['REQUEST_URI'], 'custom-grip') !== false
+            )) {
+                // Force load essential Gravity Forms scripts
+                wp_enqueue_script('jquery');
+                wp_enqueue_script('gform_gravityforms');
+                wp_enqueue_script('gform_conditional_logic');
+                
+                // Force load form-specific scripts for grip forms
+                if (function_exists('gravity_form_enqueue_scripts')) {
+                    gravity_form_enqueue_scripts(8, true);  // Original form
+                    gravity_form_enqueue_scripts(9, true);  // New form
+                }
+            }
+        }, 15);
+        
+        // Add gform object initialization directly in wp_head for earlier execution
+        add_action('wp_head', function() {
+            if (is_page() && (
+                strpos($_SERVER['REQUEST_URI'], 'grip-configurator') !== false ||
+                strpos($_SERVER['REQUEST_URI'], 'twintack-custom-grips') !== false ||
+                strpos($_SERVER['REQUEST_URI'], 'custom-grip') !== false
+            )) {
+                echo '<script type="text/javascript">
+                // Initialize gform object immediately for 2.9.18+ compatibility
+                if (typeof window.gform === "undefined") {
+                    window.gform = {
+                        addAction: function(action, callable, priority, tag) {
+                            if (!window.gform.hooks) window.gform.hooks = {};
+                            if (!window.gform.hooks[action]) window.gform.hooks[action] = [];
+                            window.gform.hooks[action].push({callable: callable, priority: priority || 10, tag: tag || ""});
+                        },
+                        addFilter: function(action, callable, priority, tag) {
+                            if (!window.gform.hooks) window.gform.hooks = {};
+                            if (!window.gform.hooks[action]) window.gform.hooks[action] = [];
+                            window.gform.hooks[action].push({callable: callable, priority: priority || 10, tag: tag || ""});
+                        },
+                        applyFilters: function(action, value) {
+                            if (!window.gform.hooks || !window.gform.hooks[action]) return value;
+                            var hooks = window.gform.hooks[action];
+                            hooks.sort(function(a, b) { return a.priority - b.priority; });
+                            for (var i = 0; i < hooks.length; i++) {
+                                value = hooks[i].callable(value);
+                            }
+                            return value;
+                        },
+                        doAction: function(action) {
+                            if (!window.gform.hooks || !window.gform.hooks[action]) return;
+                            var hooks = window.gform.hooks[action];
+                            hooks.sort(function(a, b) { return a.priority - b.priority; });
+                            for (var i = 0; i < hooks.length; i++) {
+                                hooks[i].callable();
+                            }
+                        },
+                        hooks: {},
+                        addHook: function() { return window.gform.addAction.apply(this, arguments); },
+                        removeHook: function() {},
+                        doHook: function() { return window.gform.doAction.apply(this, arguments); },
+                        initializeOnLoaded: function(callback) {
+                            if (typeof callback === "function") {
+                                if (document.readyState === "loading") {
+                                    document.addEventListener("DOMContentLoaded", callback);
+                                } else {
+                                    callback();
+                                }
+                            }
+                            console.log("gform.initializeOnLoaded called");
+                        }
+                    };
+                    console.log("TwinTack Grip Manager: Initialized gform object in wp_head for 2.9.18+ compatibility");
+                }
+                </script>';
+            }
+        }, 5);
+        
+        // Ensure shortcode is properly registered
+        add_action('init', function() {
+            if (!shortcode_exists('gravityform')) {
+                add_shortcode('gravityform', 'gravity_form_shortcode');
+            }
+            
+            // Force Gravity Forms initialization
+            if (method_exists('GFForms', 'loaded')) {
+                GFForms::loaded();
+            }
+        }, 15);
+        
+        // Force hooks output for form functionality
+        add_filter('gform_force_hooks_js_output', '__return_true');
+        
+        // Add additional fallback for inline gform references
+        add_action('wp_footer', function() {
+            if (is_page() && (
+                strpos($_SERVER['REQUEST_URI'], 'grip-configurator') !== false ||
+                strpos($_SERVER['REQUEST_URI'], 'twintack-custom-grips') !== false ||
+                strpos($_SERVER['REQUEST_URI'], 'custom-grip') !== false
+            )) {
+                echo '<script type="text/javascript">
+                // Fallback for any remaining gform undefined errors
+                if (typeof window.gform === "undefined") {
+                    window.gform = {
+                        addAction: function() { console.log("gform.addAction called (fallback)"); },
+                        addFilter: function() { console.log("gform.addFilter called (fallback)"); },
+                        applyFilters: function(action, value) { return value; },
+                        doAction: function() { console.log("gform.doAction called (fallback)"); },
+                        hooks: {},
+                        addHook: function() { console.log("gform.addHook called (fallback)"); },
+                        removeHook: function() {},
+                        doHook: function() { console.log("gform.doHook called (fallback)"); },
+                        initializeOnLoaded: function(callback) {
+                            console.log("gform.initializeOnLoaded called (fallback)");
+                            if (typeof callback === "function") {
+                                if (document.readyState === "loading") {
+                                    document.addEventListener("DOMContentLoaded", callback);
+                                } else {
+                                    callback();
+                                }
+                            }
+                        }
+                    };
+                    console.log("TwinTack Grip Manager: Created fallback gform object in footer");
+                }
+                
+                // Also create global gform reference if needed
+                if (typeof gform === "undefined") {
+                    window.gform = window.gform || {};
+                }
+                </script>';
+            }
+        }, 1);
     }
 }
 
