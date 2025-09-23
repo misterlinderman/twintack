@@ -24,12 +24,13 @@ div.product.type-product.product_cat-baseball, div.product.type-product.product_
     color: var(--color-accent);
 }
 
-/* Product Gallery */
+/* Product Gallery - Enhanced with new carousel */
 .woocommerce-product-gallery {
     position: relative;
     margin-bottom: 3em;
 }
 
+/* Legacy carousel styles - kept for backward compatibility */
 .main-carousel {
     margin-bottom: 20px;
 }
@@ -43,7 +44,7 @@ div.product.type-product.product_cat-baseball, div.product.type-product.product_
     z-index: 9999;
 }
 
-/* Variation Thumbnails */
+/* Variation Thumbnails - Legacy support */
 .variation-thumbnails {
     display: flex;
     gap: 10px;

@@ -495,50 +495,34 @@ function custom_theme_setup() {
     add_theme_support('wc-product-gallery-slider');
 }
 
-add_action('wp_enqueue_scripts', 'custom_product_gallery_scripts');
-function custom_product_gallery_scripts() {
-    if (is_product()) {
-        wp_enqueue_script('flexslider');
-        wp_enqueue_script('zoom');
-        wp_enqueue_script('photoswipe');
-        wp_enqueue_script('photoswipe-ui-default');
-        
-        // Add your custom gallery script if needed
-        wp_enqueue_script('custom-product-gallery', get_template_directory_uri() . '/assets/js/product-gallery.js', array('jquery'), '1.0.0', true);
-    }
-}
-
-function enqueue_product_carousel_scripts() {
+/**
+ * Enqueue product gallery scripts with Slick Carousel
+ * Consolidated function to avoid conflicts between multiple carousel libraries
+ */
+add_action('wp_enqueue_scripts', 'twintack_enqueue_product_gallery_scripts');
+function twintack_enqueue_product_gallery_scripts() {
     if (is_product()) {
         // Enqueue Slick Slider CSS
-        wp_enqueue_style('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css');
-        wp_enqueue_style('slick-theme', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css');
+        wp_enqueue_style('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css', array(), '1.8.1');
+        wp_enqueue_style('slick-theme', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css', array('slick'), '1.8.1');
         
         // Enqueue Slick Slider JS
-        wp_enqueue_script('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js', array('jquery'), null, true);
+        wp_enqueue_script('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js', array('jquery'), '1.8.1', true);
         
-        // Enqueue custom carousel script
-        wp_enqueue_script('product-carousel', get_stylesheet_directory_uri() . '/js/product-carousel.js', array('jquery', 'slick'), null, true);
+        // Enqueue PhotoSwipe for lightbox functionality
+        wp_enqueue_script('photoswipe', 'https://cdn.jsdelivr.net/npm/photoswipe@5.3.4/dist/photoswipe.umd.min.js', array(), '5.3.4', true);
+        wp_enqueue_script('photoswipe-ui-default', 'https://cdn.jsdelivr.net/npm/photoswipe@5.3.4/dist/photoswipe-ui-default.umd.min.js', array('photoswipe'), '5.3.4', true);
+        
+        // Enqueue PhotoSwipe CSS
+        wp_enqueue_style('photoswipe', 'https://cdn.jsdelivr.net/npm/photoswipe@5.3.4/dist/photoswipe.css', array(), '5.3.4');
+        
+        // Enqueue our custom product gallery CSS
+        wp_enqueue_style('twintack-product-gallery', get_stylesheet_directory_uri() . '/css/components/_product-gallery.css', array('slick', 'slick-theme'), '1.0.0');
+        
+        // Enqueue our custom product gallery script
+        wp_enqueue_script('twintack-product-gallery', get_stylesheet_directory_uri() . '/js/product-gallery.js', array('jquery', 'slick', 'photoswipe-ui-default'), '1.0.0', true);
     }
 }
-add_action('wp_enqueue_scripts', 'enqueue_product_carousel_scripts');
-
-function enqueue_product_gallery_scripts() {
-    if (is_product()) {
-        wp_enqueue_style('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css');
-        wp_enqueue_style('slick-theme', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css');
-        wp_enqueue_script('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js', array('jquery'), null, true);
-        wp_enqueue_script('product-carousel', get_stylesheet_directory_uri() . '/js/product-carousel.js', array('jquery', 'slick'), null, true);
-    }
-}
-add_action('wp_enqueue_scripts', 'enqueue_product_gallery_scripts');
-
-function twintack_enqueue_lightbox_scripts() {
-    if (is_product()) {
-        wp_enqueue_script('twintack-product-lightbox', get_stylesheet_directory_uri() . '/js/product-lightbox.js', array('jquery', 'photoswipe-ui-default'), null, true);
-    }
-}
-add_action('wp_enqueue_scripts', 'twintack_enqueue_lightbox_scripts');
 
 function custom_logo_svg() {
     $custom_logo_id = get_theme_mod('custom_logo');

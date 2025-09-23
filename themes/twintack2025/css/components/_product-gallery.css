@@ -1,0 +1,308 @@
+/**
+ * TwinTack Product Gallery Styles
+ * Enhanced carousel with mobile touch support
+ */
+
+/* Main Carousel Container */
+.twintack-product-carousel {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+/* Carousel Slides */
+.twintack-carousel-slides {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.twintack-carousel-slide {
+    position: relative;
+    overflow: hidden;
+}
+
+.twintack-carousel-slide img {
+    width: 100%;
+    height: auto;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.twintack-carousel-slide img:hover {
+    transform: scale(1.02);
+}
+
+/* Carousel Navigation Arrows */
+.twintack-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: var(--color-highlight, #00ff88);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.twintack-carousel-arrow:hover {
+    background: var(--color-text, #333);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.twintack-carousel-arrow svg {
+    display: none; /* Hide SVG arrows, use :before pseudo-elements instead */
+}
+
+/* Arrow icons using :before pseudo-elements */
+.twintack-carousel-arrow::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+.slick-prev.twintack-carousel-arrow {
+    left: 15px;
+}
+
+.slick-prev.twintack-carousel-arrow::before {
+    border-width: 8px 12px 8px 0;
+    border-color: transparent var(--color-primary, #000) transparent transparent;
+    left: 50%;
+    top: 50%;
+    transform: translate(-60%, -50%);
+}
+
+.slick-next.twintack-carousel-arrow {
+    right: 15px;
+}
+
+.slick-next.twintack-carousel-arrow::before {
+    border-width: 8px 0 8px 12px;
+    border-color: transparent transparent transparent var(--color-primary, #000);
+    left: 50%;
+    top: 50%;
+    transform: translate(-40%, -50%);
+}
+
+/* Thumbnails - Disabled */
+.twintack-carousel-thumbnails.slick-initialized.slick-slider {
+    display: none;
+}
+
+.twintack-carousel-thumbnails {
+    margin-top: 15px;
+}
+
+.twintack-carousel-thumb {
+    padding: 0 5px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.twintack-carousel-thumb:hover,
+.twintack-carousel-thumb.slick-current {
+    opacity: 1;
+}
+
+.twintack-carousel-thumb img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+.twintack-carousel-thumb:hover img,
+.twintack-carousel-thumb.slick-current img {
+    border-color: var(--color-highlight, #007cba);
+}
+
+/* Thumbnail Navigation Arrows */
+.twintack-thumb-arrow {
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 3px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 5;
+}
+
+.twintack-thumb-arrow:hover {
+    background: rgba(255, 255, 255, 1);
+}
+
+.twintack-thumb-arrow svg {
+    color: var(--color-text, #333);
+    width: 14px;
+    height: 14px;
+}
+
+/* Slick Carousel Overrides */
+.twintack-product-carousel .slick-dots {
+    display: none !important; /* Hide default dots, we use thumbnails */
+}
+
+.twintack-product-carousel .slick-slide {
+    outline: none;
+}
+
+.twintack-product-carousel .slick-slide:focus {
+    outline: none;
+}
+
+/* Mobile Optimizations */
+@media screen and (max-width: 768px) {
+    .twintack-carousel-arrow {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .twintack-carousel-arrow svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .slick-prev.twintack-carousel-arrow {
+        left: 10px;
+    }
+    
+    .slick-next.twintack-carousel-arrow {
+        right: 10px;
+    }
+    
+    .twintack-carousel-thumbnails {
+        margin-top: 10px;
+    }
+    
+    .twintack-carousel-thumb {
+        padding: 0 3px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .twintack-carousel-arrow {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .twintack-carousel-arrow svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .slick-prev.twintack-carousel-arrow {
+        left: 5px;
+    }
+    
+    .slick-next.twintack-carousel-arrow {
+        right: 5px;
+    }
+}
+
+/* Touch and Swipe Indicators */
+.twintack-carousel-slides::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDJMMTMgNUgxMFYyWk0xMCAxOEwxMyAxNUgxMFYxOFpNMiAxMEw1IDEzVjEwSDJaTTE4IDEwTDE1IDEzVjEwSDE4WiIgZmlsbD0iIzY2NjY2NiIvPgo8L3N2Zz4K') no-repeat center;
+    background-size: contain;
+    opacity: 0.6;
+    z-index: 5;
+    pointer-events: none;
+}
+
+@media screen and (min-width: 769px) {
+    .twintack-carousel-slides::before {
+        display: none;
+    }
+}
+
+/* Loading State */
+.twintack-product-carousel.loading {
+    opacity: 0.7;
+}
+
+.twintack-product-carousel.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--color-highlight, #007cba);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 10;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Accessibility Improvements */
+.twintack-carousel-arrow:focus,
+.twintack-carousel-thumb:focus {
+    outline: 2px solid var(--color-highlight, #007cba);
+    outline-offset: 2px;
+}
+
+.twintack-carousel-slide img:focus {
+    outline: 2px solid var(--color-highlight, #007cba);
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .twintack-carousel-arrow {
+        background: white;
+        border: 2px solid black;
+    }
+    
+    .twintack-carousel-thumb img {
+        border: 2px solid black;
+    }
+    
+    .twintack-carousel-thumb.slick-current img {
+        border-color: var(--color-highlight, #007cba);
+        border-width: 3px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .twintack-carousel-slide img,
+    .twintack-carousel-arrow,
+    .twintack-carousel-thumb {
+        transition: none;
+    }
+    
+    .twintack-carousel-slide img:hover {
+        transform: none;
+    }
+    
+    .twintack-carousel-arrow:hover {
+        transform: translateY(-50%);
+    }
+}
