@@ -39,7 +39,7 @@ class Menu_Configuration {
         // Add Baseball link
         if (!empty($baseball_cats)) {
             $items .= '<li class="menu-item baseball-menu">';
-            $items .= '<a href="' . get_term_link($baseball_cats[0]) . '">Baseball</a>';
+            $items .= '<a href="' . get_term_link($baseball_cats[0]) . '">Bat Grips</a>';
             $items .= '</li>';
         }
 

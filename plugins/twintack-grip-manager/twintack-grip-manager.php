@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Grip Manager
  * Description: Manages custom grip orders with Gravity Forms and WooCommerce integration. Features separate post/artwork status, Monday.com integration, customer dashboard display, and configurable volume pricing.
- * Version: 1.6.11
+ * Version: 1.6.37
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -111,7 +111,7 @@ class TwinTack_Grip_Manager {
     private function maybe_flush_rules() {
         $version_option = 'twintack_grip_manager_version';
         $current_version = get_option($version_option);
-        $plugin_version = '1.6.11';
+        $plugin_version = '1.6.24';
         
         if ($current_version !== $plugin_version) {
             // Force flush rewrite rules
@@ -243,66 +243,14 @@ class TwinTack_Grip_Manager {
             }
         }, 15);
         
-        // Add gform object initialization directly in wp_head for earlier execution
+        // Temporarily disabled - was causing JavaScript output conflicts
+        /*
         add_action('wp_head', function() {
-            if (is_page() && (
-                strpos($_SERVER['REQUEST_URI'], 'grip-configurator') !== false ||
-                strpos($_SERVER['REQUEST_URI'], 'twintack-custom-grips') !== false ||
-                strpos($_SERVER['REQUEST_URI'], 'custom-grip') !== false
-            )) {
-                echo '<script type="text/javascript">
-                // Initialize gform object immediately for 2.9.18+ compatibility
-                if (typeof window.gform === "undefined") {
-                    window.gform = {
-                        addAction: function(action, callable, priority, tag) {
-                            if (!window.gform.hooks) window.gform.hooks = {};
-                            if (!window.gform.hooks[action]) window.gform.hooks[action] = [];
-                            window.gform.hooks[action].push({callable: callable, priority: priority || 10, tag: tag || ""});
-                        },
-                        addFilter: function(action, callable, priority, tag) {
-                            if (!window.gform.hooks) window.gform.hooks = {};
-                            if (!window.gform.hooks[action]) window.gform.hooks[action] = [];
-                            window.gform.hooks[action].push({callable: callable, priority: priority || 10, tag: tag || ""});
-                        },
-                        applyFilters: function(action, value) {
-                            if (!window.gform.hooks || !window.gform.hooks[action]) return value;
-                            var hooks = window.gform.hooks[action];
-                            hooks.sort(function(a, b) { return a.priority - b.priority; });
-                            for (var i = 0; i < hooks.length; i++) {
-                                value = hooks[i].callable(value);
-                            }
-                            return value;
-                        },
-                        doAction: function(action) {
-                            if (!window.gform.hooks || !window.gform.hooks[action]) return;
-                            var hooks = window.gform.hooks[action];
-                            hooks.sort(function(a, b) { return a.priority - b.priority; });
-                            for (var i = 0; i < hooks.length; i++) {
-                                hooks[i].callable();
-                            }
-                        },
-                        hooks: {},
-                        addHook: function() { return window.gform.addAction.apply(this, arguments); },
-                        removeHook: function() {},
-                        doHook: function() { return window.gform.doAction.apply(this, arguments); },
-                        initializeOnLoaded: function(callback) {
-                            if (typeof callback === "function") {
-                                if (document.readyState === "loading") {
-                                    document.addEventListener("DOMContentLoaded", callback);
-                                } else {
-                                    callback();
-                                }
-                            }
-                            console.log("gform.initializeOnLoaded called");
-                        }
-                    };
-                    console.log("TwinTack Grip Manager: Initialized gform object in wp_head for 2.9.18+ compatibility");
-                }
-                </script>';
-            }
+            // Script disabled for debugging
         }, 5);
+        */
         
-        // Ensure shortcode is properly registered
+        // Ensure shortcode is properly registered and basic GF compatibility
         add_action('init', function() {
             if (!shortcode_exists('gravityform')) {
                 add_shortcode('gravityform', 'gravity_form_shortcode');
@@ -314,49 +262,69 @@ class TwinTack_Grip_Manager {
             }
         }, 15);
         
+// Safe minimal script enqueuing for any page with Gravity Form ID 9
+add_action('wp_enqueue_scripts', function() {
+    // Check if this page contains Gravity Form ID 9 (our custom grip form)
+    global $post;
+    $load_script = false;
+    
+    if (is_page() && $post) {
+        // FIRST: Check if page content actually contains our form shortcode
+        if (strpos($post->post_content, '[gravityform id="9"') !== false ||
+            strpos($post->post_content, 'gravityform id="9"') !== false) {
+            $load_script = true;
+            error_log('TwinTack Grip Manager: Loading script because form shortcode found in page content');
+        }
+        // SECOND: Only check specific grip configurator URL if no shortcode found
+        elseif (strpos($_SERVER['REQUEST_URI'], 'grip-configurator') !== false) {
+            $load_script = true;
+            error_log('TwinTack Grip Manager: Loading script because URL contains grip-configurator');
+        }
+        // DO NOT load on general custom grips pages - only on actual form pages
+    }
+    
+    if ($load_script) {
+                // Enqueue a separate JavaScript file instead of inline output
+                wp_enqueue_script(
+                    'twintack-grip-form-support',
+                    plugin_dir_url(__FILE__) . 'assets/js/grip-form-support.js',
+                    array('jquery'),
+                    '1.0.0',
+                    true
+                );
+                
+                // Pass configuration via wp_localize_script (safe method)
+                wp_localize_script('twintack-grip-form-support', 'twintackGripConfig', array(
+                    'formId' => 9,
+                    'debug' => WP_DEBUG,
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                ));
+            }
+        }, 20);
+        
         // Force hooks output for form functionality
         add_filter('gform_force_hooks_js_output', '__return_true');
         
-        // Add additional fallback for inline gform references
+        // Gravity Forms 2.9 Image Choice field conditional logic support
+        // Temporarily disabled to check if this is causing the JavaScript output issue
+        /*
         add_action('wp_footer', function() {
             if (is_page() && (
                 strpos($_SERVER['REQUEST_URI'], 'grip-configurator') !== false ||
                 strpos($_SERVER['REQUEST_URI'], 'twintack-custom-grips') !== false ||
                 strpos($_SERVER['REQUEST_URI'], 'custom-grip') !== false
             )) {
-                echo '<script type="text/javascript">
-                // Fallback for any remaining gform undefined errors
-                if (typeof window.gform === "undefined") {
-                    window.gform = {
-                        addAction: function() { console.log("gform.addAction called (fallback)"); },
-                        addFilter: function() { console.log("gform.addFilter called (fallback)"); },
-                        applyFilters: function(action, value) { return value; },
-                        doAction: function() { console.log("gform.doAction called (fallback)"); },
-                        hooks: {},
-                        addHook: function() { console.log("gform.addHook called (fallback)"); },
-                        removeHook: function() {},
-                        doHook: function() { console.log("gform.doHook called (fallback)"); },
-                        initializeOnLoaded: function(callback) {
-                            console.log("gform.initializeOnLoaded called (fallback)");
-                            if (typeof callback === "function") {
-                                if (document.readyState === "loading") {
-                                    document.addEventListener("DOMContentLoaded", callback);
-                                } else {
-                                    callback();
-                                }
-                            }
-                        }
-                    };
-                    console.log("TwinTack Grip Manager: Created fallback gform object in footer");
-                }
-                
-                // Also create global gform reference if needed
-                if (typeof gform === "undefined") {
-                    window.gform = window.gform || {};
-                }
-                </script>';
+                // Script temporarily disabled for debugging
             }
+        }, 25);
+        */
+        
+        // Temporarily disabled - was causing JavaScript output conflicts
+        /*
+        add_action('wp_footer', function() {
+            // Script disabled for debugging
         }, 1);
+        */
     }
 }
 

@@ -29,7 +29,7 @@
 				<nav class="footer-nav">
 					<a href="/twintack-custom-grips/">Custom Grips</a>
 					<a href="/shop/">Shop All</a>
-					<a href="/shop/?product_cat=baseball">Baseball Grips</a>
+					<a href="/shop/?product_cat=baseball">Bat Grips</a>
 					<a href="/shop/?product_cat=fishing">Fishing Grips</a>
 					<a href="/shop/?product_cat=accessory">Accessories</a>
 				</nav>

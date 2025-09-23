@@ -56,8 +56,8 @@ $url_parts = explode('/', trim($current_url, '/'));
 							<div class="sport-icon">
 								<?php echo file_get_contents(get_template_directory() . '/baseball-icon-3.svg'); ?>
 							</div>
-							<h4>Baseball</h4>
-							<p>Grips, accessories, and custom solutions for baseball</p>
+							<h4>Bat Grips</h4>
+							<p>Grips, accessories, and custom solutions for baseball and softball</p>
 						</a>
 						<a href="/fishing/" class="sport-card fishing">
 							<div class="sport-icon">
