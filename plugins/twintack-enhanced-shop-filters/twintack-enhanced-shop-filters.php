@@ -105,6 +105,10 @@ class TwinTack_Enhanced_Shop_Filters {
         if (get_option('twintack_enable_color_swatches') === false) {
             update_option('twintack_enable_color_swatches', true);
         }
+        
+        if (!get_option('twintack_hidden_categories')) {
+            update_option('twintack_hidden_categories', array('fees', 'uncategorized'));
+        }
     }
     
     /**
@@ -260,6 +264,11 @@ class TwinTack_Enhanced_Shop_Filters {
             'sanitize_callback' => array($this, 'sanitize_checkbox')
         ));
         
+        register_setting('twintack_shop_filters', 'twintack_hidden_categories', array(
+            'default' => array('fees', 'uncategorized'),
+            'sanitize_callback' => array($this, 'sanitize_hidden_categories')
+        ));
+        
         // Settings sections
         add_settings_section('twintack_sorting_section', 'Sorting Options', array($this, 'sorting_section_callback'), 'twintack_shop_filters');
         add_settings_section('twintack_filtering_section', 'Filtering Options', array($this, 'filtering_section_callback'), 'twintack_shop_filters');
@@ -267,6 +276,7 @@ class TwinTack_Enhanced_Shop_Filters {
         // Settings fields
         add_settings_field('twintack_enabled_filters', 'Enabled Filters', array($this, 'enabled_filters_callback'), 'twintack_shop_filters', 'twintack_filtering_section');
         add_settings_field('twintack_filter_display_style', 'Display Style', array($this, 'display_style_callback'), 'twintack_shop_filters', 'twintack_filtering_section');
+        add_settings_field('twintack_hidden_categories', 'Hidden Categories', array($this, 'hidden_categories_callback'), 'twintack_shop_filters', 'twintack_filtering_section');
         add_settings_field('twintack_enable_color_swatches', 'Enable Color Swatches', array($this, 'enable_color_swatches_callback'), 'twintack_shop_filters', 'twintack_filtering_section');
         add_settings_field('twintack_enable_ajax', 'Enable AJAX', array($this, 'enable_ajax_callback'), 'twintack_shop_filters', 'twintack_filtering_section');
         add_settings_field('twintack_custom_sort_options', 'Available Sort Options', array($this, 'sort_options_callback'), 'twintack_shop_filters', 'twintack_sorting_section');
@@ -382,6 +392,30 @@ class TwinTack_Enhanced_Shop_Filters {
         echo '<p class="description">When enabled, color filters will display visual color swatches in addition to the dropdown. When disabled, only the dropdown will be shown.</p>';
     }
     
+    public function hidden_categories_callback() {
+        $hidden_categories = get_option('twintack_hidden_categories', array('fees', 'uncategorized'));
+        
+        // Get all product categories
+        $all_categories = get_terms(array(
+            'taxonomy' => 'product_cat',
+            'hide_empty' => false,
+        ));
+        
+        if (empty($all_categories) || is_wp_error($all_categories)) {
+            echo '<p>No product categories found.</p>';
+            return;
+        }
+        
+        echo '<fieldset>';
+        echo '<p class="description">Select categories to hide from shop filters. These categories will still be functional for custom grip orders and fees, but won\'t appear in the customer-facing filter dropdown.</p>';
+        
+        foreach ($all_categories as $category) {
+            $checked = in_array($category->slug, $hidden_categories) ? 'checked' : '';
+            echo '<label><input type="checkbox" name="twintack_hidden_categories[]" value="' . esc_attr($category->slug) . '" ' . $checked . '> ' . esc_html($category->name) . ' (' . $category->slug . ')</label><br>';
+        }
+        echo '</fieldset>';
+    }
+    
     public function enable_ajax_callback() {
         $enable_ajax = get_option('twintack_enable_ajax', false);
         echo '<input type="checkbox" name="twintack_enable_ajax" value="1" ' . checked($enable_ajax, true, false) . '> Enable AJAX filtering (no page reload)';
@@ -437,6 +471,20 @@ class TwinTack_Enhanced_Shop_Filters {
 
     public function sanitize_checkbox($input) {
         return (bool) $input;
+    }
+    
+    public function sanitize_hidden_categories($input) {
+        if (!is_array($input)) {
+            return array();
+        }
+        
+        // Sanitize each category slug
+        $sanitized = array();
+        foreach ($input as $category_slug) {
+            $sanitized[] = sanitize_title($category_slug);
+        }
+        
+        return array_filter($sanitized); // Remove empty values
     }
     
     /**
@@ -871,6 +919,22 @@ class TwinTack_Enhanced_Shop_Filters {
             return;
         }
         
+        // Get hidden categories from settings
+        $hidden_categories = get_option('twintack_hidden_categories', array('fees', 'uncategorized'));
+        
+        // Filter out hidden categories
+        $visible_categories = array();
+        foreach ($categories as $category) {
+            if (!in_array($category->slug, $hidden_categories)) {
+                $visible_categories[] = $category;
+            }
+        }
+        
+        // If no visible categories after filtering, don't show the filter
+        if (empty($visible_categories)) {
+            return;
+        }
+        
         $current_value = isset($current_filters['product_cat']) ? $current_filters['product_cat'] : '';
         
         echo '<div class="filter-control category-filter">';
@@ -878,7 +942,7 @@ class TwinTack_Enhanced_Shop_Filters {
         echo '<select name="product_cat" id="product_cat" class="filter-select">';
         echo '<option value="">All Categories</option>';
         
-        foreach ($categories as $category) {
+        foreach ($visible_categories as $category) {
             $selected = ($current_value === $category->slug) ? 'selected' : '';
             echo '<option value="' . esc_attr($category->slug) . '" ' . $selected . '>';
             echo esc_html($category->name);
