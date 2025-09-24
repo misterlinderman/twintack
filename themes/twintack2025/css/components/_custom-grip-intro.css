@@ -1,0 +1,411 @@
+/**
+ * Custom Grip Introduction Page Styles
+ * Updated to match the reference design with dark theme and improved visual hierarchy
+ */
+
+/* Main Wrapper */
+.custom-grip-intro-wrapper {
+    background: #000;
+    color: #fff;
+    min-height: 100vh;
+}
+
+.custom-grip-intro-wrapper .main {
+    margin: 0;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                linear-gradient(135deg, #aedd00 0%, #333 50%, #000 100%);
+    padding: 4rem 0;
+    text-align: center;
+    position: relative;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 3px;
+    color: #fff;
+}
+
+.hero-subtitle {
+    font-size: 1.3rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #fff;
+}
+
+/* Process Steps Section */
+.process-section {
+    padding: 4rem 0;
+    background: #111;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 3rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    color: #fff;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #aedd00, #8cc800);
+    border-radius: 2px;
+}
+
+.process-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.process-step {
+    background: #2d2d2d;
+    border-left: 6px solid #aedd00;
+    padding: 2rem;
+    border-radius: 0 12px 12px 0;
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    transition: all 0.3s ease;
+}
+
+.process-step:hover {
+    transform: translateX(10px);
+    box-shadow: -10px 10px 30px rgba(173, 221, 0, 0.2);
+    background: #3d3d3d;
+}
+
+.step-visual {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #444;
+    transition: all 0.3s ease;
+}
+
+.process-step:hover .step-visual {
+    border-color: #aedd00;
+    background: #222;
+}
+
+.step-visual svg {
+    width: 60px;
+    height: 60px;
+    fill: #aedd00;
+    stroke: #aedd00;
+    transition: all 0.3s ease;
+}
+
+.process-step:hover .step-visual svg {
+    transform: scale(1.1);
+}
+
+.step-info {
+    flex: 1;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #aedd00, #8cc800);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(173, 221, 0, 0.3);
+}
+
+.step-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.step-description {
+    color: #ccc;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.step-action {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.btn {
+    background: linear-gradient(135deg, #aedd00, #8cc800);
+    color: #000;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+}
+
+.btn:hover {
+    background: linear-gradient(135deg, #8cc800, #6aa000);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(173, 221, 0, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #666, #444);
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #555, #333);
+    box-shadow: 0 6px 20px rgba(102, 102, 102, 0.4);
+}
+
+.step-status {
+    background: #2d4a2d;
+    color: #aedd00;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    border: 2px solid #aedd00;
+}
+
+.step-highlight {
+    background: linear-gradient(135deg, #aedd00, #8cc800);
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.step-timeline {
+    background: #1a1a1a;
+    color: #aedd00;
+    padding: 8px 16px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-style: italic;
+    border: 1px solid #444;
+}
+
+/* Info Cards Section */
+.info-section {
+    padding: 4rem 0;
+    background: #000;
+}
+
+.info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.info-card {
+    background: #2d2d2d;
+    border: 2px solid #444;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #aedd00, #8cc800);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.info-card:hover {
+    border-color: #aedd00;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(173, 221, 0, 0.2);
+}
+
+.info-card:hover::before {
+    transform: scaleX(1);
+}
+
+.info-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 8px rgba(173, 221, 0, 0.3));
+}
+
+.info-card h3 {
+    font-size: 1.3rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.info-card p {
+    color: #ccc;
+    line-height: 1.6;
+}
+
+/* Call to Action Section */
+.cta-section {
+    background: linear-gradient(135deg, #aedd00 0%, #8cc800 100%);
+    padding: 4rem 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-title {
+    font-size: 2.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    letter-spacing: 2px;
+    color: #000;
+}
+
+.cta-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.8;
+    color: #000;
+}
+
+.cta-button {
+    background: #000;
+    color: #aedd00;
+    padding: 18px 40px;
+    border: 3px solid #000;
+    border-radius: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.cta-button:hover {
+    background: #2d2d2d;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .process-step {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .step-visual {
+        align-self: center;
+    }
+    
+    .step-header {
+        justify-content: center;
+    }
+    
+    .info-cards {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .cta-title {
+        font-size: 2rem;
+    }
+    
+    .container {
+        padding: 0 15px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .process-step {
+        padding: 1.5rem;
+    }
+    
+    .step-visual {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .step-visual svg {
+        width: 50px;
+        height: 50px;
+    }
+}
