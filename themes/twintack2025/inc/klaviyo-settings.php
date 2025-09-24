@@ -33,6 +33,8 @@ function twintack_register_klaviyo_settings() {
 }
 add_action('admin_init', 'twintack_register_klaviyo_settings');
 
+// Klaviyo script loading order fix moved to plugin: twintack-admin-console-fixes
+
 /**
  * Render the Klaviyo settings page
  */

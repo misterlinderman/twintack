@@ -2,8 +2,16 @@
 /**
  * Plugin Name: TwinTack Product Save Bypass
  * Description: Temporarily bypass wholesale plugin interference during product saves
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: TwinTack
+ * Requires at least: 5.8
+ * Tested up to: 6.8
+ * Requires PHP: 7.4
+ * WC requires at least: 6.0
+ * WC tested up to: 9.0
+ * Requires Plugins: woocommerce
+ * 
+ * @package TwinTack_Product_Save_Bypass
  */
 
 // Prevent direct access
@@ -11,11 +19,35 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Declare WooCommerce HPOS compatibility
+add_action('before_woocommerce_init', function() {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
+    }
+});
+
 class TwinTack_Product_Save_Bypass {
     
     private $bypass_active = false;
     
     public function __construct() {
+        // Delay initialization until plugins are loaded
+        add_action('plugins_loaded', array($this, 'init'));
+    }
+    
+    public function init() {
+        // Check if WooCommerce is active
+        if (!class_exists('WooCommerce')) {
+            add_action('admin_notices', array($this, 'woocommerce_missing_notice'));
+            return;
+        }
+        
+        // Check WooCommerce version compatibility
+        if (version_compare(WC()->version, '6.0', '<')) {
+            add_action('admin_notices', array($this, 'woocommerce_version_notice'));
+            return;
+        }
+        
         // Add admin interface
         add_action('admin_menu', array($this, 'add_admin_menu'));
         
@@ -27,6 +59,22 @@ class TwinTack_Product_Save_Bypass {
         
         // Add quick bypass button to product edit pages
         add_action('edit_form_after_title', array($this, 'add_bypass_button'));
+    }
+    
+    public function woocommerce_missing_notice() {
+        ?>
+        <div class="error">
+            <p><strong>TwinTack Product Save Bypass</strong> requires WooCommerce to be installed and activated.</p>
+        </div>
+        <?php
+    }
+    
+    public function woocommerce_version_notice() {
+        ?>
+        <div class="error">
+            <p><strong>TwinTack Product Save Bypass</strong> requires WooCommerce version 6.0 or higher. You are running version <?php echo WC()->version; ?>.</p>
+        </div>
+        <?php
     }
     
     public function add_admin_menu() {

@@ -28,6 +28,7 @@ require_once get_template_directory() . '/inc/class-category-customizer.php';
 require_once get_template_directory() . '/inc/header/class-header-configuration.php';//remove once marquee is working
 require_once get_template_directory() . '/inc/marquee/class-marquee-configuration.php';
 require_once get_template_directory() . '/inc/team/class-team-member.php';
+// Console fixes moved to plugin: twintack-admin-console-fixes
 
 /**
  * Mail header enforcement for deliverability
@@ -358,6 +359,8 @@ function twintack_enqueue_klaviyo_script() {
 	wp_localize_script('twintack-klaviyo-newsletter', 'klaviyoData', $klaviyo_data);
 }
 add_action('wp_enqueue_scripts', 'twintack_enqueue_klaviyo_script');
+
+// Admin console fixes moved to plugin: twintack-admin-console-fixes
 
 /**
  * Load Jetpack compatibility file
