@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Grip Manager
  * Description: Manages custom grip orders with Gravity Forms and WooCommerce integration. Features separate post/artwork status, Monday.com integration, customer dashboard display, and configurable volume pricing.
- * Version: 1.6.37
+ * Version: 1.6.08
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -84,9 +84,6 @@ class TwinTack_Grip_Manager {
         // Initialize email notifications
         TwinTack_Grip_Email_Notifications::get_instance();
         
-        // Fix Gravity Forms 2.9.18+ compatibility issues
-        $this->fix_gravity_forms_compatibility();
-        
         // Only add template hijacking prevention for frontend
         if (!is_admin()) {
             // Prevent theme template from hijacking our endpoint
@@ -111,7 +108,7 @@ class TwinTack_Grip_Manager {
     private function maybe_flush_rules() {
         $version_option = 'twintack_grip_manager_version';
         $current_version = get_option($version_option);
-        $plugin_version = '1.6.24';
+        $plugin_version = '1.6.08';
         
         if ($current_version !== $plugin_version) {
             // Force flush rewrite rules
@@ -212,119 +209,6 @@ class TwinTack_Grip_Manager {
         }
         
         return $file;
-    }
-    
-    /**
-     * Fix Gravity Forms 2.9.18+ compatibility issues
-     * Addresses gform object initialization and script loading problems
-     */
-    private function fix_gravity_forms_compatibility() {
-        if (!class_exists('GFForms')) {
-            return;
-        }
-        
-        // Force proper script loading on grip configurator pages
-        add_action('wp_enqueue_scripts', function() {
-            if (is_page() && (
-                strpos($_SERVER['REQUEST_URI'], 'grip-configurator') !== false ||
-                strpos($_SERVER['REQUEST_URI'], 'twintack-custom-grips') !== false ||
-                strpos($_SERVER['REQUEST_URI'], 'custom-grip') !== false
-            )) {
-                // Force load essential Gravity Forms scripts
-                wp_enqueue_script('jquery');
-                wp_enqueue_script('gform_gravityforms');
-                wp_enqueue_script('gform_conditional_logic');
-                
-                // Force load form-specific scripts for grip forms
-                if (function_exists('gravity_form_enqueue_scripts')) {
-                    gravity_form_enqueue_scripts(8, true);  // Original form
-                    gravity_form_enqueue_scripts(9, true);  // New form
-                }
-            }
-        }, 15);
-        
-        // Temporarily disabled - was causing JavaScript output conflicts
-        /*
-        add_action('wp_head', function() {
-            // Script disabled for debugging
-        }, 5);
-        */
-        
-        // Ensure shortcode is properly registered and basic GF compatibility
-        add_action('init', function() {
-            if (!shortcode_exists('gravityform')) {
-                add_shortcode('gravityform', 'gravity_form_shortcode');
-            }
-            
-            // Force Gravity Forms initialization
-            if (method_exists('GFForms', 'loaded')) {
-                GFForms::loaded();
-            }
-        }, 15);
-        
-// Safe minimal script enqueuing for any page with Gravity Form ID 9
-add_action('wp_enqueue_scripts', function() {
-    // Check if this page contains Gravity Form ID 9 (our custom grip form)
-    global $post;
-    $load_script = false;
-    
-    if (is_page() && $post) {
-        // FIRST: Check if page content actually contains our form shortcode
-        if (strpos($post->post_content, '[gravityform id="9"') !== false ||
-            strpos($post->post_content, 'gravityform id="9"') !== false) {
-            $load_script = true;
-            error_log('TwinTack Grip Manager: Loading script because form shortcode found in page content');
-        }
-        // SECOND: Only check specific grip configurator URL if no shortcode found
-        elseif (strpos($_SERVER['REQUEST_URI'], 'grip-configurator') !== false) {
-            $load_script = true;
-            error_log('TwinTack Grip Manager: Loading script because URL contains grip-configurator');
-        }
-        // DO NOT load on general custom grips pages - only on actual form pages
-    }
-    
-    if ($load_script) {
-                // Enqueue a separate JavaScript file instead of inline output
-                wp_enqueue_script(
-                    'twintack-grip-form-support',
-                    plugin_dir_url(__FILE__) . 'assets/js/grip-form-support.js',
-                    array('jquery'),
-                    '1.0.0',
-                    true
-                );
-                
-                // Pass configuration via wp_localize_script (safe method)
-                wp_localize_script('twintack-grip-form-support', 'twintackGripConfig', array(
-                    'formId' => 9,
-                    'debug' => WP_DEBUG,
-                    'ajaxUrl' => admin_url('admin-ajax.php'),
-                ));
-            }
-        }, 20);
-        
-        // Force hooks output for form functionality
-        add_filter('gform_force_hooks_js_output', '__return_true');
-        
-        // Gravity Forms 2.9 Image Choice field conditional logic support
-        // Temporarily disabled to check if this is causing the JavaScript output issue
-        /*
-        add_action('wp_footer', function() {
-            if (is_page() && (
-                strpos($_SERVER['REQUEST_URI'], 'grip-configurator') !== false ||
-                strpos($_SERVER['REQUEST_URI'], 'twintack-custom-grips') !== false ||
-                strpos($_SERVER['REQUEST_URI'], 'custom-grip') !== false
-            )) {
-                // Script temporarily disabled for debugging
-            }
-        }, 25);
-        */
-        
-        // Temporarily disabled - was causing JavaScript output conflicts
-        /*
-        add_action('wp_footer', function() {
-            // Script disabled for debugging
-        }, 1);
-        */
     }
 }
 

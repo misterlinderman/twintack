@@ -958,3 +958,35 @@ form.woocommerce-ResetPassword .woocommerce-Input, .input-text
     color: var(--color-text);
     font-size: 1.2rem;
 }
+
+/* Cart Coupon and Update Cart Area Styles */
+.woocommerce-cart table.woocommerce-cart-form__contents td.actions {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  
+  /* Mobile responsive - allow wrapping on smaller screens */
+  @media (max-width: 768px) {
+    .woocommerce-cart table.woocommerce-cart-form__contents td.actions {
+      flex-direction: column;
+      gap: 15px;
+    }
+  }
+  
+  
+  /* Inactive/disabled update cart button */
+  .woocommerce-cart table.woocommerce-cart-form__contents td.actions .button[name="update_cart"]:disabled,
+  .woocommerce-cart table.woocommerce-cart-form__contents td.actions .button[name="update_cart"].disabled {
+    background: #6c757d !important;
+    color: var(--color-primary) !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  
+  /* Hover state for active update cart button */
+  .woocommerce-cart table.woocommerce-cart-form__contents td.actions .button[name="update_cart"]:not(:disabled):not(.disabled):hover {
+    background: var(--color-highlight) !important;
+    color: var(--color-primary) !important;
+    transform: translateY(-1px);
+  }

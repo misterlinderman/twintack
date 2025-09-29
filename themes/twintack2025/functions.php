@@ -358,7 +358,187 @@ function twintack_enqueue_klaviyo_script() {
 	// Pass data to the script
 	wp_localize_script('twintack-klaviyo-newsletter', 'klaviyoData', $klaviyo_data);
 }
+// Re-enabled with conditional loading to avoid conflicts on grip form pages
 add_action('wp_enqueue_scripts', 'twintack_enqueue_klaviyo_script');
+
+/**
+ * Clean Grip Form Template - Script Isolation
+ * Prevents marketing scripts from loading on grip configuration pages
+ */
+function twintack_isolate_grip_form_scripts() {
+    // Check if we're using the clean grip form template
+    if (is_page_template('templates/template-gripform-clean.php')) {
+        // Remove all marketing scripts
+        add_action('wp_enqueue_scripts', function() {
+            // Klaviyo
+            wp_dequeue_script('twintack-klaviyo-newsletter');
+            wp_deregister_script('twintack-klaviyo-newsletter');
+            wp_dequeue_style('twintack-klaviyo-styles');
+            wp_deregister_style('twintack-klaviyo-styles');
+            
+            // WP Analytify
+            wp_dequeue_script('analytify-google-analytics');
+            wp_deregister_script('analytify-google-analytics');
+            
+            // Facebook for WooCommerce (disable pixel only)
+            wp_dequeue_script('wc-facebook-pixel');
+            wp_deregister_script('wc-facebook-pixel');
+            
+            // Any other marketing scripts
+            wp_dequeue_script('klaviyo-newsletter');
+            wp_dequeue_script('facebook-pixel');
+            wp_dequeue_script('google-tag-manager');
+        }, 999);
+        
+        // Remove footer marketing scripts
+        add_action('wp_footer', function() {
+            remove_action('wp_footer', 'klaviyo_newsletter_script');
+            remove_action('wp_footer', 'analytify_gtag_script');
+            remove_action('wp_footer', 'wc_facebook_pixel_init');
+        }, 1);
+        
+        // Disable Facebook Pixel on grip form pages only
+        add_filter('wc_facebook_pixel_enabled', '__return_false');
+        add_filter('woocommerce_facebook_pixel_enabled', '__return_false');
+        add_filter('facebook_for_woocommerce_integration_pixel_enabled', '__return_false');
+        add_filter('wc_facebook_pixel_events_enabled', '__return_false');
+        
+        // Block Facebook Pixel script completely
+        add_filter('script_loader_tag', function($tag, $handle, $src) {
+            if (strpos($src, 'connect.facebook.net') !== false || strpos($src, 'fbevents.js') !== false) {
+                return '';
+            }
+            return $tag;
+        }, 10, 3);
+        
+        // Additional Facebook Pixel blocking via output buffering (only for clean template)
+        add_action('template_redirect', function() {
+            if (is_page_template('templates/template-gripform-clean.php')) {
+                ob_start(function($buffer) {
+                    // Remove Facebook Pixel scripts
+                    $buffer = preg_replace('/<script[^>]*src=["\'][^"\']*connect\.facebook\.net[^"\']*["\'][^>]*><\/script>/i', '', $buffer);
+                    $buffer = preg_replace('/<script[^>]*src=["\'][^"\']*fbevents\.js[^"\']*["\'][^>]*><\/script>/i', '', $buffer);
+                    $buffer = preg_replace('/<script[^>]*>.*?fbq\(.*?<\/script>/is', '', $buffer);
+                    return $buffer;
+                });
+            }
+        }, 1);
+        
+        add_action('wp_footer', function() {
+            if (is_page_template('templates/template-gripform-clean.php') && ob_get_level()) {
+                ob_end_flush();
+            }
+        }, 999);
+        
+        // Nuclear option: Disable Facebook for WooCommerce completely
+        add_action('init', function() {
+            if (class_exists('WC_Facebookcommerce_Pixel')) {
+                // Remove the entire Facebook Pixel class
+                remove_action('wp_head', array('WC_Facebookcommerce_Pixel', 'pixel_init_code'));
+                remove_action('wp_footer', array('WC_Facebookcommerce_Pixel', 'pixel_init_code'));
+                remove_action('wp_enqueue_scripts', array('WC_Facebookcommerce_Pixel', 'enqueue_scripts'));
+            }
+        }, 999);
+        
+        // Fix Gravity Forms 2.9.18 Script Loading Order Issue
+        add_action('wp_enqueue_scripts', function() {
+            if (class_exists('GFForms')) {
+                // Ensure Gravity Forms scripts load early and in correct order
+                wp_enqueue_script('gform_gravityforms');
+                wp_enqueue_script('gform_conditional_logic');
+                wp_enqueue_script('gform_placeholder');
+                wp_enqueue_script('gform_json');
+                wp_enqueue_script('gform_utils');
+            }
+        }, 5); // Early priority to load before other scripts
+        
+        // Proper script enqueuing for Gravity Forms fix - runs AFTER all scripts
+        add_action('wp_footer', function() {
+            if (is_page_template('templates/template-gripform-clean.php')) {
+                ?>
+                <script>
+                // Wait for ALL scripts to load, then fix gform
+                window.addEventListener('load', function() {
+                    setTimeout(function() {
+                        console.log("=== Final Gravity Forms Fix ===");
+                        console.log("gform object:", typeof window.gform);
+                        console.log("gform.addAction:", typeof window.gform?.addAction);
+                        
+                        // Fix gform.addAction if missing
+                        if (typeof window.gform !== "undefined" && typeof window.gform.addAction === "undefined") {
+                            console.log("Fixing gform.addAction after all scripts loaded...");
+                            window.gform.addAction = function(hook, callback, priority) {
+                                if (typeof window.jQuery !== "undefined") {
+                                    window.jQuery(document).on("gform_post_render", callback);
+                                }
+                            };
+                            console.log("✓ gform.addAction fixed after all scripts");
+                        }
+                        
+                        // Also fix other methods
+                        if (typeof window.gform !== "undefined") {
+                            if (typeof window.gform.initializeOnLoaded === "undefined") {
+                                window.gform.initializeOnLoaded = function(callback) {
+                                    if (typeof window.jQuery !== "undefined") {
+                                        window.jQuery(document).ready(callback);
+                                    }
+                                };
+                            }
+                            
+                            if (typeof window.gform.addFilter === "undefined") {
+                                window.gform.addFilter = function(hook, callback, priority) {
+                                    return callback;
+                                };
+                            }
+                        }
+                        
+                        // Re-initialize form
+                        var form = document.querySelector("form[id*=\"gform_\"]");
+                        if (form) {
+                            if (typeof window.jQuery !== "undefined") {
+                                window.jQuery(form).trigger("gform_post_render");
+                            }
+                            console.log("✓ Form re-initialized after all scripts:", form.id);
+                        }
+                        
+                        console.log("=== End Final Fix ===");
+                    }, 500); // Wait 500ms after page load
+                });
+                </script>
+                <?php
+            }
+        }, 999);
+    }
+}
+add_action('template_redirect', 'twintack_isolate_grip_form_scripts');
+
+// Gravity Forms 2.9.18 Script Optimization Exclusions
+add_action('init', function() {
+    // Exclude Gravity Forms scripts from optimization plugins
+    if (class_exists('GFForms')) {
+        // WP Rocket exclusions
+        add_filter('rocket_exclude_js', function($excluded_js) {
+            $excluded_js[] = 'gravityforms';
+            $excluded_js[] = 'gform_';
+            $excluded_js[] = 'conditional_logic';
+            return $excluded_js;
+        });
+        
+        // Autoptimize exclusions
+        add_filter('autoptimize_filter_js_exclude', function($excluded_js) {
+            $excluded_js .= ',gravityforms,gform_,conditional_logic';
+            return $excluded_js;
+        });
+        
+        // W3 Total Cache exclusions
+        add_filter('w3tc_minify_js_ignore', function($ignored_js) {
+            $ignored_js[] = 'gravityforms';
+            $ignored_js[] = 'gform_';
+            $ignored_js[] = 'conditional_logic';
+            return $ignored_js;
+        });
+    }
+});
 
 // Admin console fixes moved to plugin: twintack-admin-console-fixes
 
