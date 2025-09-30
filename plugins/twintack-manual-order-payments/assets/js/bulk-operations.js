@@ -236,12 +236,29 @@ jQuery(document).ready(function($) {
      * Initialize enhancements
      */
     function init() {
-        // Check if we're on orders page
-        if ($('#posts-filter').length || $('.woocommerce-orders-list').length) {
+        // Check if we're on orders page using more specific selectors
+        var isOrdersPage = false;
+        
+        // Check for WooCommerce orders page (HPOS)
+        if ($('.woocommerce-orders-list').length) {
+            isOrdersPage = true;
+        }
+        
+        // Check for traditional orders page (posts-filter with shop_order post type)
+        if ($('#posts-filter').length && $('input[name="post_type"]').val() === 'shop_order') {
+            isOrdersPage = true;
+        }
+        
+        // Check for bulk actions specific to orders
+        if ($('select[name="action"] option[value*="twintack_"]').length) {
+            isOrdersPage = true;
+        }
+        
+        if (isOrdersPage) {
             enhanceBulkActions();
         }
         
-        console.log('TwinTack Bulk Operations initialized');
+        console.log('TwinTack Bulk Operations initialized', { isOrdersPage: isOrdersPage });
     }
     
     // Initialize when page loads

@@ -833,8 +833,19 @@ class TwinTack_Bulk_Invoice_Manager {
      * Enqueue admin scripts
      */
     public function enqueue_admin_scripts($hook) {
-        // Load on our admin page and orders pages
-        if (!in_array($hook, array('woocommerce_page_twintack-bulk-operations', 'edit.php', 'woocommerce_page_wc-orders'))) {
+        // Load on our admin page and orders pages only
+        $allowed_hooks = array('woocommerce_page_twintack-bulk-operations', 'woocommerce_page_wc-orders');
+        
+        // Also allow edit.php but only for shop_order post type
+        if ($hook === 'edit.php') {
+            $screen = get_current_screen();
+            if (!$screen || $screen->post_type !== 'shop_order') {
+                return;
+            }
+            $allowed_hooks[] = 'edit.php';
+        }
+        
+        if (!in_array($hook, $allowed_hooks)) {
             return;
         }
         
