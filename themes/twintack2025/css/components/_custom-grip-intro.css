@@ -17,8 +17,8 @@
 /* Container */
 .container {
     max-width: 1200px;
-    margin: 90px auto;
-    padding: 0px 20px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
 /* Hero Section */
@@ -53,7 +53,11 @@
 /* Process Steps Section */
 .process-section {
     padding: 4rem 0;
-    background: #111;
+    background: var(--color-primary);
+}
+
+.process-section .container {
+    background: var(--color-primary);
 }
 
 .section-title {
@@ -65,6 +69,10 @@
     letter-spacing: 2px;
     position: relative;
     color: #fff;
+}
+
+.page-template-page-custom-grip-intro-php h2.section-title {
+    display: none;
 }
 
 .section-title::after {
@@ -96,37 +104,39 @@
     gap: 2rem;
     align-items: flex-start;
     transition: all 0.3s ease;
+    position: relative;
+    flex-direction: row-reverse; /* This puts the icon on the right */
 }
 
 .process-step:hover {
     transform: translateX(10px);
     box-shadow: -10px 10px 30px rgba(173, 221, 0, 0.2);
-    background: #3d3d3d;
 }
 
 .step-visual {
     flex-shrink: 0;
-    width: 100px;
-    height: 100px;
-    background: #1a1a1a;
-    border-radius: 12px;
+    width: 240px;
+    height: 240px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #444;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.step-visual svg {
+    fill: #aedd00;
     transition: all 0.3s ease;
 }
 
 .process-step:hover .step-visual {
     border-color: #aedd00;
-    background: #222;
 }
 
 .step-visual svg {
-    width: 60px;
-    height: 60px;
+    width: 200px;
+    height: 200px;
     fill: #aedd00;
-    stroke: #aedd00;
     transition: all 0.3s ease;
 }
 
@@ -136,6 +146,9 @@
 
 .step-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .step-header {
@@ -146,16 +159,16 @@
 }
 
 .step-number {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #aedd00, #8cc800);
+    width: 50px;
+    height: 50px;
+    background: #aedd00;
     color: #000;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    font-weight: bold;
+    font-size: 1.8rem;
+    font-weight: 900;
     flex-shrink: 0;
     box-shadow: 0 4px 15px rgba(173, 221, 0, 0.3);
 }
@@ -170,79 +183,136 @@
 .step-description {
     color: #ccc;
     margin-bottom: 1.5rem;
-    line-height: 1.6;
+    line-height: 1.4;
+    font-size: 1.2rem !important;
 }
 
 .step-action {
     display: flex;
     gap: 1rem;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .btn {
-    background: linear-gradient(135deg, #aedd00, #8cc800);
-    color: #000;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    text-transform: uppercase;
-    text-decoration: none;
+    background: var(--color-highlight);
+    color: var(--color-primary);
+    padding: 0.618em 1em;
+    border-radius: 3px;
+    font-weight: 800;
+    font-size: 100%;
+    border: 0;
     display: inline-block;
     transition: all 0.3s ease;
-    letter-spacing: 1px;
-    font-size: 0.9rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-style: italic;
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+    line-height: 1;
+    margin: 0;
+    box-shadow: none;
+    text-shadow: none;
+    background-image: none;
 }
 
 .btn:hover {
-    background: linear-gradient(135deg, #8cc800, #6aa000);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(173, 221, 0, 0.4);
+    background: var(--color-secondary);
+    color: var(--color-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #666, #444);
-    color: #fff;
+    background: var(--color-light);
+    color: var(--color-primary);
+    border: 0;
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #555, #333);
-    box-shadow: 0 6px 20px rgba(102, 102, 102, 0.4);
+    background: var(--color-secondary);
+    color: var(--color-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .step-status {
-    background: #2d4a2d;
-    color: #aedd00;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: bold;
-    font-size: 0.9rem;
-    border: 2px solid #aedd00;
+    background: var(--color-highlight);
+    color: var(--color-primary);
+    padding: 0.618em 1em;
+    border-radius: 3px;
+    font-weight: 800;
+    font-size: 100%;
+    border: 0;
+    display: inline-block;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-style: italic;
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+    line-height: 1;
+    margin: 0;
+    box-shadow: none;
+    text-shadow: none;
+    background-image: none;
 }
 
 .step-highlight {
-    background: linear-gradient(135deg, #aedd00, #8cc800);
-    color: #000;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-weight: bold;
-    font-size: 1rem;
+    background: var(--color-highlight);
+    color: var(--color-primary);
+    padding: 0.618em 1em;
+    border-radius: 3px;
+    font-weight: 800;
+    font-size: 100%;
+    border: 0;
+    display: inline-block;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-style: italic;
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+    line-height: 1;
+    margin: 0;
+    box-shadow: none;
+    text-shadow: none;
+    background-image: none;
 }
 
 .step-timeline {
-    background: #1a1a1a;
-    color: #aedd00;
-    padding: 8px 16px;
-    border-radius: 15px;
-    font-size: 0.9rem;
+    background: var(--color-light);
+    color: var(--color-primary);
+    padding: 0.618em 1em;
+    border-radius: 3px;
+    font-weight: 800;
+    font-size: 100%;
+    border: 0;
+    display: inline-block;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-transform: uppercase;
     font-style: italic;
-    border: 1px solid #444;
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+    line-height: 1;
+    margin: 0;
+    box-shadow: none;
+    text-shadow: none;
+    background-image: none;
 }
 
 /* Info Cards Section */
 .info-section {
     padding: 4rem 0;
     background: #000;
+}
+
+.info-section .container {
+    background: var(--color-primary);
 }
 
 .info-cards {
@@ -261,6 +331,10 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+}
+
+.info-card:nth-child(2) {
+    background: white;
 }
 
 .info-card::before {
@@ -286,9 +360,16 @@
 }
 
 .info-icon {
-    font-size: 3rem;
     margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.info-icon svg {
     filter: drop-shadow(0 4px 8px rgba(173, 221, 0, 0.3));
+    width: 200px;
+    height: 140px;
 }
 
 .info-card h3 {
@@ -363,13 +444,14 @@
     }
     
     .process-step {
-        flex-direction: column;
+        flex-direction: column; /* Stack vertically on mobile */
         text-align: center;
         gap: 1.5rem;
     }
     
     .step-visual {
         align-self: center;
+        order: -1; /* Put icon at top on mobile */
     }
     
     .step-header {
@@ -390,6 +472,24 @@
     }
 }
 
+/* Tablet adjustments */
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+    .step-visual {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .step-visual svg {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .info-icon svg {
+        width: 160px;
+        height: 112px;
+    }
+}
+
 @media screen and (max-width: 480px) {
     .hero-title {
         font-size: 2rem;
@@ -400,12 +500,22 @@
     }
     
     .step-visual {
-        width: 80px;
-        height: 80px;
+        width: 120px;
+        height: 120px;
     }
     
     .step-visual svg {
-        width: 50px;
-        height: 50px;
+        width: 100px;
+        height: 100px;
+    }
+    
+    .info-icon svg {
+        width: 120px;
+        height: 84px;
+    }
+    
+    .btn, .step-status {
+        padding: 10px 20px;
+        font-size: 0.8rem;
     }
 }

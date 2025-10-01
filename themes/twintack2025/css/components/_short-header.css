@@ -1,0 +1,85 @@
+/* Short Header Styles */
+
+.short-header {
+    position: relative;
+    /* background: linear-gradient(135deg, #000 0%, #333 100%); */
+    padding: 6rem 0 0rem;
+    /* border-bottom: 2px solid #aedd00; */
+    overflow: hidden;
+}
+
+.header-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.3;
+    z-index: 1;
+}
+
+.header-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+header.short-header .header-content .container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 5rem auto 1.5rem;
+    padding: 0 20px;
+    background-color: var(--color-primary);
+    padding: 0;
+    border-radius: 0.4rem;
+}
+
+.header-title {
+    font-size: 3rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 3px;
+    color: #fff;
+}
+
+.header-description {
+    font-size: 1.3rem;
+    margin-bottom: 0;
+    opacity: 0.9;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #fff;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .short-header {
+        padding: 2rem 0;
+    }
+    
+    .header-title {
+        font-size: 2.5rem;
+        letter-spacing: 2px;
+    }
+    
+    .header-description {
+        font-size: 1.1rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .header-title {
+        font-size: 2rem;
+        letter-spacing: 1px;
+    }
+    
+    .header-description {
+        font-size: 1rem;
+    }
+}
