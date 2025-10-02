@@ -28,8 +28,8 @@ $check_email = isset( $_GET['checkemail'] ) ? sanitize_text_field( $_GET['checke
             <p><?php echo apply_filters( 'woocommerce_lost_password_message', esc_html__( 'Lost your password? Please enter your username or email address. You will receive a link to create a new password via email.', 'woocommerce' ) ); ?></p>
 
             <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-                <label for="user_login"><?php esc_html_e( 'Username or email', 'woocommerce' ); ?></label>
-                <input class="woocommerce-Input woocommerce-Input--text input-text" type="text" name="user_login" id="user_login" autocomplete="username" />
+                <label for="user_login"><?php esc_html_e( 'Username or email', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span><span class="screen-reader-text"><?php esc_html_e( 'Required', 'woocommerce' ); ?></span></label>
+                <input class="woocommerce-Input woocommerce-Input--text input-text" type="text" name="user_login" id="user_login" autocomplete="username" required aria-required="true" />
             </p>
 
             <div class="clear"></div>

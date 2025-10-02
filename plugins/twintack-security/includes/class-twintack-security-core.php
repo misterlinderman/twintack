@@ -99,6 +99,14 @@ class TwinTack_Security_Core {
             return $sanitized_user_login;
         }
 
+        // BYPASS: If this is a lost password request, skip ALL validation
+        if ($this->is_lost_password_request()) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('TwinTack Security: BYPASS in validate_registration - Detected lost password request, skipping ALL security validation');
+            }
+            return $sanitized_user_login;
+        }
+
         // Get the email from registration form - try multiple possible field names
         $user_email = '';
         
@@ -181,6 +189,14 @@ class TwinTack_Security_Core {
         if ($this->is_any_checkout_request()) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('TwinTack Security: EMERGENCY BYPASS in validate_registration_errors - Detected checkout request, skipping ALL security validation');
+            }
+            return $errors;
+        }
+
+        // BYPASS: If this is a lost password request, skip ALL validation
+        if ($this->is_lost_password_request()) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('TwinTack Security: BYPASS in validate_registration_errors - Detected lost password request, skipping ALL security validation');
             }
             return $errors;
         }
@@ -452,6 +468,40 @@ class TwinTack_Security_Core {
             doing_action('woocommerce_before_checkout_process') ||
             doing_action('woocommerce_after_checkout_process') ||
             doing_action('woocommerce_checkout_order_processed')) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if this is a lost password request
+     *
+     * @return bool
+     */
+    private function is_lost_password_request() {
+        // Check URL parameters for lost password action
+        if (isset($_GET['action']) && $_GET['action'] === 'lostpassword') {
+            return true;
+        }
+        
+        // Check REQUEST_URI for lost password paths
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $uri = $_SERVER['REQUEST_URI'];
+            if (strpos($uri, 'lostpassword') !== false || 
+                strpos($uri, 'lost-password') !== false) {
+                return true;
+            }
+        }
+        
+        // Check for lost password form submission
+        if (isset($_POST['wc_reset_password']) && isset($_POST['user_login'])) {
+            return true;
+        }
+        
+        // Check for WordPress lost password form
+        if (isset($_POST['user_login']) && !isset($_POST['user_email']) && !isset($_POST['register'])) {
+            // This is likely a lost password form (has user_login but no email or register fields)
             return true;
         }
         

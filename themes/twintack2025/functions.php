@@ -1737,6 +1737,7 @@ add_action('retrieve_password', 'twintack_debug_password_reset');
 // Include the password reset helper functions
 require_once get_template_directory() . '/inc/password-reset-helper.php';
 
+
 /**
  * Enqueue password reset script
  */

@@ -141,50 +141,57 @@ if ( isset( $_POST['wc_reset_password'] ) && isset( $_POST['reset_key'] ) && iss
 
 // Handle lost password request
 if ( isset( $_POST['wc_reset_password'] ) && isset( $_POST['user_login'] ) && !isset( $_POST['reset_key'] ) ) {
-    // Process lost password
-    $user_login = sanitize_text_field( wp_unslash( $_POST['user_login'] ) );
+    // Verify nonce for security
+    $nonce_value = wc_get_var( $_REQUEST['woocommerce-lost-password-nonce'], wc_get_var( $_REQUEST['_wpnonce'], '' ) );
     
-    if ( empty( $user_login ) ) {
-        wc_add_notice( __( 'Enter a username or email address.', 'woocommerce' ), 'error' );
+    if ( ! wp_verify_nonce( $nonce_value, 'lost_password' ) ) {
+        wc_add_notice( __( 'Security verification failed. Please try again.', 'woocommerce' ), 'error' );
     } else {
-        // Check if it's a username
-        $user_data = get_user_by( 'login', $user_login );
+        // Process lost password (reCAPTCHA disabled for lost password forms)
+        $user_login = sanitize_text_field( wp_unslash( $_POST['user_login'] ) );
         
-        // If not a username, try email
-        if ( ! $user_data && is_email( $user_login ) ) {
-            $user_data = get_user_by( 'email', $user_login );
-        }
-        
-        if ( $user_data ) {
-            $user_login = $user_data->user_login;
-            // Get new password reset key (a temp key to allow password reset)
-            $key = get_password_reset_key( $user_data );
-            
-            if ( ! is_wp_error( $key ) ) {
-                // Send reset email
-                $reset_url = add_query_arg(
-                    array(
-                        'action' => 'rp',
-                        'key'    => $key,
-                        'login'  => rawurlencode( $user_login ),
-                    ),
-                    site_url( '/login/' )
-                );
-                
-                // Log for debugging
-                error_log('Sending password reset for user: ' . $user_login . ' with key: ' . $key);
-                error_log('Reset URL: ' . $reset_url);
-                
-                // Hooks into the password reset request to send email
-                do_action( 'retrieve_password', $user_login );
-                
-                // Show message
-                wc_add_notice( __( 'Password reset instructions have been sent to your email address.', 'woocommerce' ), 'success' );
-                wp_safe_redirect( add_query_arg( 'checkemail', 'confirm', site_url( '/login/?action=lostpassword' ) ) );
-                exit;
-            }
+        if ( empty( $user_login ) ) {
+            wc_add_notice( __( 'Enter a username or email address.', 'woocommerce' ), 'error' );
         } else {
-            wc_add_notice( __( 'Invalid username or email.', 'woocommerce' ), 'error' );
+            // Check if it's a username
+            $user_data = get_user_by( 'login', $user_login );
+            
+            // If not a username, try email
+            if ( ! $user_data && is_email( $user_login ) ) {
+                $user_data = get_user_by( 'email', $user_login );
+            }
+            
+            if ( $user_data ) {
+                $user_login = $user_data->user_login;
+                // Get new password reset key (a temp key to allow password reset)
+                $key = get_password_reset_key( $user_data );
+                
+                if ( ! is_wp_error( $key ) ) {
+                    // Send reset email
+                    $reset_url = add_query_arg(
+                        array(
+                            'action' => 'rp',
+                            'key'    => $key,
+                            'login'  => rawurlencode( $user_login ),
+                        ),
+                        site_url( '/login/' )
+                    );
+                    
+                    // Log for debugging
+                    error_log('Sending password reset for user: ' . $user_login . ' with key: ' . $key);
+                    error_log('Reset URL: ' . $reset_url);
+                    
+                    // Hooks into the password reset request to send email
+                    do_action( 'retrieve_password', $user_login );
+                    
+                    // Show message
+                    wc_add_notice( __( 'Password reset instructions have been sent to your email address.', 'woocommerce' ), 'success' );
+                    wp_safe_redirect( add_query_arg( 'checkemail', 'confirm', site_url( '/login/?action=lostpassword' ) ) );
+                    exit;
+                }
+            } else {
+                wc_add_notice( __( 'Invalid username or email.', 'woocommerce' ), 'error' );
+            }
         }
     }
 }
