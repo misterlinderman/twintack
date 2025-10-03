@@ -23,6 +23,24 @@ get_header();
             the_post();
             ?>
 
+            <?php
+            // Get ACF fields
+            $page_intro_text = get_field('page_intro_text');
+            $cta_title = get_field('cta_section_title') ?: 'Ready to Get Started?';
+            $cta_subtitle = get_field('cta_section_subtitle') ?: 'Join teams and players nationwide who trust TwinTack for their custom grip needs.';
+            ?>
+
+            <?php if ($page_intro_text) : ?>
+                <!-- Page Introduction -->
+                <section class="intro-section">
+                    <div class="container">
+                        <div class="intro-content">
+                            <?php echo wp_kses_post($page_intro_text); ?>
+                        </div>
+                    </div>
+                </section>
+            <?php endif; ?>
+
             <!-- Process Steps -->
             <section class="process-section">
                 <div class="container">
@@ -293,8 +311,8 @@ get_header();
             <!-- Call to Action -->
             <section class="cta-section">
                 <div class="container">
-                    <h2 class="cta-title">Ready to Get Started?</h2>
-                    <p class="cta-subtitle">Join teams and players nationwide who trust TwinTack for their custom grip needs.</p>
+                    <h2 class="cta-title"><?php echo esc_html($cta_title); ?></h2>
+                    <p class="cta-subtitle"><?php echo esc_html($cta_subtitle); ?></p>
                     <?php if ( !is_user_logged_in() ) : ?>
                         <a href="<?php echo esc_url( wp_registration_url() ); ?>" class="cta-button">Create Account & Start Designing</a>
                     <?php else : ?>

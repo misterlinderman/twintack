@@ -21,6 +21,45 @@
     padding: 0 20px;
 }
 
+/* Intro Section */
+.intro-section {
+    padding: 3rem 0;
+    background: #111;
+    border-bottom: 1px solid #333;
+}
+
+.intro-content {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.intro-content h1,
+.intro-content h2,
+.intro-content h3 {
+    color: #a9ff00;
+    margin-bottom: 1rem;
+}
+
+.intro-content p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    color: #ccc;
+}
+
+.intro-content ul,
+.intro-content ol {
+    text-align: left;
+    max-width: 600px;
+    margin: 0 auto 1.5rem;
+}
+
+.intro-content li {
+    color: #ccc;
+    margin-bottom: 0.5rem;
+}
+
 /* Hero Section */
 .hero-section {
     background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
@@ -174,10 +213,11 @@
 }
 
 .step-title {
-    font-size: 1.4rem;
-    font-weight: bold;
+    font-size: 2.5rem;
+    font-weight: 900;
     text-transform: uppercase;
     color: #fff;
+    margin: 0;
 }
 
 .step-description {
@@ -535,7 +575,22 @@
     }
     
     .btn, .step-status {
-        padding: 10px 20px;
-        font-size: 0.8rem;
+        /* padding: 10px 20px; */
+        /* font-size: 0.8rem; */
+        margin: 0 auto;
+    }
+
+    .step-title {
+        font-size: 2rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #fff;
+        margin: 0;
+        line-height: 1;
+    }
+
+    .process-section {
+        padding: 2.5rem 0 1rem;
+        background: var(--color-primary);
     }
 }
