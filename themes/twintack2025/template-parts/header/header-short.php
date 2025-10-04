@@ -14,7 +14,13 @@ $header_background = get_field('header_background_image');
 
 <header class="short-header">
     <?php if ($header_background) : ?>
-        <div class="header-background" style="background-image: url('<?php echo esc_url($header_background['url']); ?>');"></div>
+        <?php 
+        // Clean the URL to remove problematic parameters
+        $clean_url = $header_background['url'];
+        // Remove any query parameters that might cause QUIC issues
+        $clean_url = strtok($clean_url, '?');
+        ?>
+        <div class="header-background" style="background-image: url('<?php echo esc_url($clean_url); ?>');"></div>
     <?php endif; ?>
     
     <div class="header-content">

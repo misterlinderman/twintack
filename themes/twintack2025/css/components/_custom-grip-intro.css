@@ -15,7 +15,7 @@
 }
 
 /* Container */
-.container {
+.page-template-page-custom-grip-intro-php .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
@@ -265,7 +265,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.btn-secondary {
+.btn, .btn-secondary {
     background: var(--color-text);
     color: var(--color-primary);
     border: 0;
@@ -273,7 +273,7 @@
     font-size: 1.2rem;
 }
 
-.btn-secondary:hover {
+.btn:hover, .btn-secondary:hover {
     background: var(--color-highlight);
     color: var(--color-primary);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);

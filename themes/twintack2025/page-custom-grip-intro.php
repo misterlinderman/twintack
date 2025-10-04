@@ -72,7 +72,12 @@ get_header();
                                 </p>
                                 <div class="step-action">
                                     <?php if ( !is_user_logged_in() ) : ?>
-                                        <a href="<?php echo esc_url( wp_registration_url() ); ?>" class="btn">Create Account</a>
+                                        <?php 
+                                        // Get current page URL for redirect after registration
+                                        $current_page_url = get_permalink();
+                                        $registration_url = add_query_arg( 'redirect_to', urlencode( $current_page_url ), wp_registration_url() );
+                                        ?>
+                                        <a href="<?php echo esc_url( $registration_url ); ?>" class="btn">Create Account</a>
                                     <?php else : ?>
                                         <div class="step-status">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -164,27 +169,7 @@ get_header();
                                     Our internal art team will create professional mockups of your design. Review and approve before we move to production.
                                 </p>
                                 <div class="step-action">
-                                    <?php 
-                                    // Check if user has existing grip designs
-                                    $user_has_designs = false;
-                                    if (is_user_logged_in()) {
-                                        $user_id = get_current_user_id();
-                                        $grip_designs = get_posts(array(
-                                            'post_type' => 'grip-design',
-                                            'author' => $user_id,
-                                            'post_status' => array('publish', 'pending', 'draft'),
-                                            'numberposts' => 1
-                                        ));
-                                        $user_has_designs = !empty($grip_designs);
-                                    }
-                                    ?>
-                                    
-                                    <?php if ($user_has_designs) : ?>
-                                        <a href="/my-account/grip-designs/" class="btn btn-secondary">View My Designs</a>
-                                        <div class="step-timeline">2-3 business days</div>
-                                    <?php else : ?>
-                                        <div class="step-timeline">2-3 business days</div>
-                                    <?php endif; ?>
+                                    <div class="step-timeline">2-3 business days</div>
                                 </div>
                             </div>
                         </div>
@@ -215,7 +200,53 @@ get_header();
                                     Once approved, purchase your grips in quantity breaks of 25. Production begins immediately with a 2-week lead time.
                                 </p>
                                 <div class="step-action">
-                                    <div class="step-timeline">2-week lead time</div>
+                                    <?php 
+                                    // Check if user has existing grip designs
+                                    $user_has_designs = false;
+                                    if (is_user_logged_in()) {
+                                        $current_user = wp_get_current_user();
+                                        $user_id = $current_user->ID;
+                                        $customer_email = $current_user->user_email;
+                                        
+                                        // Query by author (posts created by this user)
+                                        $author_designs = get_posts(array(
+                                            'post_type' => 'grip_design',
+                                            'author' => $user_id,
+                                            'post_status' => array('publish', 'pending', 'draft', 'private'),
+                                            'numberposts' => 1
+                                        ));
+                                        
+                                        // Query by email meta field (posts associated with this email)
+                                        $email_designs = get_posts(array(
+                                            'post_type' => 'grip_design',
+                                            'post_status' => array('publish', 'pending', 'draft', 'private'),
+                                            'meta_query' => array(
+                                                array(
+                                                    'key' => '_grip_customer_email',
+                                                    'value' => $customer_email,
+                                                    'compare' => '='
+                                                )
+                                            ),
+                                            'numberposts' => 1
+                                        ));
+                                        
+                                        // Check if we have any designs from either query
+                                        $user_has_designs = !empty($author_designs) || !empty($email_designs);
+                                        
+                                        // Debug: Log the results
+                                        error_log("Debug Step 5 - User ID: " . $user_id . ", Email: " . $customer_email);
+                                        error_log("Debug Step 5 - Author designs: " . count($author_designs));
+                                        error_log("Debug Step 5 - Email designs: " . count($email_designs));
+                                        error_log("Debug Step 5 - Has designs: " . ($user_has_designs ? 'YES' : 'NO'));
+                                    }
+                                    ?>
+                                    
+                                    <?php if ($user_has_designs) : ?>
+                                        <a href="/my-account/grip-designs/" class="btn btn-secondary">Your Grip Library</a>
+                                        <div class="step-timeline">2-week lead time</div>
+                                    <?php else : ?>
+                                        <div class="step-timeline">2-week lead time</div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -316,7 +347,7 @@ get_header();
                     <?php if ( !is_user_logged_in() ) : ?>
                         <a href="<?php echo esc_url( wp_registration_url() ); ?>" class="cta-button">Create Account & Start Designing</a>
                     <?php else : ?>
-                        <a href="/twintack-custom-grips/" class="cta-button">Start Designing Your Grips</a>
+                        <a href="/twintack-custom-grips/grip-configurator/" class="cta-button">Start Designing Your Grips</a>
                     <?php endif; ?>
                 </div>
             </section>
