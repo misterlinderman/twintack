@@ -333,16 +333,114 @@ class TwinTack_PDF_Invoice_Generator {
             </thead>
             <tbody>';
         
+        // Get wholesale pricing helper
+        $bulk_manager = null;
+        if (class_exists('TwinTack_Bulk_Invoice_Manager')) {
+            $bulk_manager = TwinTack_Bulk_Invoice_Manager::get_instance();
+            twintack_manual_payments_log("PDF Invoice: Bulk manager instance created for order {$order->get_id()}");
+        } else {
+            twintack_manual_payments_log("PDF Invoice: TwinTack_Bulk_Invoice_Manager class not found for order {$order->get_id()}");
+        }
+        
         foreach ($order->get_items() as $item_id => $item) {
             $product = $item->get_product();
             $item_name = $item->get_name();
             $quantity = $item->get_quantity();
-            $unit_price = $order->get_item_subtotal($item, false, true);
-            $total_price = $order->get_line_subtotal($item, false, true);
+            
+            // Get pricing (wholesale if applicable)
+            if ($bulk_manager) {
+                $pricing = $bulk_manager->get_wholesale_item_pricing($order, $item);
+                $unit_price = $pricing['unit_price'];
+                $total_price = $pricing['line_total'];
+                twintack_manual_payments_log("PDF Invoice: Using wholesale pricing for {$item_name} - Unit: $" . $unit_price . ", Total: $" . $total_price . ", Is Wholesale: " . ($pricing['is_wholesale'] ? 'Yes' : 'No'));
+            } else {
+                // Fallback: Try to calculate wholesale pricing directly
+                $customer_id = $order->get_customer_id();
+                $is_wholesale_customer = false;
+                
+                if ($customer_id) {
+                    $user = get_user_by('id', $customer_id);
+                    if ($user) {
+                        // Use WooCommerce Wholesale Prices plugin method to detect wholesale roles
+                        if (class_exists('WWP_Wholesale_Roles')) {
+                            $wholesale_roles = WWP_Wholesale_Roles::getInstance()->getUserWholesaleRole($user);
+                            if (!empty($wholesale_roles) && is_array($wholesale_roles)) {
+                                $is_wholesale_customer = true;
+                                twintack_manual_payments_log("PDF Invoice: Detected wholesale role '{$wholesale_roles[0]}' for customer {$customer_id}");
+                            }
+                        } else {
+                            // Fallback to manual role detection
+                            $user_roles = $user->roles;
+                            foreach ($user_roles as $role) {
+                                if (strpos($role, 'wholesale') !== false || strpos($role, 'drop_ship') !== false) {
+                                    $is_wholesale_customer = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if ($is_wholesale_customer) {
+                    // Calculate wholesale price based on order total
+                    $order_total = $order->get_total();
+                    $shipping_total = $order->get_shipping_total();
+                    $tax_total = $order->get_total_tax();
+                    $actual_subtotal = $order_total - $shipping_total - $tax_total;
+                    $calculated_unit_price = $quantity > 0 ? ($actual_subtotal / $quantity) : 0;
+                    
+                    if ($calculated_unit_price > 0) {
+                        $unit_price = $calculated_unit_price;
+                        $total_price = $calculated_unit_price * $quantity;
+                        twintack_manual_payments_log("PDF Invoice: Using direct wholesale calculation for {$item_name} - Unit: $" . $unit_price . ", Total: $" . $total_price);
+                    } else {
+                        $unit_price = $order->get_item_subtotal($item, false, true);
+                        $total_price = $order->get_line_subtotal($item, false, true);
+                        twintack_manual_payments_log("PDF Invoice: Using original pricing for {$item_name} - Unit: $" . $unit_price . ", Total: $" . $total_price);
+                    }
+                } else {
+                    // Regular customer - use original pricing
+                    $unit_price = $order->get_item_subtotal($item, false, true);
+                    $total_price = $order->get_line_subtotal($item, false, true);
+                    twintack_manual_payments_log("PDF Invoice: Using original pricing for {$item_name} - Unit: $" . $unit_price . ", Total: $" . $total_price);
+                }
+            }
             
             $html .= '<tr>
                 <td style="border: 1px solid #ddd; padding: 12px;">
                     <strong>' . $item_name . '</strong>';
+            
+            // Add wholesale indicator if applicable
+            if ($bulk_manager) {
+                $pricing = $bulk_manager->get_wholesale_item_pricing($order, $item);
+                if ($pricing['is_wholesale']) {
+                    $html .= ' <span style="background: #0073aa; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">WHOLESALE</span>';
+                }
+            } else {
+                // Check if this is a wholesale customer for direct calculation
+                $customer_id = $order->get_customer_id();
+                if ($customer_id) {
+                    $user = get_user_by('id', $customer_id);
+                    if ($user) {
+                        // Use WooCommerce Wholesale Prices plugin method to detect wholesale roles
+                        if (class_exists('WWP_Wholesale_Roles')) {
+                            $wholesale_roles = WWP_Wholesale_Roles::getInstance()->getUserWholesaleRole($user);
+                            if (!empty($wholesale_roles) && is_array($wholesale_roles)) {
+                                $html .= ' <span style="background: #0073aa; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">WHOLESALE</span>';
+                            }
+                        } else {
+                            // Fallback to manual role detection
+                            $user_roles = $user->roles;
+                            foreach ($user_roles as $role) {
+                                if (strpos($role, 'wholesale') !== false || strpos($role, 'drop_ship') !== false) {
+                                    $html .= ' <span style="background: #0073aa; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">WHOLESALE</span>';
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             
             // Add product meta if available
             $meta_data = $item->get_meta_data();
@@ -366,12 +464,29 @@ class TwinTack_PDF_Invoice_Generator {
         $html .= '</tbody>
         </table>';
         
+        // Calculate wholesale subtotal based on actual line items
+        $wholesale_subtotal = 0;
+        foreach ($order->get_items() as $item_id => $item) {
+            if ($bulk_manager) {
+                $pricing = $bulk_manager->get_wholesale_item_pricing($order, $item);
+                $wholesale_subtotal += $pricing['line_total'];
+            } else {
+                // Fallback: calculate based on order total
+                $order_total = $order->get_total();
+                $shipping_total = $order->get_shipping_total();
+                $tax_total = $order->get_total_tax();
+                $actual_subtotal = $order_total - $shipping_total - $tax_total;
+                $wholesale_subtotal = $actual_subtotal;
+                break; // Only need to calculate once for the total
+            }
+        }
+        
         // Order totals
         $html .= '<div style="float: right; width: 300px; margin-bottom: 30px;">
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                     <td style="border-bottom: 1px solid #ddd; padding: 8px; text-align: left;"><strong>Subtotal:</strong></td>
-                    <td style="border-bottom: 1px solid #ddd; padding: 8px; text-align: right;">' . wc_price($order->get_subtotal()) . '</td>
+                    <td style="border-bottom: 1px solid #ddd; padding: 8px; text-align: right;">' . wc_price($wholesale_subtotal) . '</td>
                 </tr>';
         
         // Add tax if present

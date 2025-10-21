@@ -349,6 +349,11 @@ if ( ! class_exists( 'WWP_Script_Loader' ) ) {
                 );
             }
 
+            if ( ! WWP_Helper_Functions::is_wpay_active() ) {
+                wp_enqueue_script( 'wwp_wpay_suggestion_install_notice', WWP_JS_URL . 'backend/wwp-show-wpay-suggestions-on-woo-settings.js', array( 'jquery' ), $this->_wwp_current_version, true );
+                wp_enqueue_style( 'wwp_wpay_suggestion_install_notice', WWP_CSS_URL . 'backend/wwp-show-wpay-suggestions-on-woo-settings.css', array(), $this->_wwp_current_version, 'all' );
+            }
+
             // New Settings notice. Notice shows up on every page in the backend unless the message is dismissed.
             if ( 'yes' !== get_option( 'wwp_admin_notice_new_settings_hide' ) ) {
                 wp_enqueue_script( 'wwp_new_settings_notice_js', WWP_JS_URL . 'backend/wwp-new-settings-notice.js', array( 'jquery' ), $this->_wwp_current_version, true );

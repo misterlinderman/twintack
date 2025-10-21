@@ -593,7 +593,7 @@ class WWP_Wholesale_Prices {
             // If get price html is called from rest api request, then get wholesale role from request.
             // The wholesale role verification is done in the rest api request.
             if ( WC()->is_rest_api_request() ) {
-                $user_wholesale_role = isset( $_REQUEST['wholesale_role'] ) ? array( $_REQUEST['wholesale_role'] ) : $this->_wwp_wholesale_roles->getUserWholesaleRole(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                $user_wholesale_role = isset( $_REQUEST['wholesale_role'] ) ? array( sanitize_text_field( wp_unslash( $_REQUEST['wholesale_role'] ) ) ) : $this->_wwp_wholesale_roles->getUserWholesaleRole(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             } else {
                 $user_wholesale_role = $this->_wwp_wholesale_roles->getUserWholesaleRole();
             }
@@ -1481,16 +1481,17 @@ class WWP_Wholesale_Prices {
      * @return void
      */
     public function wc_cart_item_block_wwp_data() {
-
-        woocommerce_store_api_register_endpoint_data(
-            array(
-                'endpoint'        => CartItemSchema::IDENTIFIER,
-                'namespace'       => 'rymera_wwp',
-                'data_callback'   => array( $this, 'get_cart_block_item_wwp_data' ),
-                'schema_callback' => array( $this, 'get_cart_block_item_wwp_schema' ),
-                'schema_type'     => ARRAY_A,
-            )
-        );
+        if ( function_exists( 'woocommerce_store_api_register_endpoint_data' ) ) {
+            woocommerce_store_api_register_endpoint_data(
+                array(
+                    'endpoint'        => CartItemSchema::IDENTIFIER,
+                    'namespace'       => 'rymera_wwp',
+                    'data_callback'   => array( $this, 'get_cart_block_item_wwp_data' ),
+                    'schema_callback' => array( $this, 'get_cart_block_item_wwp_schema' ),
+                    'schema_type'     => ARRAY_A,
+                )
+            );
+        }
     }
 
     /**
@@ -1540,7 +1541,7 @@ class WWP_Wholesale_Prices {
             wp_enqueue_script( 'wwp-cart-checkout-block-js', WWP_JS_URL . 'frontend/cart-checkout-block.js', array( 'jquery', 'wp-element', 'wc-blocks-checkout' ), $wc_wholesale_prices::VERSION, true );
 
 			if ( get_option( 'wwpp_settings_hide_original_price', null ) === 'yes' ) {
-				$css = <<<CSS
+				$css = <<<'CSS'
 .wwp-wholesale-priced .price del.wc-block-components-product-price__regular {
   display: none;
 }
@@ -1553,52 +1554,6 @@ CSS;
 		}
 	}
 
-    /**
-     * Customize the posts clauses.
-     *
-     * @param array    $clauses Clauses.
-     * @param WP_Query $query WP_Query object.
-     *
-     * @since 2.2.3
-     * @return array
-     */
-    public function posts_clauses( $clauses, $query ) {
-        global $wpdb;
-
-        if ( ! $query->is_main_query() ) {
-            return $clauses;
-        }
-
-        $user_wholesale_role = $this->_wwp_wholesale_roles->getUserWholesaleRole();
-
-        // phpcs:disable WordPress.Security.NonceVerification.Recommended
-        $min_price = isset( $_GET['min_price'] ) ? floatval( wp_unslash( $_GET['min_price'] ) ) : 1;
-        $max_price = isset( $_GET['max_price'] ) ? floatval( wp_unslash( $_GET['max_price'] ) ) : 0;
-        // phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-        if ( ! empty( $user_wholesale_role ) && $max_price > 0 ) {
-            // Join post meta table.
-            $clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} ON {$wpdb->posts}.ID = {$wpdb->postmeta}.post_id ";
-
-            // Where post meta is wholesale price.
-            $wwp_clause = $wpdb->prepare(
-                ' AND (wp_posts.post_type = %s AND wp_posts.post_status = %s) ',
-                'product',
-                'publish',
-            );
-
-            $wwp_clause .= $wpdb->prepare(
-                " AND {$wpdb->postmeta}.meta_key = %s AND {$wpdb->postmeta}.meta_value BETWEEN %f AND %f ",
-                $user_wholesale_role[0] . '_wholesale_price',
-                $min_price,
-                $max_price
-            );
-
-            $clauses['where'] = $wwp_clause;
-        }
-
-        return $clauses;
-    }
 
     /**
      * Register the options for translation.
@@ -1663,6 +1618,94 @@ CSS;
     }
 
     /**
+     * Configure Maximum/Minimum Values for WooCommerce Products Shortcode for Compatibility with the HUSKY – Products Filter Professional for WooCommerce Plugin.
+     *
+     * @param array  $query WordPress query object.
+     * @param array  $atts  attributes set for woocommerce.
+     * @param string $type  post_type for woocoomerce which is 'post_type'.
+     *
+     * @return array
+     */
+    public function woocommerce_shortcode_products_query( $query, $atts, $type ) { //phpcs:ignore
+        $user_wholesale_role = $this->_wwp_wholesale_roles->getUserWholesaleRole();
+
+        // if the user has a wholesale role and the min and max price is set, then add the meta query to the query.
+        if ( ! empty( $user_wholesale_role ) && isset( $_GET['min_price'] ) && isset( $_GET['max_price'] ) ) { //phpcs:ignore
+            $min_price = isset( $_GET['min_price'] ) ? floatval( wp_unslash( $_GET['min_price'] ) ) : 1; //phpcs:ignore
+            $max_price = isset( $_GET['max_price'] ) ? floatval( wp_unslash( $_GET['max_price'] ) ) : 0; //phpcs:ignore
+            $meta_key              = $user_wholesale_role[0] . '_wholesale_price';
+            $meta_key_variations   = $user_wholesale_role[0] . '_variations_with_wholesale_price';
+            $meta_key_variations_2 = '_price';
+
+            $meta_query          = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => $meta_key,
+                    'value'   => array( $min_price, $max_price ),
+                    'compare' => 'BETWEEN',
+                    'type'    => 'NUMERIC',
+                ),
+                array(
+                    'key'     => $meta_key_variations,
+                    'value'   => array( $min_price, $max_price ),
+                    'compare' => 'BETWEEN',
+                    'type'    => 'NUMERIC',
+                ),
+                array(
+                    'key'     => $meta_key_variations_2,
+                    'value'   => array( $min_price, $max_price ),
+                    'compare' => 'BETWEEN',
+                    'type'    => 'NUMERIC',
+                ),
+            );
+            $query['meta_query'] = $meta_query;
+        }
+        return $query;
+    }
+
+    /**
+     * Configure Maximum/Minimum Values in WooCommerce Product Queries for Compatibility with the HUSKY – Products Filter Professional for WooCommerce Plugin.
+     *
+     * @param object $product_query WooCommerce product query object.
+     * @param object $wc_object  WooCommerce product query object.
+     *
+     * @return void
+     */
+    public function woocommerce_product_query_meta_query( $product_query, $wc_object ) { //phpcs:ignore
+        $user_wholesale_role = $this->_wwp_wholesale_roles->getUserWholesaleRole();
+
+        if ( ! empty( $user_wholesale_role ) && isset( $_GET['min_price'] ) && isset( $_GET['max_price'] ) ) { //phpcs:ignore
+            $min_price = isset( $_GET['min_price'] ) ? floatval( wp_unslash( $_GET['min_price'] ) ) : 1; //phpcs:ignore
+            $max_price = isset( $_GET['max_price'] ) ? floatval( wp_unslash( $_GET['max_price'] ) ) : 0; //phpcs:ignore
+            $meta_key              = $user_wholesale_role[0] . '_wholesale_price';
+            $meta_key_variations   = $user_wholesale_role[0] . '_variations_with_wholesale_price';
+            $meta_key_variations_2 = '_price';
+
+            $meta_query = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => $meta_key,
+                    'value'   => array( $min_price, $max_price ),
+                    'compare' => 'BETWEEN',
+                    'type'    => 'NUMERIC',
+                ),
+                array(
+                    'key'     => $meta_key_variations,
+                    'value'   => array( $min_price, $max_price ),
+                    'compare' => 'BETWEEN',
+                    'type'    => 'NUMERIC',
+                ),
+                array(
+                    'key'     => $meta_key_variations_2,
+                    'value'   => array( $min_price, $max_price ),
+                    'compare' => 'BETWEEN',
+                    'type'    => 'NUMERIC',
+                ),
+            );
+            $product_query->set( 'meta_query', $meta_query );
+        }
+    }
+    /**
      * Execute model.
      *
      * @since  1.5.0
@@ -1684,6 +1727,9 @@ CSS;
             10,
             1
         );
+
+        // this is called when cart/cart.php is called anywhere(this solves the divi theme builder issue-#768).
+        add_action( 'woocommerce_cart_loaded_from_session', array( $this, 'apply_product_wholesale_price_to_cart' ), 10, 1 );
 
         // We need to recalculate cart on loading widget cart to properly sync the cart item prices.
         add_action( 'woocommerce_before_mini_cart', array( $this, 'recalculate_cart_totals' ) );
@@ -1786,8 +1832,11 @@ CSS;
         add_action( 'wp_enqueue_scripts', array( $this, 'wc_cart_block_price_html' ), 20 );
         add_action( 'woocommerce_blocks_loaded', array( $this, 'wc_cart_item_block_wwp_data' ) );
 
-        // WooCommerce Filter.
-        add_filter( 'posts_clauses', array( $this, 'posts_clauses' ), 99, 2 );
+        // For products queried using the WooCommerce Query class, ensure compatibility with the HUSKY – WooCommerce Products Filter plugin, Filter Products by Price.
+        add_action( 'woocommerce_product_query', array( $this, 'woocommerce_product_query_meta_query' ), 99999, 2 );
+
+        // Modify WooCommerce Shortcode Filtering for Compatibility with the HUSKY – WooCommerce Products Filter Plugin, Filter Products by Price.
+        add_filter( 'woocommerce_shortcode_products_query', array( $this, 'woocommerce_shortcode_products_query' ), 99999, 3 );
 
         // Register the option for translation.
         add_filter( 'pre_update_option', array( $this, 'wwp_wpml_translatable_options' ), 100, 2 );

@@ -1,0 +1,10 @@
+.wwpp-recommendation-notice{
+    display: block;
+    width: max-content;
+}
+
+.wwp-recommendation-main-warapper{
+    padding: 10px 25px 10px 25px;
+    background-color: #dce9de;
+    margin: 0px 20px 0px 20px;
+}

@@ -1,0 +1,1 @@
+import{K as s,S as c,M as a,ao as u,_ as i}from"../apps/settings/index.CgAnrKTY.js";function m(o){const t=Symbol("contextKey");return{useProvide:(n,r)=>{const e=c({});return a(t,e),u(()=>{i(e,n,r||{})}),e},useInject:()=>s(t,o)||{}}}export{m as c};

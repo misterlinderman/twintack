@@ -2,6 +2,26 @@
 
 All notable changes to this plugin will be documented in this file.
 
+## 4.5.2 – 2025-01-14
+### Fixed
+- **🔧 PDF INVOICE WHOLESALE PRICING**: PDF invoices now correctly display wholesale pricing for Drop Ship customers
+  - **Proper Role Detection**: Fixed wholesale role detection to work with WooCommerce Wholesale Prices plugin
+  - **Accurate Unit Pricing**: Line items now show wholesale unit price ($14.49) instead of MSRP ($21.99)
+  - **Consistent Subtotal**: Subtotal now matches line item pricing for wholesale customers
+  - **Visual Indicators**: Added "WHOLESALE" badges to wholesale items in PDF invoices
+  - **Enhanced Integration**: Properly integrates with WooCommerce Wholesale Prices plugin role detection
+
+### Enhanced
+- **Improved Wholesale Detection**: Uses WooCommerce Wholesale Prices plugin's built-in role detection methods
+- **Comprehensive Fallback Logic**: Multiple fallback methods ensure wholesale pricing is applied correctly
+- **Detailed Logging**: Added comprehensive logging for wholesale pricing detection and calculation
+- **Consistent Pricing**: Both CSV exports and PDF invoices now use the same wholesale pricing logic
+
+### Technical
+- **Role Detection Fix**: Updated to use `WWP_Wholesale_Roles::getUserWholesaleRole()` for proper Drop Ship role detection
+- **Subtotal Calculation**: Fixed subtotal calculation to use wholesale line totals instead of MSRP subtotal
+- **Plugin Integration**: Enhanced integration with WooCommerce Wholesale Prices plugin (free and premium versions)
+
 ## 4.5.1 – 2025-01-08
 ### Fixed
 - **💰 CSV EXPORT PRICING FIX**: CSV exports now show actual charged prices (wholesale/dropship rates) instead of MSRP

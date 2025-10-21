@@ -109,7 +109,7 @@ class WooCommerceWholeSalePrices {
     public $wwp_plugin_installer;
     // phpcs:enable
 
-    const VERSION = '2.2.3';
+    const VERSION = '2.2.4.2';
 
     /**
      * Class Methods
@@ -276,7 +276,7 @@ class WooCommerceWholeSalePrices {
      */
     public function admin_old_wholesale_settings_redirect() {
         // For wholesale prices tabs.
-        if ( strpos( $_SERVER['REQUEST_URI'], 'page=wc-settings&tab=wwp_settings' ) !== false ) {
+        if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), 'page=wc-settings&tab=wwp_settings' ) !== false ) {
             wp_safe_redirect( admin_url( 'admin.php?page=wholesale-settings&tab=wholesale_prices' ) );
             exit;
         }

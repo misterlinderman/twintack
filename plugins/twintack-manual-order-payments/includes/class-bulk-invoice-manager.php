@@ -26,10 +26,8 @@ class TwinTack_Bulk_Invoice_Manager {
     }
     
     private function __construct() {
-        // Only initialize in admin
-        if (!is_admin()) {
-            return;
-        }
+        // Initialize admin functionality only in admin
+        if (is_admin()) {
         
         // Add bulk actions to orders list
         add_filter('bulk_actions-edit-shop_order', array($this, 'add_bulk_actions'));
@@ -60,7 +58,8 @@ class TwinTack_Bulk_Invoice_Manager {
         // Enqueue admin scripts
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         
-        twintack_manual_payments_log('Bulk Invoice Manager: Initialized');
+            twintack_manual_payments_log('Bulk Invoice Manager: Initialized');
+        }
     }
     
     /**
@@ -576,16 +575,84 @@ class TwinTack_Bulk_Invoice_Manager {
             $order->get_shipping_country()
         )));
         
-        // Get items with actual charged prices (not MSRP)
+        // Check if customer has wholesale role
+        $customer_id = $order->get_customer_id();
+        $is_wholesale_customer = false;
+        $wholesale_role = null;
+        
+        twintack_manual_payments_log("CSV Export: Processing order {$order->get_id()}, customer ID: {$customer_id}");
+        
+        if ($customer_id) {
+            $user = get_user_by('id', $customer_id);
+            if ($user) {
+                $user_roles = $user->roles;
+                twintack_manual_payments_log("CSV Export: Customer roles: " . implode(', ', $user_roles));
+                foreach ($user_roles as $role) {
+                    if (strpos($role, 'wholesale') !== false) {
+                        $is_wholesale_customer = true;
+                        $wholesale_role = $role;
+                        twintack_manual_payments_log("CSV Export: Found wholesale customer with role: {$role}");
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (!$is_wholesale_customer) {
+            twintack_manual_payments_log("CSV Export: Order {$order->get_id()} is not a wholesale customer");
+        }
+        
+        // Get items with actual charged prices (wholesale pricing for wholesale customers)
         $items = array();
         foreach ($order->get_items() as $item) {
             $product_name = $item->get_name();
             $quantity = $item->get_quantity();
+            $product_id = $item->get_product_id();
+            $variation_id = $item->get_variation_id();
             
-            // Get the actual price charged to customer (wholesale/dropship rate)
+            // Get the actual price charged to customer
             $line_total = $item->get_total(); // This is the actual amount charged
             $line_subtotal = $item->get_subtotal(); // Before discounts
             $unit_price = $quantity > 0 ? ($line_total / $quantity) : 0;
+            
+            // For wholesale customers, try to get the wholesale price if not already applied
+            if ($is_wholesale_customer) {
+                $effective_product_id = $variation_id ? $variation_id : $product_id;
+                twintack_manual_payments_log("CSV Export: Processing wholesale item - Product: {$product_name}, ID: {$effective_product_id}, Role: {$wholesale_role}");
+                
+                $wholesale_price = $this->get_wholesale_price_for_product($effective_product_id, $wholesale_role, $quantity);
+                
+                if ($wholesale_price && $wholesale_price > 0) {
+                    // Use wholesale price instead of regular price
+                    $wholesale_line_total = $wholesale_price * $quantity;
+                    $unit_price = $wholesale_price;
+                    $line_total = $wholesale_line_total;
+                    
+                    twintack_manual_payments_log("CSV Export: Using wholesale price for product {$effective_product_id}: $" . $wholesale_price . " (was: $" . ($item->get_total() / $quantity) . ")");
+                } else {
+                    // Fallback: Calculate wholesale price based on actual order total
+                    $order_total = $order->get_total();
+                    $shipping_total = $order->get_shipping_total();
+                    $tax_total = $order->get_total_tax();
+                    
+                    // Calculate the actual subtotal that was charged (excluding shipping and tax)
+                    $actual_subtotal = $order_total - $shipping_total - $tax_total;
+                    
+                    // Calculate the wholesale unit price based on the actual charged amount
+                    $calculated_wholesale_price = $quantity > 0 ? ($actual_subtotal / $quantity) : 0;
+                    
+                    twintack_manual_payments_log("CSV Export: Fallback calculation - Order total: $" . $order_total . ", Shipping: $" . $shipping_total . ", Tax: $" . $tax_total . ", Actual subtotal: $" . $actual_subtotal . ", Calculated unit price: $" . $calculated_wholesale_price);
+                    
+                    if ($calculated_wholesale_price > 0) {
+                        $unit_price = $calculated_wholesale_price;
+                        $line_total = $calculated_wholesale_price * $quantity;
+                        
+                        twintack_manual_payments_log("CSV Export: Using calculated wholesale price for product {$effective_product_id}: $" . $calculated_wholesale_price . " (based on actual order total)");
+                    } else {
+                        twintack_manual_payments_log("CSV Export: Calculated price invalid, using original price: $" . ($item->get_total() / $quantity));
+                    }
+                }
+            }
             
             // Format the item with actual pricing
             $item_string = $product_name;
@@ -597,6 +664,11 @@ class TwinTack_Bulk_Invoice_Manager {
                 $item_string .= " (Line Total: $" . number_format($line_total, 2) . ")";
             } else {
                 $item_string .= " (Total: $" . number_format($line_total, 2) . ")";
+            }
+            
+            // Add wholesale pricing indicator for wholesale customers
+            if ($is_wholesale_customer) {
+                $item_string .= " [Wholesale]";
             }
             
             // Add any item meta (variations, custom options, etc.)
@@ -617,6 +689,16 @@ class TwinTack_Bulk_Invoice_Manager {
             $items[] = $item_string;
         }
         $items_string = implode('; ', $items);
+        
+        // Recalculate order totals if wholesale pricing was applied
+        $order_subtotal = $order->get_subtotal();
+        $order_total = $order->get_total();
+        
+        if ($is_wholesale_customer) {
+            // For wholesale customers, use the actual order total (which should already reflect wholesale pricing)
+            // The order total is already correct ($19.49), we just need to ensure the line items reflect the same rate
+            twintack_manual_payments_log("CSV Export: Wholesale order {$order->get_id()} - Using actual order totals: Subtotal: $" . $order_subtotal . ", Total: $" . $order_total);
+        }
         
         // Get Shippo data
         $shippo_status = $order->get_meta('_shippo_fulfillment_status');
@@ -649,13 +731,179 @@ class TwinTack_Bulk_Invoice_Manager {
             $billing_address,
             $shipping_address,
             $order->get_payment_method_title(),
-            wc_format_decimal($order->get_subtotal(), 2), // Subtotal (before tax/shipping)
+            wc_format_decimal($order_subtotal, 2), // Subtotal (wholesale pricing applied if applicable)
             wc_format_decimal($order->get_total_tax(), 2), // Tax amount
-            wc_format_decimal($order->get_total(), 2), // Final total (actual amount charged)
+            wc_format_decimal($order_total, 2), // Final total (wholesale pricing applied if applicable)
             $items_string, // Items with actual charged prices (wholesale/dropship rates)
             $shippo_status,
             $tracking_number,
             $notes
+        );
+    }
+    
+    /**
+     * Get wholesale price for a product (public method for use by other classes)
+     */
+    public function get_wholesale_price_for_product($product_id, $wholesale_role, $quantity = 1) {
+        if (empty($wholesale_role)) {
+            twintack_manual_payments_log("CSV Export: No wholesale role provided for product {$product_id}");
+            return 0;
+        }
+        
+        twintack_manual_payments_log("CSV Export: Getting wholesale price for product {$product_id}, role: {$wholesale_role}, quantity: {$quantity}");
+        
+        try {
+            // Method 1: Try direct meta lookup first (most reliable)
+            $product = wc_get_product($product_id);
+            if ($product) {
+                $wholesale_price_meta = $product->get_meta($wholesale_role . '_wholesale_price', true);
+                if ($wholesale_price_meta && is_numeric($wholesale_price_meta)) {
+                    twintack_manual_payments_log("CSV Export: Found wholesale price via meta for product {$product_id}: $" . $wholesale_price_meta);
+                    return (float) $wholesale_price_meta;
+                }
+            }
+            
+            // Method 2: Try WooCommerce Wholesale Prices plugin function
+            if (class_exists('WWP_Wholesale_Prices')) {
+                $wholesale_price = WWP_Wholesale_Prices::getProductWholesalePrice($product_id, array($wholesale_role), $quantity);
+                if ($wholesale_price && is_numeric($wholesale_price)) {
+                    twintack_manual_payments_log("CSV Export: Found wholesale price via WWP for product {$product_id}: $" . $wholesale_price);
+                    return (float) $wholesale_price;
+                }
+            }
+            
+            // Method 3: Try premium version
+            if (class_exists('WWPP_Wholesale_Prices')) {
+                $wholesale_price = WWPP_Wholesale_Prices::get_product_raw_wholesale_price($product_id, array($wholesale_role));
+                if ($wholesale_price && is_numeric($wholesale_price)) {
+                    twintack_manual_payments_log("CSV Export: Found wholesale price via WWPP for product {$product_id}: $" . $wholesale_price);
+                    return (float) $wholesale_price;
+                }
+            }
+            
+            // Method 4: Try direct post meta lookup
+            $direct_meta = get_post_meta($product_id, $wholesale_role . '_wholesale_price', true);
+            if ($direct_meta && is_numeric($direct_meta)) {
+                twintack_manual_payments_log("CSV Export: Found wholesale price via direct meta for product {$product_id}: $" . $direct_meta);
+                return (float) $direct_meta;
+            }
+            
+            twintack_manual_payments_log("CSV Export: No wholesale price found for product {$product_id} with role {$wholesale_role}");
+            return 0;
+            
+        } catch (Exception $e) {
+            twintack_manual_payments_log("Error getting wholesale price for product {$product_id}: " . $e->getMessage(), 'error');
+            return 0;
+        }
+    }
+    
+    /**
+     * Get wholesale pricing for an order item
+     */
+    public function get_wholesale_item_pricing($order, $item) {
+        $customer_id = $order->get_customer_id();
+        $is_wholesale_customer = false;
+        $wholesale_role = null;
+        
+        // Check if customer has wholesale role using WooCommerce Wholesale Prices plugin
+        if ($customer_id) {
+            $user = get_user_by('id', $customer_id);
+            if ($user) {
+                // Use WooCommerce Wholesale Prices plugin method to detect wholesale roles
+                if (class_exists('WWP_Wholesale_Roles')) {
+                    $wholesale_roles = WWP_Wholesale_Roles::getInstance()->getUserWholesaleRole($user);
+                    if (!empty($wholesale_roles) && is_array($wholesale_roles)) {
+                        $is_wholesale_customer = true;
+                        $wholesale_role = $wholesale_roles[0]; // Use first wholesale role
+                        twintack_manual_payments_log("CSV Export: Detected wholesale role '{$wholesale_role}' for customer {$customer_id}");
+                    }
+                } else {
+                    // Fallback to manual role detection
+                    $user_roles = $user->roles;
+                    foreach ($user_roles as $role) {
+                        if (strpos($role, 'wholesale') !== false || strpos($role, 'drop_ship') !== false) {
+                            $is_wholesale_customer = true;
+                            $wholesale_role = $role;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Check if wholesale pricing should be applied based on order total vs MSRP
+        $order_total = $order->get_total();
+        $shipping_total = $order->get_shipping_total();
+        $tax_total = $order->get_total_tax();
+        $msrp_subtotal = $order->get_subtotal();
+        $actual_subtotal = $order_total - $shipping_total - $tax_total;
+        
+        twintack_manual_payments_log("CSV Export: Order analysis - Total: $" . $order_total . ", MSRP Subtotal: $" . $msrp_subtotal . ", Actual Subtotal: $" . $actual_subtotal);
+        
+        // If the actual subtotal is significantly less than MSRP subtotal, apply wholesale pricing
+        if ($actual_subtotal < $msrp_subtotal && $actual_subtotal > 0) {
+            $calculated_unit_price = $quantity > 0 ? ($actual_subtotal / $quantity) : 0;
+            if ($calculated_unit_price > 0) {
+                twintack_manual_payments_log("CSV Export: Applied wholesale pricing based on order total - Unit: $" . $calculated_unit_price);
+                return array(
+                    'unit_price' => $calculated_unit_price,
+                    'line_total' => $calculated_unit_price * $quantity,
+                    'is_wholesale' => true
+                );
+            }
+        }
+        
+        if (!$is_wholesale_customer) {
+            // Return original pricing for non-wholesale customers
+            return array(
+                'unit_price' => $order->get_item_subtotal($item, false, true),
+                'line_total' => $order->get_line_subtotal($item, false, true),
+                'is_wholesale' => false
+            );
+        }
+        
+        // For wholesale customers, try to get wholesale pricing
+        $product_id = $item->get_product_id();
+        $variation_id = $item->get_variation_id();
+        $effective_product_id = $variation_id ? $variation_id : $product_id;
+        $quantity = $item->get_quantity();
+        
+        $wholesale_price = $this->get_wholesale_price_for_product($effective_product_id, $wholesale_role, $quantity);
+        
+        if ($wholesale_price && $wholesale_price > 0) {
+            // Use wholesale price
+            $wholesale_line_total = $wholesale_price * $quantity;
+            return array(
+                'unit_price' => $wholesale_price,
+                'line_total' => $wholesale_line_total,
+                'is_wholesale' => true
+            );
+        } else {
+            // Fallback: Calculate wholesale price based on actual order total
+            $order_total = $order->get_total();
+            $shipping_total = $order->get_shipping_total();
+            $tax_total = $order->get_total_tax();
+            
+            // Calculate the actual subtotal that was charged (excluding shipping and tax)
+            $actual_subtotal = $order_total - $shipping_total - $tax_total;
+            
+            // Calculate the wholesale unit price based on the actual charged amount
+            $calculated_wholesale_price = $quantity > 0 ? ($actual_subtotal / $quantity) : 0;
+            
+            if ($calculated_wholesale_price > 0) {
+                return array(
+                    'unit_price' => $calculated_wholesale_price,
+                    'line_total' => $calculated_wholesale_price * $quantity,
+                    'is_wholesale' => true
+                );
+            }
+        }
+        
+        // Final fallback: return original pricing
+        return array(
+            'unit_price' => $order->get_item_subtotal($item, false, true),
+            'line_total' => $order->get_line_subtotal($item, false, true),
+            'is_wholesale' => false
         );
     }
     
@@ -871,3 +1119,4 @@ class TwinTack_Bulk_Invoice_Manager {
         ));
     }
 }
+

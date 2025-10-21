@@ -1,5 +1,147 @@
 # TwinTack Grip Manager Changelog
 
+## Version 1.7.01 - 2025-10-18
+
+### 🧠 Intelligent Import - Smart Partial Data Handling
+
+#### **Problem Identified**
+User feedback: *"Obviously there is missing information, otherwise I wouldn't need to be using the tool to import the submission."*
+
+The v1.7.00 importer was too strict - it would completely fail if ANY required field was missing, blocking the entire import. This defeated the purpose of having a manual creation tool.
+
+#### **Solution Implemented**
+Smart partial import that:
+- ✅ **Always imports available data** - No more blocking errors
+- ✅ **Identifies missing fields** - Lists exactly what needs manual entry
+- ✅ **Visual highlighting** - Yellow background on fields needing attention
+- ✅ **Helpful guidance** - Specific instructions for each missing field
+- ✅ **Intelligent save behavior** - Only suggests auto-save when complete
+
+#### **New Behavior**
+```
+Before: ❌ Error: Entry is missing team/school name [BLOCKED]
+
+After:  ✓ Imported 8 fields from entry #849
+        
+        Missing 2 field(s):
+        ⚠️ Team/School Name is REQUIRED - please add manually
+        ⚠️ No artwork file uploaded in form - add via upload or URL
+        
+        → Please fill the highlighted fields above and save.
+```
+
+#### **Visual Improvements**
+- **Warning Color**: Orange border/yellow background for partial imports
+- **Success Color**: Green border/blue background for complete imports  
+- **Field Highlighting**: Yellow background on empty required fields
+- **Smart Messaging**: Shows count of imported vs missing fields
+
+#### **User Benefits**
+1. **Saves Time**: Import 11 fields, manually fill 1 (vs typing all 12)
+2. **Reduces Errors**: Only manual fields can have typos
+3. **Clear Guidance**: Specific list of what's missing
+4. **Works Flexibly**: Handles any combination of present/missing data
+
+#### **Technical Changes**
+- Changed from hard validation failure to soft warning system
+- Added `missing_fields` array tracking
+- Enhanced response with `has_warnings` flag
+- JavaScript now highlights empty fields and adjusts colors based on completeness
+- Conditional save prompt based on data completeness
+
+#### **Documentation**
+- **New Guide**: `INTELLIGENT-IMPORT.md` - Complete explanation with examples
+
+---
+
+## Version 1.7.00 - 2025-10-18
+
+### 🎨 Enhanced Manual Grip Design Creation
+
+#### **New: Gravity Forms Entry Importer**
+- **One-Click Import**: Import complete grip design data directly from Gravity Forms entries
+- **Auto-Population**: Automatically fills all customer info, design specs, artwork, and color details
+- **Smart Title Generation**: Creates proper grip design post title from team name
+- **Form Type Detection**: Automatically identifies "new" vs "original" form submissions
+- **Live Feedback**: Instant success/error messages with imported data preview
+- **Entry Linking**: Maintains connection to original form submission
+
+#### **New: Artwork Management**
+- **Three Upload Methods**:
+  1. Direct file upload via WordPress Media Library
+  2. Paste artwork URL from Gravity Forms or Media Library
+  3. Manual URL entry
+- **Live Preview**: Artwork displays immediately after URL entry or upload
+- **Auto-Filename Extract**: Automatically extracts filename from URL if not provided
+- **Validation**: Ensures URLs are properly formatted and accessible
+- **Media Library Integration**: Full WordPress media uploader support
+
+#### **New: Complete Field Management**
+- **All Meta Fields Available**: Every field that automatic creation uses
+- **Order Linking**: Add Order ID and Order Item ID for tracking
+- **Form Entry Reference**: Link to original Gravity Forms submission
+- **Form Type Selector**: Choose between "new" form or "original" form
+- **System Metadata**: View creation method, timestamps, and audit trail
+- **Enhanced Field Organization**: Grouped by purpose (customer, design, system)
+
+#### **New: System Information Sidebar**
+- **Gravity Forms Integration**: Entry ID with direct link to form submission
+- **WooCommerce Integration**: Order ID with direct link to order
+- **Audit Trail**: Shows if created via fallback tool or manually
+- **Timestamp Display**: Form submission date/time
+- **Quick Links**: One-click access to related records
+
+#### **Enhanced Admin Interface**
+- **Better Meta Box Organization**: Logical grouping of related fields
+- **Improved Save Handling**: Multiple nonce support, enhanced validation
+- **Smart Sanitization**: Field-specific sanitization (email, URL, numbers, text)
+- **Media Enqueuing**: WordPress media scripts loaded only when needed
+- **AJAX Integration**: Real-time import without page refresh
+
+#### **Developer Features**
+- **AJAX Handler**: `grip_import_gf_entry` endpoint for form data import
+- **Security**: Nonce verification, capability checks, error handling
+- **Error Messages**: Descriptive feedback for troubleshooting
+- **Field Mapping**: Complete documentation of Gravity Forms field IDs
+- **Extensible**: Filter and action hooks for customization
+
+#### **Problem Solved**
+- **Manual Creation Parity**: Manually created posts now have identical data to automatic posts
+- **Missing Field Issue**: No more incomplete grip designs due to missing admin fields
+- **Artwork Upload Gap**: Can now add artwork to manually created posts
+- **Recovery Tool**: Easy way to create grip posts for failed automatic creation
+- **Audit Trail**: Track which posts were created manually vs automatically
+
+#### **Use Cases**
+1. **Failed Automatic Creation**: Quickly recover by importing from form entry
+2. **Missing Team Name**: Add required field and create grip post manually
+3. **Order Status Issues**: Create grip post regardless of order status
+4. **Bulk Processing**: Handle multiple failed orders systematically
+5. **Custom Workflows**: Create grip posts outside normal purchase flow
+
+#### **Documentation**
+- **New Guide**: `MANUAL-GRIP-CREATION-GUIDE.md` - Complete manual creation documentation
+- **Step-by-Step Workflows**: Four common scenarios with timing estimates
+- **Troubleshooting**: Solutions for common errors and issues
+- **Best Practices**: Tips for efficient manual creation
+
+#### **Technical Details**
+- **AJAX Endpoint**: Secure, permission-checked form import
+- **Field Validation**: Ensures required fields (customer name, team name) present
+- **Auto-Title Generation**: Same format as automatic creation (`Custom Grip - [Team] YYMMDD`)
+- **Color Support**: Handles both simple and multi-color design types
+- **WordPress Standards**: Uses core WordPress functions and security practices
+
+#### **Breaking Changes**
+- None - fully backward compatible
+
+#### **Migration Notes**
+- No migration needed
+- Existing posts unchanged
+- New features available immediately
+
+---
+
 ## Version 1.6.06 - 2024-12-19
 
 ### 🔄 Make.com Revision Detection Fix

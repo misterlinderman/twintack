@@ -1,0 +1,1 @@
+System.register(["../apps/settings/index-legacy.D_HQ7UHt.js"],function(e,t){"use strict";var n,s,r,c,u;return{setters:[e=>{n=e.K,s=e.S,r=e.M,c=e.ao,u=e._}],execute:function(){e("c",function(e){const t=Symbol("contextKey");return{useProvide:(e,n)=>{const o=s({});return r(t,o),c(()=>{u(o,e,n||{})}),o},useInject:()=>n(t,e)||{}}})}}});

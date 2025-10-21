@@ -3,7 +3,7 @@ Contributors: jkohlbach, RymeraWebCo, smub
 Tags: woocommerce wholesale, b2b, wholesale pricing, catalog mode, dynamic pricing
 Requires at least: 4.2
 Tested up to: 6.8
-Stable tag: 2.2.3
+Stable tag: 2.2.4.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -129,12 +129,32 @@ For more details about features please [see the product page here](https://whole
 
 Click here to learn what else [Wholesale Suite](https://wholesalesuiteplugin.com/bundle/) can do for your business.
 
+= How can I report security bugs? =
+
+You can report security bugs through the Patchstack Vulnerability Disclosure Program. The Patchstack team helps validate, triage and handle any security vulnerabilities. [Report a security vulnerability.](https://patchstack.com/database/vdp/9e5fb944-ec6b-4bd8-97fc-cb9793adb416)
+
 == Screenshots ==
 
 Plenty of amazing screenshots for this plugin and more over at:
 [https://wholesalesuiteplugin.com/woocommerce-wholesale-prices-premium/](https://wholesalesuiteplugin.com/woocommerce-wholesale-prices-premium/)
 
 == Changelog ==
+
+= 2.2.4.2 =
+- Bug Fix: PHP Fatal Error: Undefined Method get_product_wholesale_sale_price()
+
+= 2.2.4.1 =
+- Bug Fix: Wholesale Price Becomes Retail Price  In Cart/Checkout When Coupon is used With Advanced Coupons Plugin
+
+= 2.2.4 =
+- Bug Fix: Fatal Error in WWP_Duplicate_Product Class and Missing Variable Product Variations
+- Bug Fix: Fatal Error: woocommerce_store_api_register_endpoint_data() Undefined
+- Bug Fix: Issue: Class "WWP_Rest_API_Client" not found during plugin activation
+- Bug Fix: Legacy Cart Omits Regular Price for Subscriptions Under Wholesale Pricing
+- Bug Fix: Missing Product When Wholesale price set to 0 and show wholesale products only enabled
+- Bug Fix: Unable To Filter Product Category
+- Bug Fix: Wholesale Price Displays Retail Price in Divi Woo Cart Products Widget
+- Improvement: Add Cursor Project Rule
 
 = 2.2.3 =
 - Bug Fix: 500 error during wholesale API meta fetching wp-json/wholesale/v1/products/xxxxx
