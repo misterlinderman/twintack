@@ -2,6 +2,32 @@
 
 All notable changes to this plugin will be documented in this file.
 
+## 4.6.0 – 2025-01-17
+### Added
+- **🎯 VIRTUAL PRODUCT SHIPPO FILTERING**: Intelligent filtering system prevents virtual products from syncing to Shippo
+  - **Smart Detection**: Uses WooCommerce's native `needs_shipping()` method to identify virtual products
+  - **Automatic Filtering**: Virtual-only orders are automatically skipped from Shippo sync
+  - **Admin Visibility**: New "Shippo Skipped" admin page shows all skipped orders with reasons
+  - **Comprehensive Logging**: All filtering decisions are logged with clear explanations
+  - **Performance Optimization**: Reduces unnecessary API calls to Shippo for virtual products
+
+### Enhanced
+- **Shippo Integration**: Enhanced with intelligent product type detection before API sync
+- **Admin Interface**: Added dedicated admin page at WooCommerce → Shippo Skipped for transparency
+- **Order Tracking**: Skipped orders are marked in database with skip reasons for audit trail
+- **Mixed Order Handling**: Orders with both virtual and physical products sync correctly (physical products trigger sync)
+
+### Technical
+- **Virtual Product Detection**: Added `order_needs_shipping()` method to check all order items
+- **Skip Reason Tracking**: Orders marked with `_shippo_skipped_reason` meta for admin visibility
+- **WooCommerce Native**: Uses built-in WooCommerce product type detection methods
+- **Backward Compatible**: All existing functionality preserved, only adds filtering layer
+
+### Fixed
+- **Grip Deposit Orders**: Virtual grip deposit products no longer appear in Shippo dashboard
+- **Clean Shippo Interface**: Only physical products requiring shipping appear in Shippo
+- **Proper Product Classification**: Ensures virtual products are correctly identified and filtered
+
 ## 4.5.2 – 2025-01-14
 ### Fixed
 - **🔧 PDF INVOICE WHOLESALE PRICING**: PDF invoices now correctly display wholesale pricing for Drop Ship customers

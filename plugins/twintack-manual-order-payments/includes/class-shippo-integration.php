@@ -34,11 +34,102 @@ class TwinTack_Shippo_Integration {
         add_filter('woocommerce_shipping_packages', array($this, 'include_invoiced_orders_in_shipping'));
         add_action('woocommerce_checkout_order_processed', array($this, 'process_order_for_shippo'), 10, 1);
         
+        // Add admin menu for skipped orders
+        add_action('admin_menu', array($this, 'add_skipped_orders_menu'));
+        
         // DISABLED: Meta box conflicts with TwinTack Order Control - use Simple Order Manager instead
         // add_action('add_meta_boxes', array($this, 'add_shippo_meta_box'));
         // add_action('save_post', array($this, 'save_shippo_meta_fields'));
     }
     
+    /**
+     * Add admin menu for skipped orders
+     */
+    public function add_skipped_orders_menu() {
+        add_submenu_page(
+            'woocommerce',
+            'Shippo Skipped Orders',
+            'Shippo Skipped',
+            'manage_woocommerce',
+            'shippo-skipped-orders',
+            array($this, 'skipped_orders_page')
+        );
+    }
+
+    /**
+     * Display skipped orders page
+     */
+    public function skipped_orders_page() {
+        $skipped_orders = $this->get_skipped_orders();
+        ?>
+        <div class="wrap">
+            <h1>Orders Skipped from Shippo Sync</h1>
+            <p>These orders contain only virtual/downloadable products and were automatically skipped from Shippo synchronization.</p>
+            
+            <?php if (empty($skipped_orders)): ?>
+                <div class="notice notice-success">
+                    <p>No orders have been skipped from Shippo sync.</p>
+                </div>
+            <?php else: ?>
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Skip Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($skipped_orders as $order): ?>
+                            <tr>
+                                <td><a href="<?php echo admin_url('post.php?post=' . $order->get_id() . '&action=edit'); ?>">#<?php echo $order->get_order_number(); ?></a></td>
+                                <td><?php echo $order->get_date_created()->format('Y-m-d H:i:s'); ?></td>
+                                <td><?php echo $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(); ?></td>
+                                <td>
+                                    <?php 
+                                    $items = array();
+                                    foreach ($order->get_items() as $item) {
+                                        $product = $item->get_product();
+                                        $items[] = $item->get_name() . ' (' . ($product && $product->is_virtual() ? 'Virtual' : 'Physical') . ')';
+                                    }
+                                    echo implode(', ', $items);
+                                    ?>
+                                </td>
+                                <td><?php echo $order->get_meta('_shippo_skipped_reason'); ?></td>
+                                <td>
+                                    <a href="<?php echo admin_url('post.php?post=' . $order->get_id() . '&action=edit'); ?>" class="button button-small">View Order</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Get orders that were skipped from Shippo sync
+     */
+    public function get_skipped_orders() {
+        $skipped_orders = wc_get_orders(array(
+            'meta_query' => array(
+                array(
+                    'key' => '_shippo_skipped_reason',
+                    'compare' => 'EXISTS'
+                )
+            ),
+            'limit' => 50,
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ));
+        
+        return $skipped_orders;
+    }
+
     /**
      * Sync order status changes with Shippo
      */

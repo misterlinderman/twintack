@@ -1,1 +1,0 @@
-System.register(["../../../../../common/BreakdownDueLabel.vue_vue_type_script_setup_true_lang-legacy.qgX9KmlI.js","../../../../../common/vue.esm-bundler-legacy.WK047frM.js","../../../../../common/index-legacy.CrPvcMca.js"],(function(e,t){"use strict";return{setters:[t=>{t._,e("default",t._)},null,null],execute:function(){}}}));

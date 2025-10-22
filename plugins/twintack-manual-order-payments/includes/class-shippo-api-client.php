@@ -97,19 +97,45 @@ class TwinTack_Shippo_API_Client {
         $this->send_order_to_shippo($shippo_order_data, $order);
     }
     
-         /**
-      * Send order to Shippo API using Orders API (CORRECTED with proper required fields)
-      */
-     public function send_order_to_shippo($shippo_order_data, $order) {
-         if (empty($this->api_token)) {
-             twintack_manual_payments_log("Shippo API: No API token configured", 'error');
-             return false;
-         }
-         
-         try {
-             $order_id = $order->get_id();
-             twintack_manual_payments_log("Shippo API: ========== STARTING ORDER SYNC FOR ORDER #{$order_id} ==========");
-             twintack_manual_payments_log("Shippo API: Input shippo_order_data: " . json_encode($shippo_order_data));
+    /**
+     * Check if order contains any items that need shipping
+     */
+    private function order_needs_shipping($order) {
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+            if ($product && $product->needs_shipping()) {
+                return true; // At least one item needs shipping
+            }
+        }
+        return false; // All items are virtual/downloadable
+    }
+
+    /**
+     * Send order to Shippo API using Orders API (CORRECTED with proper required fields)
+     */
+    public function send_order_to_shippo($shippo_order_data, $order) {
+        if (empty($this->api_token)) {
+            twintack_manual_payments_log("Shippo API: No API token configured", 'error');
+            return false;
+        }
+        
+        // Check if order needs shipping before syncing to Shippo
+        if (!$this->order_needs_shipping($order)) {
+            $order_id = $order->get_id();
+            twintack_manual_payments_log("Shippo API: ⏭️ Skipping order #{$order_id} - contains only virtual/downloadable products");
+            
+            // Mark as skipped in order meta for tracking
+            $order->update_meta_data('_shippo_skipped_reason', 'Virtual products only');
+            $order->update_meta_data('_shippo_api_sync_timestamp', current_time('timestamp'));
+            $order->save();
+            
+            return true; // Return true since this is expected behavior, not an error
+        }
+        
+        try {
+            $order_id = $order->get_id();
+            twintack_manual_payments_log("Shippo API: ========== STARTING ORDER SYNC FOR ORDER #{$order_id} ==========");
+            twintack_manual_payments_log("Shippo API: Input shippo_order_data: " . json_encode($shippo_order_data));
              
              // Format order data according to Shippo Orders API specification
              $api_data = $this->format_order_for_shippo_orders_api($shippo_order_data, $order);
