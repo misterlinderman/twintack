@@ -171,6 +171,23 @@ class TwinTack_Shippo_Webhook_Handler {
         // Map Shippo status to WooCommerce status
         $wc_status = $this->map_shippo_status_to_wc($shippo_status);
         
+        // Prevent downgrading completed orders - once an order is completed, don't change it back
+        $current_status = $wc_order->get_status();
+        $protected_statuses = array('completed', 'shipped-unpaid');
+        
+        // Check if this is an Amazon order (for additional protection)
+        $is_amazon_order = $this->is_amazon_order($wc_order);
+        
+        // If order is already completed or shipped, don't downgrade to processing
+        // This is especially critical for Amazon orders to prevent shipping delays
+        if (in_array($current_status, $protected_statuses) && $wc_status === 'processing') {
+            $order_type = $is_amazon_order ? 'Amazon' : 'regular';
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Shippo Webhook: Ignoring status downgrade for {$order_type} order {$wc_order->get_id()} from '{$current_status}' to '{$wc_status}' (Shippo: {$shippo_status}) - order is already completed/shipped");
+            }
+            return new WP_REST_Response(array('message' => 'Order status protected - cannot downgrade from completed/shipped to processing'), 200);
+        }
+        
         if ($wc_status && $wc_status !== $wc_order->get_status()) {
             $old_status = $wc_order->get_status();
             $wc_order->update_status($wc_status, "Status updated via Shippo webhook: {$shippo_status}");
@@ -541,6 +558,37 @@ class TwinTack_Shippo_Webhook_Handler {
                 twintack_manual_payments_log("Webhook trigger: Scheduled additional sync check for other orders");
             }
         }
+    }
+    
+    /**
+     * Check if an order is from Amazon
+     * 
+     * @param WC_Order $order The WooCommerce order object
+     * @return bool True if this is an Amazon order
+     */
+    private function is_amazon_order($order) {
+        // Check customer note for Amazon references
+        $customer_note = $order->get_customer_note();
+        if (!empty($customer_note) && stripos($customer_note, 'amazon') !== false) {
+            return true;
+        }
+        
+        // Check billing email for Amazon marketplace domains
+        $billing_email = $order->get_billing_email();
+        if (!empty($billing_email) && (
+            stripos($billing_email, '@marketplace.amazon.com') !== false ||
+            stripos($billing_email, '@amazon.com') !== false
+        )) {
+            return true;
+        }
+        
+        // Check order meta for Amazon indicators
+        $order_source = $order->get_meta('_order_source');
+        if (!empty($order_source) && stripos($order_source, 'amazon') !== false) {
+            return true;
+        }
+        
+        return false;
     }
     
     /**

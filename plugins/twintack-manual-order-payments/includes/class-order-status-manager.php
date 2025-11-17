@@ -30,6 +30,14 @@ class TwinTack_Order_Status_Manager {
         // REMOVED: add_action('woocommerce_order_status_changed', array($this, 'handle_status_change_for_shippo'), 10, 4);
         // This hook is now handled by TwinTack_Shippo_Integration to prevent double API calls
         
+        // CRITICAL: Prevent downgrading completed/shipped orders to processing
+        // This must run early (priority 5) to intercept ALL status changes before they're saved
+        add_action('woocommerce_before_order_object_save', array($this, 'prevent_status_downgrade'), 5, 1);
+        
+        // Backup protection: Also hook into status changed to catch any that slip through
+        // This runs immediately after status change (priority 1) to revert if needed
+        add_action('woocommerce_order_status_changed', array($this, 'revert_status_downgrade'), 1, 4);
+        
         // Make sure invoiced orders show in admin lists
         add_filter('woocommerce_reports_order_statuses', array($this, 'add_invoiced_to_reports'));
         add_filter('woocommerce_order_is_paid_statuses', array($this, 'remove_invoiced_from_paid_statuses'));
@@ -122,6 +130,230 @@ class TwinTack_Order_Status_Manager {
         $statuses[] = 'invoiced';
         $statuses[] = 'shipped-unpaid';  // Allow payment for shipped but unpaid orders
         return $statuses;
+    }
+    
+    /**
+     * Prevent downgrading completed/shipped orders to processing
+     * This intercepts ALL status changes before they're saved to the database
+     * 
+     * @param WC_Order $order The order object being saved
+     */
+    public function prevent_status_downgrade($order) {
+        if (!$order || !$order->get_id()) {
+            return;
+        }
+        
+        // Get the new status from the order object (what's being set)
+        $changes = $order->get_changes();
+        if (!isset($changes['status'])) {
+            return; // No status change
+        }
+        
+        $new_status = $changes['status'];
+        
+        // Get the current status from the database (what it currently is)
+        $current_order = wc_get_order($order->get_id());
+        if (!$current_order) {
+            return;
+        }
+        
+        $current_status = $current_order->get_status();
+        
+        // Protected statuses that should never be downgraded to processing
+        $protected_statuses = array('completed', 'shipped-unpaid');
+        
+        // Prevent downgrade from protected statuses to processing
+        if (in_array($current_status, $protected_statuses) && $new_status === 'processing') {
+            // Check if this is an admin manual change (allow admins to override)
+            $is_admin_override = $this->is_admin_manual_change();
+            
+            if ($is_admin_override) {
+                // Allow admin override but log it
+                $is_amazon_order = $this->is_amazon_order($order);
+                $order_type = $is_amazon_order ? 'Amazon' : 'regular';
+                $admin_user = wp_get_current_user();
+                $admin_name = $admin_user ? $admin_user->display_name : 'Admin';
+                
+                if (function_exists('twintack_manual_payments_log')) {
+                    twintack_manual_payments_log("ADMIN OVERRIDE: Allowed status downgrade for {$order_type} order {$order->get_id()} from '{$current_status}' to '{$new_status}' by admin user: {$admin_name}");
+                }
+                
+                // Add order note about the admin override
+                $order->add_order_note(sprintf(
+                    'Status changed from %s to %s by admin override (%s).',
+                    ucfirst($current_status),
+                    ucfirst($new_status),
+                    $admin_name
+                ));
+                
+                // Allow the change to proceed
+                return;
+            }
+            
+            // Not an admin override - block the change
+            // Check if this is an Amazon order
+            $is_amazon_order = $this->is_amazon_order($order);
+            $order_type = $is_amazon_order ? 'Amazon' : 'regular';
+            
+            // Log the blocked attempt
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("CRITICAL: Blocked status downgrade for {$order_type} order {$order->get_id()} from '{$current_status}' to '{$new_status}' - order is already completed/shipped");
+            }
+            
+            // Add order note about the blocked change
+            $order->add_order_note(sprintf(
+                'Status change blocked: Cannot downgrade from %s to %s. Order is already completed/shipped.',
+                ucfirst($current_status),
+                ucfirst($new_status)
+            ));
+            
+            // Revert the status change - keep the current status
+            $order->set_status($current_status);
+            
+            // Also prevent the change from being saved
+            return;
+        }
+    }
+    
+    /**
+     * Backup protection: Revert status downgrades that slip through
+     * This runs immediately after status change to catch any that bypassed prevent_status_downgrade
+     * 
+     * @param int $order_id The order ID
+     * @param string $old_status The old status
+     * @param string $new_status The new status
+     * @param WC_Order $order The order object
+     */
+    public function revert_status_downgrade($order_id, $old_status, $new_status, $order) {
+        if (!$order) {
+            return;
+        }
+        
+        // Protected statuses that should never be downgraded to processing
+        $protected_statuses = array('completed', 'shipped-unpaid');
+        
+        // If we're trying to change from a protected status to processing, revert it
+        if (in_array($old_status, $protected_statuses) && $new_status === 'processing') {
+            // Check if this is an admin manual change (allow admins to override)
+            $is_admin_override = $this->is_admin_manual_change();
+            
+            if ($is_admin_override) {
+                // Allow admin override but log it
+                $is_amazon_order = $this->is_amazon_order($order);
+                $order_type = $is_amazon_order ? 'Amazon' : 'regular';
+                $admin_user = wp_get_current_user();
+                $admin_name = $admin_user ? $admin_user->display_name : 'Admin';
+                
+                if (function_exists('twintack_manual_payments_log')) {
+                    twintack_manual_payments_log("ADMIN OVERRIDE: Allowed status downgrade for {$order_type} order {$order_id} from '{$old_status}' to '{$new_status}' by admin user: {$admin_name}");
+                }
+                
+                // Add order note about the admin override (if not already added)
+                $order->add_order_note(sprintf(
+                    'Status changed from %s to %s by admin override (%s).',
+                    ucfirst($old_status),
+                    ucfirst($new_status),
+                    $admin_name
+                ));
+                
+                // Allow the change to proceed
+                return;
+            }
+            
+            // Not an admin override - revert the change
+            // Check if this is an Amazon order
+            $is_amazon_order = $this->is_amazon_order($order);
+            $order_type = $is_amazon_order ? 'Amazon' : 'regular';
+            
+            // Log the blocked attempt
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("CRITICAL: Reverting status downgrade for {$order_type} order {$order_id} from '{$old_status}' to '{$new_status}' - order is already completed/shipped");
+            }
+            
+            // Add order note about the blocked change
+            $order->add_order_note(sprintf(
+                'Status change reverted: Cannot downgrade from %s to %s. Order is already completed/shipped.',
+                ucfirst($old_status),
+                ucfirst($new_status)
+            ));
+            
+            // Revert the status change - restore the old status
+            $order->set_status($old_status);
+            $order->save();
+        }
+    }
+    
+    /**
+     * Check if the current status change is a manual admin action
+     * 
+     * @return bool True if this is an admin manual change
+     */
+    private function is_admin_manual_change() {
+        // Check if current user has admin capabilities
+        if (!current_user_can('manage_woocommerce') && !current_user_can('edit_shop_orders')) {
+            return false;
+        }
+        
+        // Check if this is coming from admin interface (not API/webhook)
+        // Admin changes typically come from POST requests in admin area
+        if (is_admin() && (isset($_POST['order_status']) || isset($_REQUEST['order_status']))) {
+            return true;
+        }
+        
+        // Check if this is from WooCommerce admin order edit page
+        if (is_admin() && isset($_GET['post']) && isset($_POST['save'])) {
+            return true;
+        }
+        
+        // Check if this is from HPOS admin order edit page
+        if (is_admin() && isset($_GET['id']) && isset($_POST['order_status'])) {
+            return true;
+        }
+        
+        // Check if this is from AJAX admin action
+        if (defined('DOING_AJAX') && DOING_AJAX && is_admin()) {
+            // Allow if it's from admin AJAX (not public API)
+            return true;
+        }
+        
+        // If we're in admin and user has permissions, but can't determine source,
+        // default to allowing it (safer to allow admin than block legitimate changes)
+        if (is_admin() && current_user_can('manage_woocommerce')) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if an order is from Amazon
+     * 
+     * @param WC_Order $order The WooCommerce order object
+     * @return bool True if this is an Amazon order
+     */
+    private function is_amazon_order($order) {
+        // Check customer note for Amazon references
+        $customer_note = $order->get_customer_note();
+        if (!empty($customer_note) && stripos($customer_note, 'amazon') !== false) {
+            return true;
+        }
+        
+        // Check billing email for Amazon marketplace domains
+        $billing_email = $order->get_billing_email();
+        if (!empty($billing_email) && (
+            stripos($billing_email, '@marketplace.amazon.com') !== false ||
+            stripos($billing_email, '@amazon.com') !== false
+        )) {
+            return true;
+        }
+        
+        // Check order meta for Amazon indicators
+        $order_source = $order->get_meta('_order_source');
+        if (!empty($order_source) && stripos($order_source, 'amazon') !== false) {
+            return true;
+        }
+        
+        return false;
     }
     
     /**
