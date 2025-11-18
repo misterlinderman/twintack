@@ -1,0 +1,225 @@
+/**
+ * TwinTack Marketing Styles
+ */
+
+/* Product Video */
+.twintack-product-video-wrapper {
+    margin: 40px 0;
+    clear: both;
+}
+
+.twintack-video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    max-width: 100%;
+    background: #000;
+}
+
+.twintack-video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Announcement Bar */
+.twintack-announcement-bar {
+    position: relative;
+    width: 100%;
+    padding: 12px 20px;
+    text-align: center;
+    z-index: 9999;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.twintack-announcement-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.twintack-announcement-text {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.twintack-announcement-text a {
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.twintack-announcement-close {
+    position: absolute;
+    right: 0;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.twintack-announcement-close:hover {
+    opacity: 1;
+}
+
+/* Product Color Scheme */
+body.twintack-product-color-alternate .woocommerce .product {
+    /* Alternate color scheme styles - customize as needed */
+}
+
+body.twintack-product-color-alternate .woocommerce .product .summary {
+    /* Example: Different background or text colors */
+}
+
+/* Featured Products */
+.twintack-featured-products {
+    margin: 40px 0;
+}
+
+.twintack-featured-products-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2rem;
+}
+
+/* Banner Blocks */
+.twintack-banner-block {
+    margin: 40px 0;
+    width: 100%;
+}
+
+.twintack-banner-fullwidth {
+    width: 100%;
+}
+
+.twintack-banner-fullwidth .twintack-banner-link {
+    display: block;
+    width: 100%;
+}
+
+.twintack-banner-fullwidth .twintack-banner-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.twintack-banner-50-50 .twintack-banner-content-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+.twintack-banner-50-50 .twintack-banner-image-side {
+    flex: 1;
+}
+
+.twintack-banner-50-50 .twintack-banner-image-side img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.twintack-banner-50-50 .twintack-banner-text-side {
+    flex: 1;
+    padding: 20px;
+}
+
+.twintack-banner-title {
+    margin-bottom: 20px;
+    font-size: 2rem;
+}
+
+.twintack-banner-text {
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.twintack-banner-cta {
+    display: inline-block;
+    margin-top: 20px;
+}
+
+/* Landing Page Hero */
+.twintack-landing-hero {
+    position: relative;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.twintack-landing-hero-image {
+    width: 100%;
+    display: block;
+}
+
+.twintack-landing-hero-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.twintack-landing-hero-content {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    text-align: center;
+    color: #fff;
+    z-index: 2;
+}
+
+.twintack-landing-hero-title {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.twintack-landing-hero-subtitle {
+    font-size: 1.5rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.twintack-landing-content {
+    padding: 40px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .twintack-banner-50-50 .twintack-banner-content-wrapper {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .twintack-banner-50-50 .twintack-banner-text-side {
+        padding: 15px;
+    }
+    
+    .twintack-announcement-text {
+        font-size: 12px;
+        padding-right: 30px;
+    }
+    
+    .twintack-landing-hero-title {
+        font-size: 2rem;
+    }
+    
+    .twintack-landing-hero-subtitle {
+        font-size: 1.2rem;
+    }
+}
+

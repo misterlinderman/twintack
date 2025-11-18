@@ -7,6 +7,20 @@ div.product.type-product.product_cat-baseball, div.product.type-product.product_
     align-items: flex-start;
 }
 
+/* Alternate Color Scheme for Product Pages */
+body.twintack-product-color-alternate .woocommerce .product {
+    /* Add alternate color scheme styles here */
+    /* Example: Different background, text colors, etc. */
+}
+
+body.twintack-product-color-alternate .woocommerce .product .summary {
+    /* Alternate summary styles */
+}
+
+body.twintack-product-color-alternate .woocommerce .product .woocommerce-product-gallery {
+    /* Alternate gallery styles */
+}
+
 .product-template-default main#main {
     margin: 5rem 5%;
 }
