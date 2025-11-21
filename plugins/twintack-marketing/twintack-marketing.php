@@ -39,6 +39,7 @@ class TwinTack_Marketing {
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-featured-products.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-banner-blocks.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-landing-page.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-hero-carousel.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-admin.php';
         
         // Initialize components
@@ -48,6 +49,7 @@ class TwinTack_Marketing {
         TwinTack_Marketing_Featured_Products::get_instance();
         TwinTack_Marketing_Banner_Blocks::get_instance();
         TwinTack_Marketing_Landing_Page::get_instance();
+        TwinTack_Marketing_Hero_Carousel::get_instance();
         
         // Admin interface
         if (is_admin()) {
@@ -59,17 +61,38 @@ class TwinTack_Marketing {
     }
     
     public function enqueue_assets() {
+        // Enqueue Slick Carousel for featured products
+        wp_enqueue_style(
+            'slick',
+            'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css',
+            array(),
+            '1.8.1'
+        );
+        wp_enqueue_style(
+            'slick-theme',
+            'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css',
+            array('slick'),
+            '1.8.1'
+        );
+        wp_enqueue_script(
+            'slick',
+            'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js',
+            array('jquery'),
+            '1.8.1',
+            true
+        );
+        
         wp_enqueue_style(
             'twintack-marketing',
             plugin_dir_url(__FILE__) . 'assets/css/marketing.css',
-            array(),
+            array('slick', 'slick-theme'),
             filemtime(plugin_dir_path(__FILE__) . 'assets/css/marketing.css')
         );
         
         wp_enqueue_script(
             'twintack-marketing',
             plugin_dir_url(__FILE__) . 'assets/js/marketing.js',
-            array('jquery'),
+            array('jquery', 'slick'),
             filemtime(plugin_dir_path(__FILE__) . 'assets/js/marketing.js'),
             true
         );

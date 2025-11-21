@@ -30,6 +30,12 @@ class TwinTack_Order_Status_Manager {
         // REMOVED: add_action('woocommerce_order_status_changed', array($this, 'handle_status_change_for_shippo'), 10, 4);
         // This hook is now handled by TwinTack_Shippo_Integration to prevent double API calls
         
+        // TARGETED: Auto-upgrade Amazon orders from Pending to Processing (only when in Pending status)
+        // Hook into order creation and status changes to catch Amazon orders early
+        add_action('woocommerce_checkout_order_processed', array($this, 'auto_upgrade_amazon_orders_on_creation'), 10, 1);
+        add_action('woocommerce_new_order', array($this, 'auto_upgrade_amazon_orders_on_creation'), 10, 1);
+        add_action('woocommerce_order_status_changed', array($this, 'auto_upgrade_amazon_orders_on_status_change'), 5, 4);
+        
         // CRITICAL: Prevent downgrading completed/shipped orders to processing
         // This must run early (priority 5) to intercept ALL status changes before they're saved
         add_action('woocommerce_before_order_object_save', array($this, 'prevent_status_downgrade'), 5, 1);
@@ -130,6 +136,70 @@ class TwinTack_Order_Status_Manager {
         $statuses[] = 'invoiced';
         $statuses[] = 'shipped-unpaid';  // Allow payment for shipped but unpaid orders
         return $statuses;
+    }
+    
+    /**
+     * Auto-upgrade Amazon orders from Pending to Processing when order is created
+     * This only applies when orders are in Pending status - prevents need for downgrade protection
+     * 
+     * @param int $order_id The order ID
+     */
+    public function auto_upgrade_amazon_orders_on_creation($order_id) {
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return;
+        }
+        
+        // Only process if this is an Amazon order
+        if (!$this->is_amazon_order($order)) {
+            return;
+        }
+        
+        // Only upgrade if order is currently in Pending status
+        // This prevents the issue where Completed orders get downgraded
+        $current_status = $order->get_status();
+        if ($current_status === 'pending') {
+            $order->update_status('processing', 'Amazon order automatically upgraded from Pending to Processing for Shippo fulfillment.');
+            
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Amazon Order Auto-Upgrade: Order {$order_id} upgraded from Pending to Processing on creation");
+            }
+        }
+    }
+    
+    /**
+     * Auto-upgrade Amazon orders from Pending to Processing on status changes
+     * This catches orders that might be created with pending status via other methods
+     * 
+     * @param int $order_id The order ID
+     * @param string $old_status The old status
+     * @param string $new_status The new status
+     * @param WC_Order $order The order object
+     */
+    public function auto_upgrade_amazon_orders_on_status_change($order_id, $old_status, $new_status, $order) {
+        if (!$order) {
+            return;
+        }
+        
+        // Only process if this is an Amazon order
+        if (!$this->is_amazon_order($order)) {
+            return;
+        }
+        
+        // Only upgrade from Pending to Processing (not from any other status)
+        // This prevents the issue where Completed orders get downgraded
+        if ($old_status === 'pending' && $new_status === 'pending') {
+            // This shouldn't happen (status didn't change), but handle edge case
+            return;
+        } elseif ($old_status === 'pending' && $new_status !== 'processing' && $new_status !== 'completed' && $new_status !== 'cancelled' && $new_status !== 'refunded') {
+            // If Amazon order is moving from Pending to something other than Processing/Completed/Cancelled/Refunded,
+            // upgrade it to Processing instead (unless it's already going to a final state)
+            $order->update_status('processing', 'Amazon order automatically set to Processing for Shippo fulfillment.');
+            
+            if (function_exists('twintack_manual_payments_log')) {
+                twintack_manual_payments_log("Amazon Order Auto-Upgrade: Order {$order_id} redirected from {$new_status} to Processing");
+            }
+        }
     }
     
     /**
@@ -292,6 +362,24 @@ class TwinTack_Order_Status_Manager {
         // Check if current user has admin capabilities
         if (!current_user_can('manage_woocommerce') && !current_user_can('edit_shop_orders')) {
             return false;
+        }
+        
+        // IMPORTANT: Exclude automated Amazon plugin syncs from being treated as "admin overrides"
+        // The Amazon plugin runs with admin privileges but is NOT a manual admin action
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 15);
+        foreach ($backtrace as $trace) {
+            // Check if this is coming from the Amazon plugin's automated sync
+            if (isset($trace['file']) && 
+                (strpos($trace['file'], 'amazon-for-woocommerce') !== false ||
+                 strpos($trace['file'], 'class-order-manager.php') !== false) &&
+                isset($trace['function']) && 
+                $trace['function'] === 'ced_amazon_manage_order_status') {
+                
+                if (function_exists('twintack_manual_payments_log')) {
+                    twintack_manual_payments_log("DETECTED: Amazon plugin automated sync - NOT treating as admin override");
+                }
+                return false; // This is automated, not a manual admin action
+            }
         }
         
         // Check if this is coming from admin interface (not API/webhook)

@@ -50,6 +50,15 @@ class TwinTack_Marketing_Admin {
             array($this, 'render_banner_blocks_page')
         );
         
+        add_submenu_page(
+            'twintack-marketing',
+            __('Hero Carousel', 'twintack-marketing'),
+            __('Hero Carousel', 'twintack-marketing'),
+            'manage_options',
+            'twintack-marketing-hero',
+            array($this, 'render_hero_carousel_page')
+        );
+        
         // Add Announcement Bar submenu here to ensure parent exists
         add_submenu_page(
             'twintack-marketing',
@@ -106,6 +115,7 @@ class TwinTack_Marketing_Admin {
                 <div class="twintack-marketing-card">
                     <h2><?php _e('Quick Links', 'twintack-marketing'); ?></h2>
                     <ul>
+                        <li><a href="<?php echo admin_url('admin.php?page=twintack-marketing-hero'); ?>"><?php _e('Manage Hero Carousel', 'twintack-marketing'); ?></a></li>
                         <li><a href="<?php echo admin_url('admin.php?page=twintack-marketing-featured'); ?>"><?php _e('Manage Featured Products', 'twintack-marketing'); ?></a></li>
                         <li><a href="<?php echo admin_url('admin.php?page=twintack-marketing-banners'); ?>"><?php _e('Manage Banner Blocks', 'twintack-marketing'); ?></a></li>
                         <li><a href="<?php echo admin_url('admin.php?page=twintack-announcement-bar'); ?>"><?php _e('Announcement Bar Settings', 'twintack-marketing'); ?></a></li>
@@ -305,6 +315,116 @@ class TwinTack_Marketing_Admin {
                 </table>
                 
                 <button type="button" class="button button-primary save-banner-block"><?php _e('Save Block', 'twintack-marketing'); ?></button>
+            </div>
+        </div>
+        <?php
+    }
+    
+    public function render_hero_carousel_page() {
+        $hero_carousel = TwinTack_Marketing_Hero_Carousel::get_instance();
+        $slides = $hero_carousel->get_all_hero_slides();
+        
+        ?>
+        <div class="wrap">
+            <h1><?php _e('Hero Carousel', 'twintack-marketing'); ?></h1>
+            <p class="description"><?php _e('Manage hero carousel slides for the homepage marketing template. Upload desktop and mobile images with destination URLs.', 'twintack-marketing'); ?></p>
+            
+            <div class="twintack-marketing-admin">
+                <div class="twintack-hero-carousel-manager">
+                    <button type="button" class="button button-primary add-hero-slide">
+                        <?php _e('Add Hero Slide', 'twintack-marketing'); ?>
+                    </button>
+                    
+                    <div id="hero-slides-list" class="twintack-hero-slides-list sortable">
+                        <?php foreach ($slides as $slide) : ?>
+                            <?php $this->render_hero_slide_editor($slide); ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hero Slide Template (hidden) -->
+        <div id="hero-slide-template" style="display: none;">
+            <?php $this->render_hero_slide_editor(array('id' => '', 'image_desktop' => '', 'image_mobile' => '', 'destination_url' => '', 'alt_text' => '', 'active' => '1', 'order' => 0), true); ?>
+        </div>
+        <?php
+    }
+    
+    private function render_hero_slide_editor($slide, $is_template = false) {
+        $slide_id = isset($slide['id']) ? $slide['id'] : uniqid('hero_');
+        $image_desktop = isset($slide['image_desktop']) ? $slide['image_desktop'] : '';
+        $image_mobile = isset($slide['image_mobile']) ? $slide['image_mobile'] : '';
+        $destination_url = isset($slide['destination_url']) ? $slide['destination_url'] : '';
+        $alt_text = isset($slide['alt_text']) ? $slide['alt_text'] : '';
+        $active = isset($slide['active']) ? $slide['active'] : '1';
+        $order = isset($slide['order']) ? $slide['order'] : 0;
+        
+        ?>
+        <div class="twintack-hero-slide-editor" data-slide-id="<?php echo esc_attr($slide_id); ?>">
+            <div class="hero-slide-header">
+                <h3><?php _e('Hero Slide', 'twintack-marketing'); ?> <span class="slide-id"><?php echo esc_html($slide_id); ?></span></h3>
+                <div class="hero-slide-actions">
+                    <label>
+                        <input type="checkbox" name="active" class="slide-active" value="1" <?php checked($active, '1'); ?> />
+                        <?php _e('Active', 'twintack-marketing'); ?>
+                    </label>
+                    <button type="button" class="button remove-hero-slide"><?php _e('Remove', 'twintack-marketing'); ?></button>
+                </div>
+            </div>
+            
+            <div class="hero-slide-content">
+                <table class="form-table">
+                    <tr>
+                        <th><label><?php _e('Desktop Image', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <div class="image-upload-wrapper">
+                                <input type="hidden" name="image_desktop" class="image-url" value="<?php echo esc_attr($image_desktop); ?>" />
+                                <div class="image-preview">
+                                    <?php if ($image_desktop) : ?>
+                                        <img src="<?php echo esc_url($image_desktop); ?>" alt="" style="max-width: 300px; height: auto;" />
+                                    <?php endif; ?>
+                                </div>
+                                <button type="button" class="button upload-image"><?php _e('Upload Desktop Image', 'twintack-marketing'); ?></button>
+                                <button type="button" class="button remove-image" style="<?php echo $image_desktop ? '' : 'display:none;'; ?>"><?php _e('Remove', 'twintack-marketing'); ?></button>
+                                <p class="description"><?php _e('Recommended size: Industry standard desktop banner dimensions', 'twintack-marketing'); ?></p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label><?php _e('Mobile Image', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <div class="image-upload-wrapper">
+                                <input type="hidden" name="image_mobile" class="image-url" value="<?php echo esc_attr($image_mobile); ?>" />
+                                <div class="image-preview">
+                                    <?php if ($image_mobile) : ?>
+                                        <img src="<?php echo esc_url($image_mobile); ?>" alt="" style="max-width: 300px; height: auto;" />
+                                    <?php endif; ?>
+                                </div>
+                                <button type="button" class="button upload-image"><?php _e('Upload Mobile Image', 'twintack-marketing'); ?></button>
+                                <button type="button" class="button remove-image" style="<?php echo $image_mobile ? '' : 'display:none;'; ?>"><?php _e('Remove', 'twintack-marketing'); ?></button>
+                                <p class="description"><?php _e('Recommended size: Industry standard mobile banner dimensions', 'twintack-marketing'); ?></p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label><?php _e('Destination URL', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <input type="url" name="destination_url" class="regular-text" value="<?php echo esc_attr($destination_url); ?>" placeholder="https://example.com" />
+                            <p class="description"><?php _e('URL to link to when the slide is clicked (optional)', 'twintack-marketing'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label><?php _e('Alt Text', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <input type="text" name="alt_text" class="regular-text" value="<?php echo esc_attr($alt_text); ?>" placeholder="Descriptive text for accessibility" />
+                            <p class="description"><?php _e('Alt text for the image (recommended for accessibility)', 'twintack-marketing'); ?></p>
+                        </td>
+                    </tr>
+                    <input type="hidden" name="order" class="slide-order" value="<?php echo esc_attr($order); ?>" />
+                </table>
+                
+                <button type="button" class="button button-primary save-hero-slide"><?php _e('Save Slide', 'twintack-marketing'); ?></button>
             </div>
         </div>
         <?php

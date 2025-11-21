@@ -1,0 +1,105 @@
+*** Amazon for WooCommerce Changelog ***
+
+2025-11-05 - version 1.2.6
+* dev - Added bulk product upload.
+* dev - Added manual price and stock update.
+* update - modified feed-view page.
+
+2025-07-31 - version 1.2.5
+* dev - Manual price and inventory update
+* dev - Reserve stock and Max quantity threshold
+* update - Optimized inventory update, price update and order import process.
+* fix - Template cloning
+
+2025-06-11 - version 1.2.4
+* update - Optimized inventory update, price update and order import process.
+
+2025-04-15 - version 1.2.3
+* fix - Product upload issues
+
+2025-03-26 - version 1.2.2
+* update - Improve stability
+
+2025-03-20 - version 1.2.1
+* update - Added support for managing product upload process using Amazon's latest JSON-based APIs.
+* update - Modified code to update shipment status in WooCommerce.
+
+2024-02-25 - version 1.2.0
+* update - Improve stability
+
+2025-02-24 - version 1.1.9
+* update - Added support for managing price updates, inventory updates, and the relisting process using Amazon's latest JSON-based APIs.
+
+2024-09-26 - version 1.1.8
+* update - Improve stability
+
+2024-09-25 - version 1.1.7
+* fix - Corrected Amazon taxation rules for multiple regions.
+* dev - Added an option to switch between Amazon and WooCommerce taxation methods.
+
+2024-08-06 - version 1.1.6
+* update - Pricing plan UI.
+
+2024-08-02 - version 1.1.5
+* update - Improve stability
+
+2024-08-01 - version 1.1.4
+* new - Price field mapping.
+* update - Feed details improvised.
+
+2024-03-11 - version 1.1.3
+* new - Bulk delete option in orders section.
+* new - Fetch order by Amazon order Id.
+* fix - Prevent duplication of custom meta fields while duplicating products.
+
+2024-03-11 - version 1.1.2
+* new - Pagination in order, products, and feeds view section.
+* new - Emails switch off option in settings section.
+* dev - modified feed type column content 
+
+2024-03-09 - version 1.1.1
+* new - Introducing a search category feature within the template section.
+* fix - Issue with wp-crons getting unset
+ 
+2023-11-30 - version 1.1.0
+* new - Search amazon order by id
+
+2023-11-20 - version 1.0.9
+* update - Optimised background processes
+
+2023-10-26 - version 1.0.8
+* update - Optimised amazon account connection process
+* dev - logging of amazon api response
+
+2023-10-16 - version 1.0.7
+* update - Modified order revenue query
+
+2023-10-12 - version 1.0.6
+* update - Improve stability
+
+2023-10-11 - version 1.0.5
+* new - Template clone functionality
+* new - HPOS compatibility
+* update - Optimised existing product sync process
+
+2023-09-25 - version 1.0.4
+* update - Optimised product upload process
+
+2023-09-14 - version 1.0.3
+* update - Improve stability
+
+2023-09-12 - version 1.0.2
+* update - update price scheduler process.
+* update - update inventory scheduler process.
+* fix - Used a common array containing amazon regions information.
+* fix - Fixed not displaying of custom attributes in Global Options section during Onboarding.
+* fix - Fixed order revenue calculation query.
+* fix - Made rendering of free trial content dynamic
+
+2023-08-29 - version 1.0.1
+* fix - Fixed existing product sync header issue.
+* fix - Fixed category display and product upload issue for multiple accounts.
+* fix - Fixed 'View on Amazon' button not working issue. 
+
+2023-08-28 - version 1.0.0
+* Inital release

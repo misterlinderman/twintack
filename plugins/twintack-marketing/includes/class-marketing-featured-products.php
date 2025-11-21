@@ -84,22 +84,43 @@ class TwinTack_Marketing_Featured_Products {
         
         ob_start();
         ?>
-        <div class="twintack-featured-products" data-columns="<?php echo esc_attr($atts['columns']); ?>">
-            <?php if (!empty($atts['title'])) : ?>
-                <h2 class="twintack-featured-products-title"><?php echo esc_html($atts['title']); ?></h2>
-            <?php endif; ?>
-            
-            <ul class="products columns-<?php echo esc_attr($atts['columns']); ?>">
-                <?php
-                foreach ($products as $product) {
-                    $post_object = get_post($product->get_id());
-                    setup_postdata($GLOBALS['post'] = $post_object);
-                    wc_get_template_part('content', 'product');
-                }
-                wp_reset_postdata();
-                ?>
-            </ul>
-        </div>
+        <section class="twintack-featured-products">
+            <div class="container">
+                <?php if (!empty($atts['title'])) : ?>
+                    <h2 class="twintack-featured-products-title"><?php echo esc_html($atts['title']); ?></h2>
+                <?php endif; ?>
+                
+                <?php if (count($products) > 0) : ?>
+                    <div class="twintack-featured-products-wrapper">
+                        <ul class="products twintack-featured-products-slider columns-<?php echo esc_attr($atts['columns']); ?>">
+                            <?php
+                            foreach ($products as $product) {
+                                $post_object = get_post($product->get_id());
+                                setup_postdata($GLOBALS['post'] = $post_object);
+                                wc_get_template_part('content', 'product');
+                            }
+                            wp_reset_postdata();
+                            ?>
+                        </ul>
+                        
+                        <?php if (count($products) > 3) : ?>
+                            <div class="twintack-featured-products-nav">
+                                <button type="button" class="twintack-featured-products-prev" aria-label="Previous products">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="15,18 9,12 15,6"></polyline>
+                                    </svg>
+                                </button>
+                                <button type="button" class="twintack-featured-products-next" aria-label="Next products">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9,18 15,12 9,6"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
         <?php
         return ob_get_clean();
     }
@@ -230,4 +251,5 @@ class TwinTack_Marketing_Featured_Products {
         ));
     }
 }
+
 

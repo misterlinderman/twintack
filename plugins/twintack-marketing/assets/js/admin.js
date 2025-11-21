@@ -348,5 +348,135 @@
             }
         });
     }
+    
+    // Hero Carousel Management
+    function initHeroCarousel() {
+        // Add hero slide
+        $('.add-hero-slide').on('click', function() {
+            var $template = $('#hero-slide-template').clone();
+            $template.removeAttr('id').removeAttr('style');
+            $template.find('input, select, textarea').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    $(this).attr('name', name);
+                }
+            });
+            
+            $('#hero-slides-list').append($template);
+        });
+        
+        // Image upload for hero slides
+        $(document).on('click', '.twintack-hero-slide-editor .upload-image', function() {
+            var $wrapper = $(this).closest('.image-upload-wrapper');
+            var $input = $wrapper.find('.image-url');
+            var $preview = $wrapper.find('.image-preview');
+            var $removeBtn = $wrapper.find('.remove-image');
+            
+            var frame = wp.media({
+                title: 'Select Image',
+                button: {
+                    text: 'Use Image'
+                },
+                multiple: false
+            });
+            
+            frame.on('select', function() {
+                var attachment = frame.state().get('selection').first().toJSON();
+                $input.val(attachment.url);
+                $preview.html('<img src="' + attachment.url + '" alt="" style="max-width: 300px; height: auto;" />');
+                $removeBtn.show();
+            });
+            
+            frame.open();
+        });
+        
+        // Remove image
+        $(document).on('click', '.twintack-hero-slide-editor .remove-image', function() {
+            var $wrapper = $(this).closest('.image-upload-wrapper');
+            $wrapper.find('.image-url').val('');
+            $wrapper.find('.image-preview').html('');
+            $(this).hide();
+        });
+        
+        // Remove hero slide
+        $(document).on('click', '.remove-hero-slide', function() {
+            var $slide = $(this).closest('.twintack-hero-slide-editor');
+            var slideId = $slide.data('slide-id');
+            
+            if (slideId && confirm('Are you sure you want to remove this hero slide?')) {
+                $.ajax({
+                    url: twintackMarketing.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'twintack_delete_hero_slide',
+                        nonce: twintackMarketing.nonce,
+                        slide_id: slideId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $slide.fadeOut(300, function() {
+                                $(this).remove();
+                            });
+                        }
+                    }
+                });
+            } else if (!slideId) {
+                $slide.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }
+        });
+        
+        // Save hero slide
+        $(document).on('click', '.save-hero-slide', function() {
+            var $slide = $(this).closest('.twintack-hero-slide-editor');
+            
+            var slideData = {
+                id: $slide.data('slide-id') || 'hero_' + Date.now(),
+                image_desktop: $slide.find('input[name="image_desktop"]').val(),
+                image_mobile: $slide.find('input[name="image_mobile"]').val(),
+                destination_url: $slide.find('input[name="destination_url"]').val(),
+                alt_text: $slide.find('input[name="alt_text"]').val(),
+                active: $slide.find('.slide-active').is(':checked') ? '1' : '0',
+                order: $slide.index()
+            };
+            
+            $.ajax({
+                url: twintackMarketing.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'twintack_save_hero_slide',
+                    nonce: twintackMarketing.nonce,
+                    slide: slideData
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $slide.data('slide-id', response.data.slide.id);
+                        $slide.find('.slide-id').text(response.data.slide.id);
+                        alert('Hero slide saved successfully!');
+                    } else {
+                        alert('Error saving hero slide.');
+                    }
+                }
+            });
+        });
+        
+        // Make hero slides sortable
+        $('#hero-slides-list').sortable({
+            handle: '.hero-slide-header',
+            placeholder: 'ui-state-highlight',
+            axis: 'y',
+            update: function() {
+                $(this).find('.twintack-hero-slide-editor').each(function(index) {
+                    $(this).find('.slide-order').val(index);
+                });
+            }
+        });
+    }
+    
+    // Initialize hero carousel if on that page
+    if ($('.twintack-hero-carousel-manager').length > 0) {
+        initHeroCarousel();
+    }
 })(jQuery);
 
