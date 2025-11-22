@@ -48,17 +48,17 @@
         var $container = $carousel.closest('.twintack-featured-products');
         var $prevBtn = $container.find('.twintack-featured-products-prev');
         var $nextBtn = $container.find('.twintack-featured-products-next');
+        var $nav = $container.find('.twintack-featured-products-nav');
         var productCount = $carousel.children('li').length;
         
-        // Hide navigation if not enough products
-        if (productCount <= 3) {
-            $prevBtn.closest('.twintack-featured-products-nav').hide();
-        }
-        
-        // Only initialize carousel if more than 3 products
-        if (productCount > 3) {
+        // Always initialize carousel if there's more than 1 product
+        if (productCount > 1) {
+            // Determine initial slides to show based on screen width
+            var isMobile = $(window).width() <= 768;
+            var initialSlidesToShow = isMobile ? 1 : (productCount > 3 ? 3 : productCount);
+            
             $carousel.slick({
-                slidesToShow: 3,
+                slidesToShow: initialSlidesToShow,
                 slidesToScroll: 1,
                 infinite: false,
                 arrows: false,
@@ -100,6 +100,16 @@
                 var slick = $carousel.slick('getSlick');
                 updateCarouselButtons(slick, $prevBtn, $nextBtn);
             }, 100);
+            
+            // Hide navigation on desktop if 3 or fewer products
+            if (!isMobile && productCount <= 3) {
+                $nav.hide();
+            } else {
+                $nav.show();
+            }
+        } else {
+            // Hide navigation if only 1 product
+            $nav.hide();
         }
     }
     
@@ -110,20 +120,31 @@
         
         var currentSlide = slick.currentSlide;
         var slideCount = slick.slideCount;
-        var slidesToShow = slick.options.slidesToShow;
+        var isMobile = $(window).width() <= 768;
+        var slidesToShow = isMobile ? 1 : slick.options.slidesToShow;
         
         // Disable prev button at start
         if (currentSlide === 0) {
-            $prevBtn.prop('disabled', true);
+            $prevBtn.prop('disabled', true).css('opacity', '0.3');
         } else {
-            $prevBtn.prop('disabled', false);
+            $prevBtn.prop('disabled', false).css('opacity', '1');
         }
         
         // Disable next button at end
-        if (currentSlide >= slideCount - slidesToShow) {
-            $nextBtn.prop('disabled', true);
+        if (isMobile) {
+            // On mobile, disable next at last slide
+            if (currentSlide >= slideCount - 1) {
+                $nextBtn.prop('disabled', true).css('opacity', '0.3');
+            } else {
+                $nextBtn.prop('disabled', false).css('opacity', '1');
+            }
         } else {
-            $nextBtn.prop('disabled', false);
+            // On desktop, disable next when showing last set of slides
+            if (currentSlide >= slideCount - slidesToShow) {
+                $nextBtn.prop('disabled', true).css('opacity', '0.3');
+            } else {
+                $nextBtn.prop('disabled', false).css('opacity', '1');
+            }
         }
     }
     
@@ -134,7 +155,23 @@
         resizeTimer = setTimeout(function() {
             var $carousel = $('.twintack-featured-products-slider');
             if ($carousel.length > 0 && $carousel.hasClass('slick-initialized')) {
+                var $container = $carousel.closest('.twintack-featured-products');
+                var $nav = $container.find('.twintack-featured-products-nav');
+                var productCount = $carousel.children('li').length;
+                var isMobile = $(window).width() <= 768;
+                
                 $carousel.slick('setPosition');
+                
+                // Show/hide navigation based on screen size and product count
+                if (productCount > 1) {
+                    if (!isMobile && productCount <= 3) {
+                        $nav.hide();
+                    } else {
+                        $nav.show();
+                    }
+                } else {
+                    $nav.hide();
+                }
             }
         }, 250);
     });

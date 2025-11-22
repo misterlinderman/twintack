@@ -94,16 +94,23 @@ class TwinTack_Marketing_Featured_Products {
                     <div class="twintack-featured-products-wrapper">
                         <ul class="products twintack-featured-products-slider columns-<?php echo esc_attr($atts['columns']); ?>">
                             <?php
+                            // Remove "Add to cart" button for featured products
+                            // We want users to visit the product page first
+                            remove_action('woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10);
+                            
                             foreach ($products as $product) {
                                 $post_object = get_post($product->get_id());
                                 setup_postdata($GLOBALS['post'] = $post_object);
                                 wc_get_template_part('content', 'product');
                             }
                             wp_reset_postdata();
+                            
+                            // Re-add the "Add to cart" button for other product loops
+                            add_action('woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10);
                             ?>
                         </ul>
                         
-                        <?php if (count($products) > 3) : ?>
+                        <?php if (count($products) > 1) : ?>
                             <div class="twintack-featured-products-nav">
                                 <button type="button" class="twintack-featured-products-prev" aria-label="Previous products">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

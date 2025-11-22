@@ -1,11 +1,12 @@
 <?php
 /**
  * Plugin Name: TwinTack Marketing
- * Description: Marketing features for TwinTack including product videos, announcement bar, color schemes, featured products, and landing page templates.
- * Version: 1.0.0
+ * Description: Marketing features for TwinTack homepage including hero carousel, featured products, banner blocks, announcement bar, and landing page templates.
+ * Version: 1.0.1
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
+ * Note: Product page features (videos, color schemes) are currently disabled
  */
 
 if (!defined('ABSPATH')) exit;
@@ -33,9 +34,12 @@ class TwinTack_Marketing {
         }
         
         // Load includes
-        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-product-video.php';
+        // DISABLED: Product page features (causing critical errors)
+        // require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-product-video.php';
+        // require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-product-colors.php';
+        
+        // ACTIVE: Homepage and site-wide features only
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-announcement-bar.php';
-        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-product-colors.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-featured-products.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-banner-blocks.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-landing-page.php';
@@ -43,9 +47,12 @@ class TwinTack_Marketing {
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-admin.php';
         
         // Initialize components
-        TwinTack_Marketing_Product_Video::get_instance();
+        // DISABLED: Product page features (causing critical errors)
+        // TwinTack_Marketing_Product_Video::get_instance();
+        // TwinTack_Marketing_Product_Colors::get_instance();
+        
+        // ACTIVE: Homepage and site-wide features only
         TwinTack_Marketing_Announcement_Bar::get_instance();
-        TwinTack_Marketing_Product_Colors::get_instance();
         TwinTack_Marketing_Featured_Products::get_instance();
         TwinTack_Marketing_Banner_Blocks::get_instance();
         TwinTack_Marketing_Landing_Page::get_instance();

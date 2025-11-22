@@ -95,6 +95,7 @@ We created a **TwinTack Marketing Plugin** (`plugins/twintack-marketing/`) to ha
 - **Responsive carousel**: 3 products on desktop, 1 on mobile
 - **Navigation**: Previous/Next buttons to scroll one product at a time
 - **Smart display**: Shows as grid if 3 or fewer products, carousel if more
+- **Product page routing**: Clicking a featured product takes users to the full product page (no direct "Add to cart")
 
 **Usage:**
 - Go to **Marketing → Featured Products**
@@ -219,7 +220,28 @@ themes/twintack2025/
 
 ## Issues Encountered and Resolved
 
-### Issue 1: Critical Error on Product Pages
+### Issue 1: CRITICAL - Product Page PHP Errors (EMERGENCY FIX)
+**Problem:** Product pages displaying critical WordPress/PHP errors causing site breakage
+
+**User Priority:**
+- Product page features not yet required
+- Focus strictly on marketing homepage template
+- Need only features managed by marketing plugin admin area
+
+**Resolution (IMMEDIATE):**
+- **DISABLED** `class-marketing-product-video.php` - Commented out require and initialization
+- **DISABLED** `class-marketing-product-colors.php` - Commented out require and initialization
+- **KEPT ACTIVE**: Hero carousel, featured products, banner blocks, announcement bar, landing page templates
+- Updated plugin version to 1.0.1 with note about disabled features
+- All homepage marketing features remain fully functional
+
+**Files Modified:**
+- `plugins/twintack-marketing/twintack-marketing.php`
+- `MARKETING-INITIATIVE-PROGRESS.md`
+
+**Current Status:** Product pages should now load without errors. All marketing homepage features remain active and functional.
+
+### Issue 2: Critical Error on Product Pages (LEGACY NOTE)
 **Problem:** Plugin caused fatal errors on product pages
 
 **Root Cause:** 
@@ -321,21 +343,42 @@ themes/twintack2025/
 **Files Modified:**
 - `plugins/twintack-marketing/assets/css/marketing.css`
 
+### Issue 7: Featured Products Direct "Add to Cart"
+**Problem:** Featured products displayed "Add to cart" button, allowing purchase without viewing product details
+
+**User Request:**
+- Route users to product page instead of direct cart action
+- Encourage product page visits for better conversion
+
+**Resolution:**
+- Removed `woocommerce_template_loop_add_to_cart` action hook for featured products carousel
+- Added hover effects to enhance clickable appearance (lift on hover, shadow, title color change)
+- Entire product card now routes to product page
+- Action hook properly restored after featured products to not affect other product loops
+
+**Files Modified:**
+- `plugins/twintack-marketing/includes/class-marketing-featured-products.php`
+- `plugins/twintack-marketing/assets/css/marketing.css`
+
 ## Current Status
 
-### ✅ Completed Features
-- [x] Product page video content
-- [x] Website-wide announcement bar
-- [x] Product page color scheme toggle
+### ✅ Completed Features (ACTIVE)
+- [x] Hero carousel for homepage (desktop/mobile images + URLs)
 - [x] Featured products management with responsive carousel
 - [x] Banner blocks system
-- [x] Hero carousel for homepage (desktop/mobile images + URLs)
+- [x] Website-wide announcement bar
 - [x] Alternate homepage template with hero carousel
 - [x] Landing page template
 - [x] Admin interface for all features
 - [x] Error handling and debugging
 - [x] Product search interface
 - [x] Container-constrained layouts matching site templates
+
+### ⚠️ Disabled Features (Causing Critical Errors)
+- [ ] ~~Product page video content~~ - DISABLED
+- [ ] ~~Product page color scheme toggle~~ - DISABLED
+
+**Note:** Product page features have been disabled due to critical PHP errors on product pages. Focus is strictly on marketing homepage template features.
 
 ### 🔧 Technical Implementation
 - All features follow WordPress coding standards
