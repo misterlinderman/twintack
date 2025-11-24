@@ -990,3 +990,25 @@ form.woocommerce-ResetPassword .woocommerce-Input, .input-text
     color: var(--color-primary) !important;
     transform: translateY(-1px);
   }
+
+
+
+ /* Marketing Homepage and CMBF */ 
+ .woocommerce span.onsale {
+    min-height: 3.236em;
+    min-width: 3.236em;
+    padding: 0;
+    font-size: 1em;
+    font-weight: 700;
+    position: absolute;
+    text-align: center;
+    line-height: 3.236;
+    top: -.5em;
+    left: -.5em;
+    margin: 20px 0px;
+    border-radius: 100%;
+    background-color: var(--color-highlight);
+    color: black;
+    font-size: .857em;
+    z-index: 9;
+}

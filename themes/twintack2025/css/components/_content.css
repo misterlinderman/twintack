@@ -87,6 +87,11 @@ h1.entry-title {
     color: var(--color-text);
 }
 
+/* ACF Content Block Styling */
+.full-width-content .container {
+    padding: 20px 25px;
+}
+
 /* Desktop Styles - Account for left nav tray */
 @media (min-width: 768px) {
     h1.entry-title {

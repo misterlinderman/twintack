@@ -1,4 +1,25 @@
 <?php
+/**
+ * Front Page Template
+ * 
+ * This file takes precedence when a static page is set as the homepage.
+ * We check if the frontpage is using the Marketing Homepage template,
+ * and if so, we load that template instead.
+ */
+
+// Check if the frontpage is using the Marketing Homepage template
+$page_id = get_option('page_on_front');
+if ($page_id) {
+    $page_template = get_post_meta($page_id, '_wp_page_template', true);
+    
+    if ($page_template === 'templates/template-homepage-marketing.php') {
+        // Load the Marketing Homepage template
+        include(locate_template('templates/template-homepage-marketing.php'));
+        return;
+    }
+}
+
+// Otherwise, load the default frontpage content
 get_header();
 
 // Get other homepage sections

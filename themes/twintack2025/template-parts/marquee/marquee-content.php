@@ -1,4 +1,27 @@
 <?php
+// Don't display ACF marquee on Marketing Homepage template (uses Marketing Plugin hero instead)
+// Need to check multiple ways because get_page_template_slug() doesn't always work on frontpage
+$page_template = get_page_template_slug();
+$post_id = get_the_ID();
+
+// Check if current page uses Marketing Homepage template
+if ($page_template === 'templates/template-homepage-marketing.php') {
+    return;
+}
+
+// Additional check for frontpage case
+if ($post_id && get_page_template_slug($post_id) === 'templates/template-homepage-marketing.php') {
+    return;
+}
+
+// Check if this is the frontpage and it's using the Marketing Homepage template
+if (is_front_page() && $post_id) {
+    $template = get_post_meta($post_id, '_wp_page_template', true);
+    if ($template === 'templates/template-homepage-marketing.php') {
+        return;
+    }
+}
+
 // Get the selected header configurations from a page
 $header_configs = get_field('select_marquee_configuration');
 
