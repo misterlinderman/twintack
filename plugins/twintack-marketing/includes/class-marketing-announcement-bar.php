@@ -45,11 +45,14 @@ class TwinTack_Marketing_Announcement_Bar {
         ?>
         <div class="wrap">
             <h1><?php _e('Announcement Bar Settings', 'twintack-marketing'); ?></h1>
-            <form method="post" action="options.php">
-                <?php settings_fields('twintack_announcement_bar'); ?>
-                <?php do_settings_sections('twintack_announcement_bar'); ?>
-                
-                <table class="form-table">
+            <p class="description"><?php _e('Display a site-wide announcement bar with custom text, colors, and optional link.', 'twintack-marketing'); ?></p>
+            
+            <div class="twintack-announcement-settings">
+                <form method="post" action="options.php">
+                    <?php settings_fields('twintack_announcement_bar'); ?>
+                    <?php do_settings_sections('twintack_announcement_bar'); ?>
+                    
+                    <table class="form-table">
                     <tr>
                         <th scope="row"><?php _e('Enable Announcement Bar', 'twintack-marketing'); ?></th>
                         <td>
@@ -119,10 +122,11 @@ class TwinTack_Marketing_Announcement_Bar {
                             </label>
                         </td>
                     </tr>
-                </table>
-                
-                <?php submit_button(); ?>
-            </form>
+                    </table>
+                    
+                    <?php submit_button(__('Save Settings', 'twintack-marketing'), 'primary', 'submit', true, array('style' => 'margin-top: 20px;')); ?>
+                </form>
+            </div>
         </div>
         <?php
     }

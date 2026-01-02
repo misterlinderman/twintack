@@ -1,0 +1,166 @@
+/**
+ * TwinTack Admin Console Fixes - Admin Styles
+ * Includes styling for Noun Project API settings
+ */
+
+/* Noun Project Settings Wrapper */
+.twintack-nounproject-wrap .twintack-nounproject-settings {
+    max-width: 900px;
+}
+
+.twintack-nounproject-wrap .form-table {
+    background: #fff;
+    padding: 24px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+}
+
+/* API Credential Inputs */
+.twintack-nounproject-settings input[type="text"],
+.twintack-nounproject-settings input[type="password"] {
+    width: 100%;
+    max-width: 600px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    transition: border-color 0.2s ease;
+}
+
+.twintack-nounproject-settings input.code {
+    background: #f8f9fa;
+}
+
+.twintack-nounproject-settings input[type="text"]:focus,
+.twintack-nounproject-settings input[type="password"]:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.twintack-nounproject-settings .description {
+    color: #646970;
+    font-size: 13px;
+    font-style: italic;
+    margin-top: 8px;
+}
+
+.twintack-nounproject-settings .description a {
+    color: #2271b1;
+    text-decoration: none;
+}
+
+.twintack-nounproject-settings .description a:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+/* API Information Section */
+.twintack-api-info {
+    background: #f0f6fc;
+    border: 1px solid #d0e3f5;
+    border-radius: 8px;
+    padding: 24px;
+    margin-top: 20px;
+}
+
+.twintack-api-info h2 {
+    margin-top: 0;
+    font-size: 20px;
+    color: #1e1e1e;
+    font-weight: 600;
+}
+
+.twintack-api-info h3 {
+    font-size: 16px;
+    color: #1e1e1e;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.twintack-api-info p {
+    line-height: 1.6;
+    color: #1e1e1e;
+}
+
+.twintack-api-info ul,
+.twintack-api-info ol {
+    margin: 12px 0 12px 30px;
+    color: #1e1e1e;
+}
+
+.twintack-api-info li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.twintack-api-info a {
+    color: #2271b1;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.twintack-api-info a:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+.twintack-api-info pre {
+    background: #f8f9fa;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 12px 0;
+}
+
+.twintack-api-info code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #1e1e1e;
+}
+
+/* Buttons */
+.twintack-nounproject-settings .button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.twintack-nounproject-settings .button-primary {
+    background: #2271b1;
+    border-color: #2271b1;
+    font-weight: 500;
+}
+
+.twintack-nounproject-settings .button-primary:hover {
+    background: #135e96;
+    border-color: #135e96;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(34, 113, 177, 0.3);
+}
+
+/* Notices */
+.twintack-nounproject-settings .notice {
+    margin: 20px 0;
+    padding: 12px 16px;
+    border-left-width: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .twintack-nounproject-settings input[type="text"],
+    .twintack-nounproject-settings input[type="password"] {
+        max-width: 100%;
+    }
+    
+    .twintack-api-info {
+        padding: 16px;
+    }
+}
+

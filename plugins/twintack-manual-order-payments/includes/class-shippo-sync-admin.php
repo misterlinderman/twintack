@@ -100,6 +100,8 @@ class TwinTack_Shippo_Sync_Admin {
         <div class="wrap">
             <h1>🔄 Shippo Sync Tool</h1>
             
+            <?php $this->show_cron_health_status(); ?>
+            
             <div class="notice notice-info">
                 <p><strong>Purpose:</strong> This tool syncs orders that have been shipped in Shippo but are still showing as "Invoiced" in WooCommerce.</p>
                 <p>It will update them to "Shipped (Unpaid)" status and send tracking notifications to customers.</p>
@@ -355,6 +357,73 @@ class TwinTack_Shippo_Sync_Admin {
         $output .= '</div>';
         
         return $output;
+    }
+    
+    /**
+     * Show WP-Cron health status
+     */
+    private function show_cron_health_status() {
+        if (!class_exists('TwinTack_Cron_Health_Monitor')) {
+            return;
+        }
+        
+        $monitor = TwinTack_Cron_Health_Monitor::get_instance();
+        $health = $monitor->get_cron_health();
+        
+        $status_class = $health['is_healthy'] ? 'notice-success' : 'notice-warning';
+        $status_icon = $health['is_healthy'] ? '✅' : '⚠️';
+        
+        ?>
+        <div class="notice <?php echo $status_class; ?>" style="padding: 15px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0;"><?php echo $status_icon; ?> WP-Cron Health Status</h3>
+            <table style="width: 100%; max-width: 800px;">
+                <tr>
+                    <td style="width: 200px; font-weight: bold;">Overall Status:</td>
+                    <td>
+                        <strong style="color: <?php echo $health['is_healthy'] ? '#28a745' : '#dc3545'; ?>;">
+                            <?php echo $health['is_healthy'] ? '✅ HEALTHY' : '❌ NEEDS ATTENTION'; ?>
+                        </strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Last Cron Run:</td>
+                    <td>
+                        <?php if ($health['last_run_timestamp']): ?>
+                            <?php echo $health['last_run_human']; ?> (<?php echo $health['last_run_date']; ?>)
+                        <?php else: ?>
+                            <span style="color: #dc3545;">Never recorded</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Real Cron Job:</td>
+                    <td>
+                        <?php if ($health['has_real_cron']): ?>
+                            <span style="color: #28a745;">✅ Active (recommended)</span>
+                        <?php else: ?>
+                            <span style="color: #ffc107;">⚠️ Using visitor-triggered WP-Cron</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Overdue Events:</td>
+                    <td>
+                        <?php if ($health['overdue_count'] > 0): ?>
+                            <span style="color: #dc3545;">⚠️ <?php echo $health['overdue_count']; ?> event(s) overdue</span>
+                        <?php else: ?>
+                            <span style="color: #28a745;">None</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            </table>
+            
+            <?php if (!$health['is_healthy']): ?>
+            <div style="background: #fff; padding: 10px; margin-top: 10px; border-left: 4px solid #ffc107;">
+                <strong>⚠️ Action Required:</strong> <?php echo $health['warning_message']; ?>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php
     }
     
     /**

@@ -564,6 +564,47 @@ body.twintack-product-color-alternate .woocommerce .product .summary {
     vertical-align: middle;
 }
 
+/* Hero Video Styles */
+.twintack-marketing-hero .marquee-slide-video {
+    display: block;
+    width: 100%;
+    line-height: 0;
+}
+
+.twintack-marketing-hero .marquee-video {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0;
+    padding: 0;
+    object-fit: cover;
+}
+
+.twintack-marketing-hero .video-fallback {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Desktop/Mobile visibility for video slides */
+.twintack-marketing-hero .desktop-only {
+    display: block !important;
+}
+
+.twintack-marketing-hero .mobile-only {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .twintack-marketing-hero .desktop-only {
+        display: none !important;
+    }
+    
+    .twintack-marketing-hero .mobile-only {
+        display: block !important;
+    }
+}
+
 /* Ensure hero images scale properly at all sizes */
 @media (min-width: 769px) {
     .twintack-marketing-hero picture.marquee-slide-image img {

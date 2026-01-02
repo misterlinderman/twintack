@@ -96,17 +96,47 @@ class TwinTack_Marketing_Hero_Carousel {
         <div class="site-marquee twintack-marketing-hero">
             <div class="marquee-slides">
                 <?php foreach ($slides as $index => $slide) : 
+                    $desktop_video = isset($slide['video_desktop']) ? $slide['video_desktop'] : '';
                     $desktop_image = isset($slide['image_desktop']) ? $slide['image_desktop'] : '';
                     $mobile_image = isset($slide['image_mobile']) ? $slide['image_mobile'] : '';
                     $destination_url = isset($slide['destination_url']) ? $slide['destination_url'] : '';
                     $alt_text = isset($slide['alt_text']) ? $slide['alt_text'] : '';
+                    $has_video = !empty($desktop_video);
                 ?>
-                    <div class="marquee-slide <?php echo ($index === 0) ? 'active' : ''; ?>">
+                    <div class="marquee-slide <?php echo ($index === 0) ? 'active' : ''; ?>" <?php echo $has_video ? 'data-has-video="true"' : ''; ?>>
                         <?php if ($destination_url) : ?>
                             <a href="<?php echo esc_url($destination_url); ?>" class="marquee-slide-link" aria-label="<?php echo esc_attr($alt_text ?: 'Hero slide ' . ($index + 1)); ?>">
                         <?php endif; ?>
                         
-                        <?php if ($desktop_image || $mobile_image) : ?>
+                        <?php if ($has_video) : ?>
+                            <!-- Desktop: Video with image fallback/poster -->
+                            <div class="marquee-slide-video desktop-only">
+                                <video 
+                                    class="marquee-video" 
+                                    autoplay 
+                                    muted 
+                                    loop 
+                                    playsinline
+                                    <?php if ($desktop_image) : ?>poster="<?php echo esc_url($desktop_image); ?>"<?php endif; ?>
+                                    aria-label="<?php echo esc_attr($alt_text ?: 'Hero video ' . ($index + 1)); ?>"
+                                >
+                                    <source src="<?php echo esc_url($desktop_video); ?>" type="video/mp4">
+                                    <?php if ($desktop_image) : ?>
+                                        <img src="<?php echo esc_url($desktop_image); ?>" 
+                                             alt="<?php echo esc_attr($alt_text ?: 'Hero slide ' . ($index + 1)); ?>" 
+                                             class="marquee-background-image video-fallback" />
+                                    <?php endif; ?>
+                                </video>
+                            </div>
+                            <!-- Mobile: Static image -->
+                            <?php if ($mobile_image) : ?>
+                                <picture class="marquee-slide-image mobile-only">
+                                    <img src="<?php echo esc_url($mobile_image); ?>" 
+                                         alt="<?php echo esc_attr($alt_text ?: 'Hero slide ' . ($index + 1)); ?>" 
+                                         class="marquee-background-image" />
+                                </picture>
+                            <?php endif; ?>
+                        <?php elseif ($desktop_image || $mobile_image) : ?>
                             <picture class="marquee-slide-image">
                                 <?php if ($mobile_image) : ?>
                                     <source media="(max-width: 768px)" srcset="<?php echo esc_url($mobile_image); ?>">
@@ -176,6 +206,7 @@ class TwinTack_Marketing_Hero_Carousel {
         // Sanitize slide data
         $sanitized_slide = array(
             'id' => isset($slide['id']) ? sanitize_text_field($slide['id']) : uniqid('hero_'),
+            'video_desktop' => isset($slide['video_desktop']) ? esc_url_raw($slide['video_desktop']) : '',
             'image_desktop' => isset($slide['image_desktop']) ? esc_url_raw($slide['image_desktop']) : '',
             'image_mobile' => isset($slide['image_mobile']) ? esc_url_raw($slide['image_mobile']) : '',
             'destination_url' => isset($slide['destination_url']) ? esc_url_raw($slide['destination_url']) : '',

@@ -23,6 +23,14 @@ This plugin fixes WordPress admin console errors and Variable Product type recog
 - **Event Handling**: Maintains wholesale plugin functionality
 - **Product Type Consistency**: Ensures wholesale features work with correct product types
 
+### Noun Project API Integration
+- **Shared API Access**: Centralized Noun Project API integration for all TwinTack plugins
+- **Icon Search**: Search millions of icons from The Noun Project
+- **Icon Download**: Download icons in SVG format
+- **Media Library Integration**: Save icons directly to WordPress media library
+- **API Management**: Configure credentials and test connection from dedicated admin page
+- **Developer Friendly**: Easy-to-use API methods available to all plugins
+
 ## Installation
 
 1. Upload the `twintack-admin-console-fixes` folder to `/wp-content/plugins/`
@@ -60,12 +68,16 @@ twintack-admin-console-fixes/
 ├── includes/
 │   ├── class-console-fixes.php
 │   ├── class-product-type-fix.php
-│   └── class-wholesale-plugin-patch.php
+│   ├── class-wholesale-plugin-patch.php
+│   └── class-nounproject-api.php
 ├── assets/
+│   ├── css/
+│   │   └── admin.css
 │   └── js/
 │       ├── product-type-fix.js
 │       └── wholesale-plugin-patch.js
-└── README.md
+├── README.md
+└── NOUNPROJECT-API.md
 ```
 
 ## AJAX Endpoints
@@ -124,10 +136,35 @@ twintack-admin-console-fixes/
 - Safari 13+
 - Edge 80+
 
+## Noun Project API
+
+This plugin includes centralized Noun Project API integration that can be used by all TwinTack plugins. 
+
+### Setup
+1. Navigate to **Noun Project** in WordPress admin
+2. Enter your API Key and Secret
+3. Click Test Connection to verify
+
+### For Developers
+See [NOUNPROJECT-API.md](NOUNPROJECT-API.md) for complete API documentation and usage examples.
+
+```php
+// Example usage in any TwinTack plugin
+if (class_exists('TwinTack_NounProject_API')) {
+    $api = TwinTack_NounProject_API::get_instance();
+    $icons = $api->search_icons('baseball', 50, 1);
+}
+```
+
 ## Changelog
 
-### Version 1.0.0
-- Initial release
+### Version 1.0.6
+- Added Noun Project API integration
+- Centralized icon search and download for all TwinTack plugins
+- New standalone admin menu for API configuration
+- Comprehensive API documentation
+
+### Version 1.0.5
 - Console error suppression
 - Product type recognition fix
 - Wholesale plugin compatibility

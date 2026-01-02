@@ -2,6 +2,56 @@
 
 All notable changes to this plugin will be documented in this file.
 
+## 4.6.1 – 2025-12-10
+### Added
+- **🔍 WP-CRON DIAGNOSTIC TOOL**: Comprehensive diagnostic tool for troubleshooting WP-Cron and Shippo sync issues
+  - **Real-time Status Monitoring**: Shows WP-Cron configuration status and identifies problems
+  - **Shippo Sync Dashboard**: Displays automation status, next scheduled run, and eligible orders
+  - **Scheduled Events Viewer**: Lists all WordPress cron events with overdue detection
+  - **One-Click Manual Sync**: Force immediate Shippo sync without waiting for cron
+  - **WP-Cron Manual Trigger**: Ability to manually spawn WP-Cron to run overdue tasks
+  - **Automation Toggle**: Enable/disable automated sync directly from diagnostic tool
+  - **Access via**: `/wp-content/plugins/twintack-manual-order-payments/test-wp-cron-status.php`
+
+- **📊 CRON HEALTH MONITOR**: Real-time monitoring of WP-Cron health directly in WordPress admin
+  - **Dashboard Widget**: Displays cron health status on WordPress main dashboard
+  - **Last Run Tracking**: Records and displays when WP-Cron last executed
+  - **Overdue Event Detection**: Automatically detects and counts overdue scheduled tasks
+  - **Real Cron Detection**: Identifies if site is using real server cron job or visitor-triggered WP-Cron
+  - **Admin Notices**: Shows warnings when cron hasn't run in over 30 minutes
+  - **Shippo Sync Integration**: Shows cron health status on Shippo Sync admin page
+  - **Execution Counter**: Tracks total number of cron executions for monitoring trends
+
+### Documentation
+- **WP-CRON-SHIPPO-FIX-GUIDE.md**: Comprehensive troubleshooting guide for WP-Cron failures
+  - Root cause analysis of WP-Cron failures
+  - Step-by-step immediate fixes
+  - Long-term solutions (real cron jobs, external services)
+  - FTP-only environment considerations
+  - Monitoring and prevention strategies
+- **QUICK-FIX-SHIPPO-SYNC.md**: One-page quick reference for immediate fixes
+- **CLIENT-COMMUNICATION-TEMPLATE.md**: Pre-written email templates for client communication
+  - Initial problem notification
+  - Follow-up messages
+  - Alternative solutions for different scenarios
+
+### Enhanced
+- **Problem Detection**: Identifies when WP-Cron failures prevent Shippo sync from running
+- **Visual Diagnostics**: Color-coded status indicators (green/yellow/red) for quick assessment
+- **Order Backlog Detection**: Automatically identifies orders waiting to sync
+- **Detailed Logging**: Enhanced logging for WP-Cron and automation events
+
+### Technical
+- **WP-Cron Analysis**: Checks for `DISABLE_WP_CRON` and `ALTERNATE_WP_CRON` constants
+- **Scheduled Task Monitoring**: Detects overdue cron events with time calculations
+- **Order Query Optimization**: Efficient queries for Processing and Invoiced orders
+- **Shippo Integration Verification**: Validates Shippo plugin presence and configuration
+
+### Fixed
+- **WP-Cron Dependency**: Documented dependency on WP-Cron for automated Shippo sync
+- **Sync Failure Detection**: Added tools to quickly identify why orders aren't syncing
+- **Manual Sync Access**: Improved access to manual sync functionality for emergency use
+
 ## 4.6.0 – 2025-01-17
 ### Added
 - **🎯 VIRTUAL PRODUCT SHIPPO FILTERING**: Intelligent filtering system prevents virtual products from syncing to Shippo

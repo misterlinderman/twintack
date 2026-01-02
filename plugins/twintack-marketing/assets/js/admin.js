@@ -365,6 +365,46 @@
             $('#hero-slides-list').append($template);
         });
         
+        // Video upload for hero slides (MP4)
+        $(document).on('click', '.twintack-hero-slide-editor .upload-video', function() {
+            var $wrapper = $(this).closest('.video-upload-wrapper');
+            var $input = $wrapper.find('.video-url');
+            var $preview = $wrapper.find('.video-preview');
+            var $removeBtn = $wrapper.find('.remove-video');
+            
+            var frame = wp.media({
+                title: 'Select Video (MP4)',
+                button: {
+                    text: 'Use Video'
+                },
+                library: {
+                    type: 'video/mp4'
+                },
+                multiple: false
+            });
+            
+            frame.on('select', function() {
+                var attachment = frame.state().get('selection').first().toJSON();
+                if (attachment.mime === 'video/mp4' || attachment.url.toLowerCase().endsWith('.mp4')) {
+                    $input.val(attachment.url);
+                    $preview.html('<video src="' + attachment.url + '" style="max-width: 300px; height: auto;" muted></video>');
+                    $removeBtn.show();
+                } else {
+                    alert('Please select an MP4 video file.');
+                }
+            });
+            
+            frame.open();
+        });
+        
+        // Remove video
+        $(document).on('click', '.twintack-hero-slide-editor .remove-video', function() {
+            var $wrapper = $(this).closest('.video-upload-wrapper');
+            $wrapper.find('.video-url').val('');
+            $wrapper.find('.video-preview').html('');
+            $(this).hide();
+        });
+        
         // Image upload for hero slides
         $(document).on('click', '.twintack-hero-slide-editor .upload-image', function() {
             var $wrapper = $(this).closest('.image-upload-wrapper');
@@ -433,6 +473,7 @@
             
             var slideData = {
                 id: $slide.data('slide-id') || 'hero_' + Date.now(),
+                video_desktop: $slide.find('input[name="video_desktop"]').val(),
                 image_desktop: $slide.find('input[name="image_desktop"]').val(),
                 image_mobile: $slide.find('input[name="image_mobile"]').val(),
                 destination_url: $slide.find('input[name="destination_url"]').val(),

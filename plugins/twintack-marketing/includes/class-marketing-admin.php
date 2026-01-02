@@ -19,6 +19,7 @@ class TwinTack_Marketing_Admin {
     private function __construct() {
         add_action('admin_menu', array($this, 'add_menu_page'), 10);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+        add_action('admin_init', array($this, 'handle_download_icons'));
     }
     
     public function add_menu_page() {
@@ -76,6 +77,72 @@ class TwinTack_Marketing_Admin {
         $announcement_bar->render_settings_page();
     }
     
+    /**
+     * Handle manual icon download request
+     */
+    public function handle_download_icons() {
+        if (!isset($_GET['download_marketing_icons']) || !isset($_GET['_wpnonce'])) {
+            return;
+        }
+        
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'download_marketing_icons')) {
+            wp_die('Invalid nonce');
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        // Icon mappings
+        $icons = array(
+            'carousel' => 8116739,
+            'product' => 7727037,
+            'content' => 7459085,
+            'announcement' => 3408481,
+            'landing-page' => 8142737,
+            'input-product' => 4797115
+        );
+        
+        $icons_dir = plugin_dir_path(__FILE__) . '../assets/images/icons/';
+        if (!file_exists($icons_dir)) {
+            wp_mkdir_p($icons_dir);
+        }
+        
+        $results = array();
+        
+        if (class_exists('TwinTack_NounProject_API')) {
+            $api = TwinTack_NounProject_API::get_instance();
+            
+            if ($api->is_configured()) {
+                foreach ($icons as $name => $icon_id) {
+                    $svg = $api->download_icon_svg($icon_id);
+                    
+                    if (!is_wp_error($svg)) {
+                        $file_path = $icons_dir . $name . '.svg';
+                        $saved = file_put_contents($file_path, $svg);
+                        
+                        if ($saved !== false) {
+                            $results[] = "✓ Downloaded {$name}.svg";
+                        } else {
+                            $results[] = "✗ Failed to save {$name}.svg";
+                        }
+                    } else {
+                        $results[] = "✗ Failed to download {$name}: " . $svg->get_error_message();
+                    }
+                }
+            } else {
+                $results[] = "✗ Noun Project API not configured";
+            }
+        } else {
+            $results[] = "✗ Noun Project API class not found";
+        }
+        
+        // Redirect back with results
+        $message = urlencode(implode(' | ', $results));
+        wp_redirect(admin_url('admin.php?page=twintack-marketing&icon_download_result=' . $message));
+        exit;
+    }
+    
     public function enqueue_admin_assets($hook) {
         if (strpos($hook, 'twintack-marketing') === false && strpos($hook, 'twintack-announcement-bar') === false) {
             return;
@@ -105,27 +172,115 @@ class TwinTack_Marketing_Admin {
         ));
     }
     
+    /**
+     * Get icon HTML for dashboard cards
+     */
+    private function get_card_icon($icon_id) {
+        // Icon mapping
+        $icons = array(
+            'carousel' => 8116739,
+            'product' => 7727037,
+            'content' => 7459085,
+            'announcement' => 3408481,
+            'landing-page' => 8142737,
+            'input-product' => 4797115
+        );
+        
+        $icon_path = plugin_dir_path(__FILE__) . '../assets/images/icons/' . $icon_id . '.svg';
+        $icon_url = plugin_dir_url(__FILE__) . '../assets/images/icons/' . $icon_id . '.svg';
+        
+        // If SVG exists locally, use it
+        if (file_exists($icon_path)) {
+            $svg = file_get_contents($icon_path);
+            return '<span class="card-icon">' . $svg . '</span>';
+        }
+        
+        // Otherwise, try to download from Noun Project API if available
+        if (class_exists('TwinTack_NounProject_API') && isset($icons[$icon_id])) {
+            $api = TwinTack_NounProject_API::get_instance();
+            if ($api->is_configured()) {
+                $svg = $api->download_icon_svg($icons[$icon_id]);
+                if (!is_wp_error($svg)) {
+                    // Ensure directory exists
+                    $icons_dir = dirname($icon_path);
+                    if (!file_exists($icons_dir)) {
+                        wp_mkdir_p($icons_dir);
+                    }
+                    
+                    // Save for future use
+                    $saved = file_put_contents($icon_path, $svg);
+                    if ($saved !== false) {
+                        error_log("TwinTack Marketing: Successfully downloaded and saved icon '{$icon_id}' (ID: {$icons[$icon_id]})");
+                        return '<span class="card-icon">' . $svg . '</span>';
+                    } else {
+                        error_log("TwinTack Marketing: Failed to save icon '{$icon_id}' to {$icon_path}");
+                    }
+                } else {
+                    error_log("TwinTack Marketing: Failed to download icon '{$icon_id}' (ID: {$icons[$icon_id]}): " . $svg->get_error_message());
+                }
+            }
+        }
+        
+        // Fallback to emoji if icon not available
+        $emoji_fallbacks = array(
+            'carousel' => '🎯',
+            'product' => '⭐',
+            'content' => '📢',
+            'announcement' => '📣',
+            'landing-page' => '📄',
+            'input-product' => '🛍️'
+        );
+        
+        return isset($emoji_fallbacks[$icon_id]) ? $emoji_fallbacks[$icon_id] . ' ' : '';
+    }
+    
     public function render_admin_page() {
         ?>
         <div class="wrap">
             <h1><?php _e('TwinTack Marketing', 'twintack-marketing'); ?></h1>
-            <p><?php _e('Manage marketing features for your TwinTack website.', 'twintack-marketing'); ?></p>
+            <p class="description"><?php _e('Manage marketing features for your TwinTack website.', 'twintack-marketing'); ?></p>
             
             <div class="twintack-marketing-dashboard">
+                <!-- Hero Carousel Card -->
                 <div class="twintack-marketing-card">
-                    <h2><?php _e('Quick Links', 'twintack-marketing'); ?></h2>
-                    <ul>
-                        <li><a href="<?php echo admin_url('admin.php?page=twintack-marketing-hero'); ?>"><?php _e('Manage Hero Carousel', 'twintack-marketing'); ?></a></li>
-                        <li><a href="<?php echo admin_url('admin.php?page=twintack-marketing-featured'); ?>"><?php _e('Manage Featured Products', 'twintack-marketing'); ?></a></li>
-                        <li><a href="<?php echo admin_url('admin.php?page=twintack-marketing-banners'); ?>"><?php _e('Manage Banner Blocks', 'twintack-marketing'); ?></a></li>
-                        <li><a href="<?php echo admin_url('admin.php?page=twintack-announcement-bar'); ?>"><?php _e('Announcement Bar Settings', 'twintack-marketing'); ?></a></li>
-                    </ul>
+                    <h2><?php echo $this->get_card_icon('carousel'); ?><?php _e('Hero Carousel', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Manage hero slides for the homepage marketing template. Upload desktop and mobile images with destination URLs.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=twintack-marketing-hero'); ?>" class="button button-primary"><?php _e('Manage Hero Slides', 'twintack-marketing'); ?></a>
                 </div>
                 
+                <!-- Featured Products Card -->
                 <div class="twintack-marketing-card">
-                    <h2><?php _e('Product Features', 'twintack-marketing'); ?></h2>
-                    <p><?php _e('To add marketing videos or change color schemes for products, edit individual products in WooCommerce.', 'twintack-marketing'); ?></p>
-                    <p><a href="<?php echo admin_url('edit.php?post_type=product'); ?>" class="button"><?php _e('Manage Products', 'twintack-marketing'); ?></a></p>
+                    <h2><?php echo $this->get_card_icon('product'); ?><?php _e('Featured Products', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Select and order products to feature on your marketing pages. Products will display in a responsive carousel.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=twintack-marketing-featured'); ?>" class="button button-primary"><?php _e('Manage Featured Products', 'twintack-marketing'); ?></a>
+                </div>
+                
+                <!-- Banner Blocks Card -->
+                <div class="twintack-marketing-card">
+                    <h2><?php echo $this->get_card_icon('content'); ?><?php _e('Banner Blocks', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Create promotional banner blocks with images and text. Choose between full-width image or 50/50 image and text layouts.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=twintack-marketing-banners'); ?>" class="button button-primary"><?php _e('Manage Banner Blocks', 'twintack-marketing'); ?></a>
+                </div>
+                
+                <!-- Announcement Bar Card -->
+                <div class="twintack-marketing-card">
+                    <h2><?php echo $this->get_card_icon('announcement'); ?><?php _e('Announcement Bar', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Display a site-wide announcement bar with custom text, colors, and optional link. Perfect for promotions and alerts.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=twintack-announcement-bar'); ?>" class="button button-primary"><?php _e('Configure Announcement Bar', 'twintack-marketing'); ?></a>
+                </div>
+                
+                <!-- Templates Card -->
+                <div class="twintack-marketing-card">
+                    <h2><?php echo $this->get_card_icon('landing-page'); ?><?php _e('Marketing Templates', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Apply the Marketing Homepage template to any page to use the hero carousel, featured products, and banner blocks.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('edit.php?post_type=page'); ?>" class="button"><?php _e('Edit Pages', 'twintack-marketing'); ?></a>
+                </div>
+                
+                <!-- Product Features Card -->
+                <div class="twintack-marketing-card">
+                    <h2><?php echo $this->get_card_icon('input-product'); ?><?php _e('Product Management', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Manage your WooCommerce products, including pricing, inventory, and product details.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('edit.php?post_type=product'); ?>" class="button"><?php _e('Manage Products', 'twintack-marketing'); ?></a>
                 </div>
             </div>
         </div>
@@ -139,6 +294,7 @@ class TwinTack_Marketing_Admin {
         ?>
         <div class="wrap">
             <h1><?php _e('Featured Products', 'twintack-marketing'); ?></h1>
+            <p class="description"><?php _e('Select and arrange products to feature on your marketing pages. Products can be reordered by dragging.', 'twintack-marketing'); ?></p>
             
             <div class="twintack-marketing-admin">
                 <div class="twintack-context-selector">
@@ -184,6 +340,7 @@ class TwinTack_Marketing_Admin {
         ?>
         <div class="wrap">
             <h1><?php _e('Banner Blocks', 'twintack-marketing'); ?></h1>
+            <p class="description"><?php _e('Create promotional banner blocks with images and optional text. Choose between full-width or 50/50 layouts.', 'twintack-marketing'); ?></p>
             
             <div class="twintack-marketing-admin">
                 <div class="twintack-context-selector">
@@ -346,13 +503,14 @@ class TwinTack_Marketing_Admin {
         
         <!-- Hero Slide Template (hidden) -->
         <div id="hero-slide-template" style="display: none;">
-            <?php $this->render_hero_slide_editor(array('id' => '', 'image_desktop' => '', 'image_mobile' => '', 'destination_url' => '', 'alt_text' => '', 'active' => '1', 'order' => 0), true); ?>
+            <?php $this->render_hero_slide_editor(array('id' => '', 'video_desktop' => '', 'image_desktop' => '', 'image_mobile' => '', 'destination_url' => '', 'alt_text' => '', 'active' => '1', 'order' => 0), true); ?>
         </div>
         <?php
     }
     
     private function render_hero_slide_editor($slide, $is_template = false) {
         $slide_id = isset($slide['id']) ? $slide['id'] : uniqid('hero_');
+        $video_desktop = isset($slide['video_desktop']) ? $slide['video_desktop'] : '';
         $image_desktop = isset($slide['image_desktop']) ? $slide['image_desktop'] : '';
         $image_mobile = isset($slide['image_mobile']) ? $slide['image_mobile'] : '';
         $destination_url = isset($slide['destination_url']) ? $slide['destination_url'] : '';
@@ -376,6 +534,22 @@ class TwinTack_Marketing_Admin {
             <div class="hero-slide-content">
                 <table class="form-table">
                     <tr>
+                        <th><label><?php _e('Desktop Video (MP4)', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <div class="video-upload-wrapper">
+                                <input type="hidden" name="video_desktop" class="video-url" value="<?php echo esc_attr($video_desktop); ?>" />
+                                <div class="video-preview">
+                                    <?php if ($video_desktop) : ?>
+                                        <video src="<?php echo esc_url($video_desktop); ?>" style="max-width: 300px; height: auto;" muted></video>
+                                    <?php endif; ?>
+                                </div>
+                                <button type="button" class="button upload-video"><?php _e('Upload Desktop Video', 'twintack-marketing'); ?></button>
+                                <button type="button" class="button remove-video" style="<?php echo $video_desktop ? '' : 'display:none;'; ?>"><?php _e('Remove', 'twintack-marketing'); ?></button>
+                                <p class="description"><?php _e('Optional: Upload an MP4 video for desktop. Will autoplay muted and loop.', 'twintack-marketing'); ?></p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label><?php _e('Desktop Image', 'twintack-marketing'); ?></label></th>
                         <td>
                             <div class="image-upload-wrapper">
@@ -387,7 +561,7 @@ class TwinTack_Marketing_Admin {
                                 </div>
                                 <button type="button" class="button upload-image"><?php _e('Upload Desktop Image', 'twintack-marketing'); ?></button>
                                 <button type="button" class="button remove-image" style="<?php echo $image_desktop ? '' : 'display:none;'; ?>"><?php _e('Remove', 'twintack-marketing'); ?></button>
-                                <p class="description"><?php _e('Recommended size: Industry standard desktop banner dimensions', 'twintack-marketing'); ?></p>
+                                <p class="description"><?php _e('If video is set, this image will be used as a fallback/poster. Otherwise used as the main desktop image.', 'twintack-marketing'); ?></p>
                             </div>
                         </td>
                     </tr>
@@ -403,7 +577,7 @@ class TwinTack_Marketing_Admin {
                                 </div>
                                 <button type="button" class="button upload-image"><?php _e('Upload Mobile Image', 'twintack-marketing'); ?></button>
                                 <button type="button" class="button remove-image" style="<?php echo $image_mobile ? '' : 'display:none;'; ?>"><?php _e('Remove', 'twintack-marketing'); ?></button>
-                                <p class="description"><?php _e('Recommended size: Industry standard mobile banner dimensions', 'twintack-marketing'); ?></p>
+                                <p class="description"><?php _e('Static image for mobile devices (video will not play on mobile).', 'twintack-marketing'); ?></p>
                             </div>
                         </td>
                     </tr>
@@ -418,7 +592,7 @@ class TwinTack_Marketing_Admin {
                         <th><label><?php _e('Alt Text', 'twintack-marketing'); ?></label></th>
                         <td>
                             <input type="text" name="alt_text" class="regular-text" value="<?php echo esc_attr($alt_text); ?>" placeholder="Descriptive text for accessibility" />
-                            <p class="description"><?php _e('Alt text for the image (recommended for accessibility)', 'twintack-marketing'); ?></p>
+                            <p class="description"><?php _e('Alt text for the image/video (recommended for accessibility)', 'twintack-marketing'); ?></p>
                         </td>
                     </tr>
                     <input type="hidden" name="order" class="slide-order" value="<?php echo esc_attr($order); ?>" />
