@@ -27,12 +27,25 @@
 
 /* Announcement Bar */
 .twintack-announcement-bar {
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     padding: 12px 20px;
     text-align: center;
-    z-index: 9999;
+    z-index: 10001;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Admin bar adjustment */
+.admin-bar .twintack-announcement-bar {
+    top: 32px;
+}
+
+@media screen and (max-width: 782px) {
+    .admin-bar .twintack-announcement-bar {
+        top: 46px;
+    }
 }
 
 .twintack-announcement-content {
@@ -75,6 +88,102 @@
 
 .twintack-announcement-close:hover {
     opacity: 1;
+}
+
+/* Bundle Counter */
+.twintack-bundle-counter {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 12px 20px;
+    text-align: center;
+    z-index: 10000;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    min-height: 75px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Admin bar adjustment - default positioning, overridden by inline styles when announcement bar is active */
+.admin-bar .twintack-bundle-counter {
+    top: 32px;
+}
+
+@media screen and (max-width: 782px) {
+    .admin-bar .twintack-bundle-counter {
+        top: 46px;
+    }
+}
+
+.twintack-bundle-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.twintack-bundle-counter .bundle-text {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.twintack-bundle-counter.qualified .bundle-text {
+    font-size: 16px;
+}
+
+.twintack-bundle-counter .bundle-progress-bar {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.twintack-bundle-counter .progress-track {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.twintack-bundle-counter .progress-fill {
+    height: 100%;
+    background: #7ed321;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.twintack-bundle-counter .progress-count {
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    min-width: 50px;
+}
+
+.twintack-bundle-counter .current-count {
+    font-size: 18px;
+}
+
+/* Qualified state animation */
+.twintack-bundle-counter.qualified {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    50% {
+        box-shadow: 0 2px 12px rgba(126, 211, 33, 0.4);
+    }
 }
 
 /* Product Color Scheme */
@@ -634,6 +743,31 @@ body.twintack-product-color-alternate .woocommerce .product .summary {
     .twintack-announcement-text {
         font-size: 12px;
         padding-right: 30px;
+    }
+    
+    .twintack-bundle-counter {
+        padding: 12px 15px;
+    }
+    
+    .twintack-bundle-counter .bundle-text {
+        font-size: 13px;
+    }
+    
+    .twintack-bundle-counter.qualified .bundle-text {
+        font-size: 14px;
+    }
+    
+    .twintack-bundle-counter .bundle-progress-bar {
+        max-width: 100%;
+    }
+    
+    .twintack-bundle-counter .progress-count {
+        font-size: 12px;
+        min-width: 45px;
+    }
+    
+    .twintack-bundle-counter .current-count {
+        font-size: 16px;
     }
     
     .twintack-landing-hero-title {

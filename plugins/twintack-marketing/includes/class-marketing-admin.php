@@ -69,12 +69,28 @@ class TwinTack_Marketing_Admin {
             'twintack-announcement-bar',
             array($this, 'render_announcement_bar_page')
         );
+        
+        // Add Bundle Counter submenu
+        add_submenu_page(
+            'twintack-marketing',
+            __('Bundle Counter', 'twintack-marketing'),
+            __('Bundle Counter', 'twintack-marketing'),
+            'manage_options',
+            'twintack-bundle-counter',
+            array($this, 'render_bundle_counter_page')
+        );
     }
     
     public function render_announcement_bar_page() {
         // Delegate to announcement bar class
         $announcement_bar = TwinTack_Marketing_Announcement_Bar::get_instance();
         $announcement_bar->render_settings_page();
+    }
+    
+    public function render_bundle_counter_page() {
+        // Delegate to bundle counter class
+        $bundle_counter = TwinTack_Marketing_Bundle_Counter::get_instance();
+        $bundle_counter->render_settings_page();
     }
     
     /**
@@ -144,7 +160,9 @@ class TwinTack_Marketing_Admin {
     }
     
     public function enqueue_admin_assets($hook) {
-        if (strpos($hook, 'twintack-marketing') === false && strpos($hook, 'twintack-announcement-bar') === false) {
+        if (strpos($hook, 'twintack-marketing') === false && 
+            strpos($hook, 'twintack-announcement-bar') === false && 
+            strpos($hook, 'twintack-bundle-counter') === false) {
             return;
         }
         
@@ -182,6 +200,7 @@ class TwinTack_Marketing_Admin {
             'product' => 7727037,
             'content' => 7459085,
             'announcement' => 3408481,
+            'bundle-counter' => 3408481,
             'landing-page' => 8142737,
             'input-product' => 4797115
         );
@@ -227,6 +246,7 @@ class TwinTack_Marketing_Admin {
             'product' => '⭐',
             'content' => '📢',
             'announcement' => '📣',
+            'bundle-counter' => '🎁',
             'landing-page' => '📄',
             'input-product' => '🛍️'
         );
@@ -267,6 +287,13 @@ class TwinTack_Marketing_Admin {
                     <h2><?php echo $this->get_card_icon('announcement'); ?><?php _e('Announcement Bar', 'twintack-marketing'); ?></h2>
                     <p><?php _e('Display a site-wide announcement bar with custom text, colors, and optional link. Perfect for promotions and alerts.', 'twintack-marketing'); ?></p>
                     <a href="<?php echo admin_url('admin.php?page=twintack-announcement-bar'); ?>" class="button button-primary"><?php _e('Configure Announcement Bar', 'twintack-marketing'); ?></a>
+                </div>
+                
+                <!-- Bundle Counter Card -->
+                <div class="twintack-marketing-card">
+                    <h2><?php echo $this->get_card_icon('bundle-counter'); ?><?php _e('Bundle Counter', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Show customers their progress toward bundle discounts. Real-time cart tracking with visual progress bar. Works independently from announcement bar.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=twintack-bundle-counter'); ?>" class="button button-primary"><?php _e('Configure Bundle Counter', 'twintack-marketing'); ?></a>
                 </div>
                 
                 <!-- Templates Card -->

@@ -39,6 +39,8 @@ class TwinTack_Marketing_Announcement_Bar {
         register_setting('twintack_announcement_bar', 'twintack_announcement_bg_color');
         register_setting('twintack_announcement_bar', 'twintack_announcement_text_color');
         register_setting('twintack_announcement_bar', 'twintack_announcement_dismissible');
+        register_setting('twintack_announcement_bar', 'twintack_announcement_show_all_pages');
+        register_setting('twintack_announcement_bar', 'twintack_announcement_specific_pages');
     }
     
     public function render_settings_page() {
@@ -59,8 +61,49 @@ class TwinTack_Marketing_Announcement_Bar {
                             <label>
                                 <input type="checkbox" name="twintack_announcement_enabled" value="1" 
                                        <?php checked(get_option('twintack_announcement_enabled'), '1'); ?> />
-                                <?php _e('Show announcement bar on all pages', 'twintack-marketing'); ?>
+                                <?php _e('Enable announcement bar', 'twintack-marketing'); ?>
                             </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Display Options', 'twintack-marketing'); ?></th>
+                        <td>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="twintack_announcement_show_all_pages" value="1" 
+                                       <?php checked(get_option('twintack_announcement_show_all_pages', '1'), '1'); ?> />
+                                <?php _e('Show on all pages', 'twintack-marketing'); ?>
+                            </label>
+                            <label style="display: block;">
+                                <input type="radio" name="twintack_announcement_show_all_pages" value="0" 
+                                       <?php checked(get_option('twintack_announcement_show_all_pages', '1'), '0'); ?> />
+                                <?php _e('Show on specific pages only', 'twintack-marketing'); ?>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr class="announcement-specific-pages" style="<?php echo get_option('twintack_announcement_show_all_pages', '1') === '0' ? '' : 'display:none;'; ?>">
+                        <th scope="row">
+                            <label for="twintack_announcement_specific_pages"><?php _e('Select Pages', 'twintack-marketing'); ?></label>
+                        </th>
+                        <td>
+                            <?php
+                            $pages = get_pages();
+                            $selected_pages = get_option('twintack_announcement_specific_pages', array());
+                            if (!is_array($selected_pages)) {
+                                $selected_pages = array();
+                            }
+                            ?>
+                            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fff;">
+                                <?php foreach ($pages as $page) : ?>
+                                    <label style="display: block; margin: 5px 0;">
+                                        <input type="checkbox" 
+                                               name="twintack_announcement_specific_pages[]" 
+                                               value="<?php echo esc_attr($page->ID); ?>"
+                                               <?php checked(in_array($page->ID, $selected_pages)); ?> />
+                                        <?php echo esc_html($page->post_title); ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <p class="description"><?php _e('Select which pages should display the announcement bar', 'twintack-marketing'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -128,6 +171,19 @@ class TwinTack_Marketing_Announcement_Bar {
                 </form>
             </div>
         </div>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            // Toggle specific pages visibility
+            $('input[name="twintack_announcement_show_all_pages"]').on('change', function() {
+                if ($(this).val() === '0' && $(this).is(':checked')) {
+                    $('.announcement-specific-pages').slideDown();
+                } else if ($(this).val() === '1' && $(this).is(':checked')) {
+                    $('.announcement-specific-pages').slideUp();
+                }
+            });
+        });
+        </script>
         <?php
     }
     
@@ -141,6 +197,21 @@ class TwinTack_Marketing_Announcement_Bar {
         
         if (!get_option('twintack_announcement_enabled')) {
             return;
+        }
+        
+        // Check page-specific display settings
+        $show_all_pages = get_option('twintack_announcement_show_all_pages', '1');
+        if ($show_all_pages === '0') {
+            $specific_pages = get_option('twintack_announcement_specific_pages', array());
+            if (!is_array($specific_pages)) {
+                $specific_pages = array();
+            }
+            
+            // Check if current page is in the list
+            $current_page_id = get_queried_object_id();
+            if (!in_array($current_page_id, $specific_pages)) {
+                return;
+            }
         }
         
         $text = get_option('twintack_announcement_text');
@@ -161,7 +232,8 @@ class TwinTack_Marketing_Announcement_Bar {
         <div id="twintack-announcement-bar" 
              class="twintack-announcement-bar<?php echo $dismissible ? ' dismissible' : ''; ?>"
              style="background-color: <?php echo esc_attr($bg_color); ?>; color: <?php echo esc_attr($text_color); ?>;"
-             data-dismissible="<?php echo $dismissible ? '1' : '0'; ?>">
+             data-dismissible="<?php echo $dismissible ? '1' : '0'; ?>"
+             data-bar-height="48">
             <div class="twintack-announcement-content">
                 <span class="twintack-announcement-text">
                     <?php echo esc_html($text); ?>
@@ -177,6 +249,43 @@ class TwinTack_Marketing_Announcement_Bar {
                 <?php endif; ?>
             </div>
         </div>
+        <style>
+            /* Push site header down when announcement bar is present */
+            body:not(.admin-bar) .site-header {
+                top: 48px !important;
+            }
+            body.admin-bar .site-header {
+                top: 80px !important; /* 32px admin bar + 48px announcement */
+            }
+            
+            /* Push fixed nav icons (account/cart) down */
+            body:not(.admin-bar) .fixed-nav-icons {
+                top: 68px !important; /* 48px announcement + 20px original padding */
+            }
+            body.admin-bar .fixed-nav-icons {
+                top: 100px !important; /* 32px admin bar + 48px announcement + 20px padding */
+            }
+            
+            /* Push main content down to prevent overlap */
+            #page {
+                padding-top: 48px !important;
+            }
+            body.admin-bar #page {
+                padding-top: 80px !important;
+            }
+            
+            @media screen and (max-width: 782px) {
+                body.admin-bar .site-header {
+                    top: 94px !important; /* 46px admin bar + 48px announcement */
+                }
+                body.admin-bar .fixed-nav-icons {
+                    top: 114px !important; /* 46px admin bar + 48px announcement + 20px padding */
+                }
+                body.admin-bar #page {
+                    padding-top: 94px !important;
+                }
+            }
+        </style>
         <?php
     }
     

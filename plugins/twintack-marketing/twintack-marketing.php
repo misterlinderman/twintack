@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: TwinTack Marketing
- * Description: Marketing features for TwinTack homepage including hero carousel, featured products, banner blocks, announcement bar, and landing page templates.
- * Version: 1.0.1
+ * Description: Marketing features for TwinTack homepage including hero carousel, featured products, banner blocks, announcement bar, bundle counter, and landing page templates.
+ * Version: 1.1.0
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -40,6 +40,7 @@ class TwinTack_Marketing {
         
         // ACTIVE: Homepage and site-wide features only
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-announcement-bar.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-bundle-counter.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-featured-products.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-banner-blocks.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-landing-page.php';
@@ -53,6 +54,7 @@ class TwinTack_Marketing {
         
         // ACTIVE: Homepage and site-wide features only
         TwinTack_Marketing_Announcement_Bar::get_instance();
+        TwinTack_Marketing_Bundle_Counter::get_instance();
         TwinTack_Marketing_Featured_Products::get_instance();
         TwinTack_Marketing_Banner_Blocks::get_instance();
         TwinTack_Marketing_Landing_Page::get_instance();
