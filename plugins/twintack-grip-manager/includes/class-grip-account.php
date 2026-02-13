@@ -127,17 +127,17 @@ class TwinTack_Grip_Account {
                 
                 // Get artwork status label
                 $status_labels = array(
-                    'artwork_pending'           => 'Artwork Pending',
-                    'pending_review'            => 'Pending Review',
+                    'artwork_pending'           => 'Mockup Required',
+                    'pending_review'            => 'Customer Review',
                     'artwork_approved'          => 'Artwork Approved',
-                    'customer_requested_changes' => 'Requested Changes',
+                    'customer_requested_changes' => 'Customer Changes',
                     'customer_approved'         => 'Customer Approved',
-                    'approved_for_production'   => 'Approved for Production',
+                    'approved_for_production'   => 'Production Ready',
                     'internal_review'           => 'Internal Review',
                     'in_production'             => 'In Production',
                     'shipped'                   => 'Shipped'
                 );
-                $status_label = isset($status_labels[$artwork_status]) ? $status_labels[$artwork_status] : 'Artwork Pending';
+                $status_label = isset($status_labels[$artwork_status]) ? $status_labels[$artwork_status] : 'Mockup Required';
                 ?>
                 <div class="grip-design-item <?php echo esc_attr($card_class); ?>">
                     <div class="grip-design-preview" <?php echo $background_style; ?>>
@@ -234,17 +234,17 @@ class TwinTack_Grip_Account {
                 $artwork_status = get_post_meta($grip_id, '_grip_artwork_status', true) ?: 'artwork_pending';
                 // Get artwork status label
                 $status_labels = array(
-                    'artwork_pending'           => 'Artwork Pending',
-                    'pending_review'            => 'Pending Review',
+                    'artwork_pending'           => 'Mockup Required',
+                    'pending_review'            => 'Customer Review',
                     'artwork_approved'          => 'Artwork Approved',
-                    'customer_requested_changes' => 'Requested Changes',
+                    'customer_requested_changes' => 'Customer Changes',
                     'customer_approved'         => 'Customer Approved',
-                    'approved_for_production'   => 'Approved for Production',
+                    'approved_for_production'   => 'Production Ready',
                     'internal_review'           => 'Internal Review',
                     'in_production'             => 'In Production',
                     'shipped'                   => 'Shipped'
                 );
-                $status_label = isset($status_labels[$artwork_status]) ? $status_labels[$artwork_status] : 'Artwork Pending';
+                $status_label = isset($status_labels[$artwork_status]) ? $status_labels[$artwork_status] : 'Mockup Required';
                 echo '<span class="status-label status-' . esc_attr($artwork_status) . '">';
                 echo esc_html($status_label);
                 echo '</span>';

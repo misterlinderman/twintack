@@ -156,9 +156,9 @@ class TwinTack_Grip_Post_Type {
                         'pending_review',
                         'customer_requested_changes',
                         'customer_approved',
-                        'artwork_approved',
+                        'artwork_approved',          // Legacy — kept for existing records
                         'approved_for_production',
-                        'internal_review',
+                        'internal_review',           // Legacy — kept for existing records
                         'in_production',
                         'shipped'
                     ),
@@ -324,9 +324,9 @@ class TwinTack_Grip_Post_Type {
                         'pending_review',
                         'customer_requested_changes',
                         'customer_approved',
-                        'artwork_approved',
+                        'artwork_approved',          // Legacy
                         'approved_for_production',
-                        'internal_review',
+                        'internal_review',           // Legacy
                         'in_production',
                         'shipped'
                     ),
@@ -639,18 +639,18 @@ class TwinTack_Grip_Post_Type {
     
     private function get_artwork_status_label($artwork_status) {
         $status_map = array(
-            'artwork_pending'            => 'Artwork Pending',
-            'pending_review'             => 'Pending Review', 
-            'customer_requested_changes' => 'Customer Requested Changes',
+            'artwork_pending'            => 'Mockup Required',
+            'pending_review'             => 'Customer Review',
+            'customer_requested_changes' => 'Customer Changes',
             'customer_approved'          => 'Customer Approved',
-            'artwork_approved'           => 'Artwork Approved',
-            'approved_for_production'    => 'Approved for Production',
-            'internal_review'            => 'Internal Review',
+            'artwork_approved'           => 'Artwork Approved',      // Legacy
+            'approved_for_production'    => 'Production Ready',
+            'internal_review'            => 'Internal Review',       // Legacy
             'in_production'              => 'In Production',
             'shipped'                    => 'Shipped'
         );
         
-        return isset($status_map[$artwork_status]) ? $status_map[$artwork_status] : 'Artwork Pending';
+        return isset($status_map[$artwork_status]) ? $status_map[$artwork_status] : 'Mockup Required';
     }
 
     // Removed problematic REST API methods that were causing critical errors
@@ -739,13 +739,11 @@ class TwinTack_Grip_Post_Type {
         echo '<select name="grip_artwork_status" id="grip_artwork_status" style="width: 100%; margin-top: 5px;">';
         
         $artwork_statuses = array(
-            'artwork_pending'            => 'Artwork Pending',
-            'pending_review'             => 'Pending Review',
-            'customer_requested_changes' => 'Customer Requested Changes',
+            'artwork_pending'            => 'Mockup Required',
+            'pending_review'             => 'Customer Review',
+            'customer_requested_changes' => 'Customer Changes',
             'customer_approved'          => 'Customer Approved',
-            'artwork_approved'           => 'Artwork Approved',
-            'approved_for_production'    => 'Approved for Production',
-            'internal_review'            => 'Internal Review',
+            'approved_for_production'    => 'Production Ready',
             'in_production'              => 'In Production',
             'shipped'                    => 'Shipped'
         );
@@ -761,10 +759,11 @@ class TwinTack_Grip_Post_Type {
         echo '<div style="margin-top: 15px; padding: 10px; background: #f9f9f9; border-left: 4px solid #d63638;">';
         echo '<h4 style="margin: 0 0 10px 0;">Artwork Status Guide:</h4>';
         echo '<ul style="margin: 0; padding-left: 20px; font-size: 12px;">';
-        echo '<li><strong>Artwork Pending:</strong> Waiting for customer artwork or initial review</li>';
-        echo '<li><strong>Pending Review:</strong> Under review by design team</li>';
-        echo '<li><strong>Artwork Approved:</strong> Design approved and ready for production</li>';
-        echo '<li><strong>Internal Review:</strong> Internal team review (hidden from customer)</li>';
+        echo '<li><strong>Mockup Required:</strong> Waiting for design team to create mockup</li>';
+        echo '<li><strong>Customer Review:</strong> Mockup ready, awaiting customer review</li>';
+        echo '<li><strong>Customer Changes:</strong> Customer has requested design changes</li>';
+        echo '<li><strong>Customer Approved:</strong> Customer has approved the design</li>';
+        echo '<li><strong>Production Ready:</strong> Order placed, ready for production</li>';
         echo '<li><strong>In Production:</strong> Currently being manufactured</li>';
         echo '<li><strong>Shipped:</strong> Order has been shipped to customer</li>';
         echo '</ul>';
@@ -1051,9 +1050,10 @@ class TwinTack_Grip_Post_Type {
         if (isset($_POST['grip_artwork_status']) && isset($_POST['grip_design_status_nonce'])) {
             $new_artwork_status = sanitize_text_field($_POST['grip_artwork_status']);
             $allowed_artwork_statuses = array(
-                'artwork_pending', 'pending_review', 'artwork_approved', 
+                'artwork_pending', 'pending_review',
                 'customer_requested_changes', 'customer_approved', 'approved_for_production',
-                'internal_review', 'in_production', 'shipped'
+                'in_production', 'shipped',
+                'artwork_approved', 'internal_review' // Legacy — still accepted for existing records
             );
             
             if (in_array($new_artwork_status, $allowed_artwork_statuses)) {

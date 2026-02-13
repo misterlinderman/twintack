@@ -97,13 +97,11 @@ class TwinTack_Grip_Importer {
         echo '<tr><th scope="row">Default Artwork Status</th><td>';
         echo '<select name="default_status">';
         $statuses = array(
-            'artwork_pending' => 'Artwork Pending',
-            'pending_review' => 'Pending Review',
-            'customer_requested_changes' => 'Customer Requested Changes',
+            'artwork_pending' => 'Mockup Required',
+            'pending_review' => 'Customer Review',
+            'customer_requested_changes' => 'Customer Changes',
             'customer_approved' => 'Customer Approved',
-            'artwork_approved' => 'Artwork Approved',
-            'approved_for_production' => 'Approved for Production',
-            'internal_review' => 'Internal Review',
+            'approved_for_production' => 'Production Ready',
             'in_production' => 'In Production',
             'shipped' => 'Shipped'
         );

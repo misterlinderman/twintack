@@ -23,7 +23,7 @@ switch ( $new_status_slug ?? '' ) {
         $contextual_message = __( 'Thank you for approving your grip design! We\'ll move forward with the next steps.', 'twintack-custom-grips' );
         break;
     case 'approved_for_production':
-        $contextual_message = __( 'Great news — your grip design has been approved for production!', 'twintack-custom-grips' );
+        $contextual_message = __( 'Great news — your grip design is production ready!', 'twintack-custom-grips' );
         break;
     case 'in_production':
         $contextual_message = __( 'Your custom grips are now in production! We\'ll let you know once they ship.', 'twintack-custom-grips' );

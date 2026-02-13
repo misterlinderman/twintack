@@ -65,6 +65,13 @@ class TTCG_Router {
             'top'
         );
 
+        // Paginated list view: /team-dashboard/page/2/
+        add_rewrite_rule(
+            '^' . self::DASHBOARD_SLUG . '/page/([0-9]+)/?$',
+            'index.php?ttcg_page=dashboard&paged=$matches[1]',
+            'top'
+        );
+
         // Main list view: /team-dashboard/
         add_rewrite_rule(
             '^' . self::DASHBOARD_SLUG . '/?$',

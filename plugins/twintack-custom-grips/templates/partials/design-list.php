@@ -12,13 +12,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Build query args from URL params
+// Build query args from URL params (check both $_GET and query_var for pagination)
+$paged_from_url = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 0;
+$paged_from_rewrite = absint( get_query_var( 'paged', 0 ) );
+$current_paged = max( 1, $paged_from_url, $paged_from_rewrite );
+
 $query_args = array(
     'status'  => $active_status,
     'search'  => $search_term,
     'orderby' => isset( $_GET['orderby'] ) ? sanitize_text_field( wp_unslash( $_GET['orderby'] ) ) : 'date',
     'order'   => isset( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : 'DESC',
-    'paged'   => isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1,
+    'paged'   => $current_paged,
 );
 
 $designs = TTCG_Dashboard::query_designs( $query_args );

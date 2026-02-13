@@ -2416,10 +2416,10 @@ add_filter('woocommerce_account_menu_items', 'twintack_add_grip_designs_menu_ite
  */
 function twintack_get_grip_status_label($status) {
     $status_map = array(
-        'draft'     => 'Artwork Pending',
-        'pending'   => 'Pending Review', 
-        'publish'   => 'Artwork Approved',
-        'private'   => 'Internal Review',
+        'draft'     => 'Mockup Required',
+        'pending'   => 'Customer Review', 
+        'publish'   => 'Customer Approved',
+        'private'   => 'Internal Review',    // Legacy
         'future'    => 'Scheduled'
     );
     

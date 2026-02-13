@@ -27,15 +27,13 @@ class TTCG_Dashboard {
      * @var array
      */
     private static $statuses = array(
-        'artwork_pending'             => array( 'label' => 'Artwork Pending',             'color' => '#f0ad4e' ),
-        'pending_review'              => array( 'label' => 'Pending Review',              'color' => '#5bc0de' ),
-        'customer_requested_changes'  => array( 'label' => 'Changes Requested',           'color' => '#d9534f' ),
-        'customer_approved'           => array( 'label' => 'Customer Approved',           'color' => '#5cb85c' ),
-        'artwork_approved'            => array( 'label' => 'Artwork Approved',            'color' => '#5cb85c' ),
-        'approved_for_production'     => array( 'label' => 'Approved for Production',     'color' => '#337ab7' ),
-        'internal_review'             => array( 'label' => 'Internal Review',             'color' => '#777'    ),
-        'in_production'               => array( 'label' => 'In Production',               'color' => '#337ab7' ),
-        'shipped'                     => array( 'label' => 'Shipped',                     'color' => '#22b24c' ),
+        'artwork_pending'             => array( 'label' => 'Mockup Required',      'color' => '#f0ad4e' ),
+        'pending_review'              => array( 'label' => 'Customer Review',      'color' => '#5bc0de' ),
+        'customer_requested_changes'  => array( 'label' => 'Customer Changes',     'color' => '#d9534f' ),
+        'customer_approved'           => array( 'label' => 'Customer Approved',    'color' => '#5cb85c' ),
+        'approved_for_production'     => array( 'label' => 'Production Ready',     'color' => '#337ab7' ),
+        'in_production'               => array( 'label' => 'In Production',        'color' => '#337ab7' ),
+        'shipped'                     => array( 'label' => 'Shipped',              'color' => '#22b24c' ),
     );
 
     /**
@@ -262,10 +260,11 @@ class TTCG_Dashboard {
             'feedback'          => self::meta_val( $meta, '_grip_feedback' ),
             'form_type'         => self::meta_val( $meta, '_grip_form_type' ),
             'production_started'=> self::meta_val( $meta, '_grip_production_started' ),
-            'featured_image'    => get_the_post_thumbnail_url( $post_id, 'medium' ),
+            'featured_image'      => get_the_post_thumbnail_url( $post_id, 'medium' ),
+            'featured_image_full' => get_the_post_thumbnail_url( $post_id, 'full' ),
         );
 
-        // Determine the best mockup image URL to display
+        // Determine the best mockup image URL to display (medium — for list views / thumbnails)
         $data['mockup_display_url'] = '';
         if ( ! empty( $data['featured_image'] ) ) {
             $data['mockup_display_url'] = $data['featured_image'];
@@ -273,6 +272,16 @@ class TTCG_Dashboard {
             $data['mockup_display_url'] = $data['mockup_url'];
         } elseif ( ! empty( $data['mockup_asset_url'] ) ) {
             $data['mockup_display_url'] = $data['mockup_asset_url'];
+        }
+
+        // Full-resolution mockup URL (for detail views / customer approval)
+        $data['mockup_full_url'] = '';
+        if ( ! empty( $data['featured_image_full'] ) ) {
+            $data['mockup_full_url'] = $data['featured_image_full'];
+        } elseif ( ! empty( $data['mockup_url'] ) ) {
+            $data['mockup_full_url'] = $data['mockup_url'];
+        } elseif ( ! empty( $data['mockup_asset_url'] ) ) {
+            $data['mockup_full_url'] = $data['mockup_asset_url'];
         }
 
         return $data;

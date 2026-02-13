@@ -25,8 +25,6 @@ class TTCG_Status {
      */
     private static $art_team_allowed = array(
         'pending_review',
-        'internal_review',
-        'artwork_approved',
     );
 
     /**
@@ -39,9 +37,7 @@ class TTCG_Status {
         'pending_review',
         'customer_requested_changes',
         'customer_approved',
-        'artwork_approved',
         'approved_for_production',
-        'internal_review',
         'in_production',
         'shipped',
     );

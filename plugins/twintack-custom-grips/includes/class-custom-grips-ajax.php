@@ -55,6 +55,9 @@ class TTCG_Ajax {
         // Customer-facing messaging (also logged-in)
         add_action( 'wp_ajax_ttcg_customer_send_message', array( $this, 'handle_customer_send_message' ) );
         add_action( 'wp_ajax_ttcg_customer_get_messages', array( $this, 'handle_customer_get_messages' ) );
+
+        // Customer review action (approve / request changes) from new My Custom Grips page
+        add_action( 'wp_ajax_ttcg_customer_review_design', array( $this, 'handle_customer_review_design' ) );
     }
 
     // ------------------------------------------------------------------
@@ -81,6 +84,11 @@ class TTCG_Ajax {
     /**
      * Verify a customer AJAX request (logged-in, owns the design).
      *
+     * Allows access if:
+     * - User email matches _grip_customer_email, OR
+     * - User is the post author, OR
+     * - User is an administrator
+     *
      * @param  int $design_id
      * @return bool
      */
@@ -93,11 +101,20 @@ class TTCG_Ajax {
             wp_send_json_error( array( 'message' => __( 'You must be logged in.', 'twintack-custom-grips' ) ), 403 );
         }
 
-        // Verify customer owns this design
+        // Admins can access any design
+        if ( current_user_can( 'manage_options' ) ) {
+            return true;
+        }
+
+        // Verify customer owns this design (by email or authorship)
         $customer_email = get_post_meta( $design_id, '_grip_customer_email', true );
         $current_user   = wp_get_current_user();
+        $post           = get_post( $design_id );
 
-        if ( $current_user->user_email !== $customer_email ) {
+        $email_match  = $current_user->user_email === $customer_email;
+        $author_match = $post && (int) $post->post_author === $current_user->ID;
+
+        if ( ! $email_match && ! $author_match ) {
             wp_send_json_error( array( 'message' => __( 'You do not have access to this design.', 'twintack-custom-grips' ) ), 403 );
         }
 
@@ -557,7 +574,11 @@ class TTCG_Ajax {
 
         $this->verify_customer_request( $design_id );
 
-        $content = isset( $_POST['message'] ) ? wp_kses_post( wp_unslash( $_POST['message'] ) ) : '';
+        // Accept both 'content' and 'message' parameter names for backwards compatibility
+        $content = isset( $_POST['content'] ) ? wp_kses_post( wp_unslash( $_POST['content'] ) ) : '';
+        if ( empty( $content ) ) {
+            $content = isset( $_POST['message'] ) ? wp_kses_post( wp_unslash( $_POST['message'] ) ) : '';
+        }
 
         if ( empty( trim( $content ) ) ) {
             wp_send_json_error( array( 'message' => __( 'Message content is required.', 'twintack-custom-grips' ) ) );
@@ -595,5 +616,88 @@ class TTCG_Ajax {
         $messages = TTCG_Messaging::get_messages( $design_id, true );
 
         wp_send_json_success( array( 'messages' => $messages ) );
+    }
+
+    // ------------------------------------------------------------------
+    // Customer Design Review (Approve / Request Changes)
+    // ------------------------------------------------------------------
+
+    /**
+     * AJAX: Handle customer design approval or change request.
+     *
+     * Called from the new My Custom Grips page. Updates artwork status,
+     * creates a system message, and triggers the status changed hook
+     * for notifications.
+     */
+    public function handle_customer_review_design() {
+        $design_id = isset( $_POST['design_id'] ) ? absint( $_POST['design_id'] ) : 0;
+
+        if ( ! $design_id ) {
+            wp_send_json_error( __( 'Missing design ID.', 'twintack-custom-grips' ) );
+        }
+
+        $this->verify_customer_request( $design_id );
+
+        $action   = isset( $_POST['review_action'] ) ? sanitize_text_field( wp_unslash( $_POST['review_action'] ) ) : '';
+        $feedback = isset( $_POST['feedback'] ) ? sanitize_textarea_field( wp_unslash( $_POST['feedback'] ) ) : '';
+
+        if ( ! in_array( $action, array( 'approve', 'request_changes' ), true ) ) {
+            wp_send_json_error( __( 'Invalid review action.', 'twintack-custom-grips' ) );
+        }
+
+        // Verify design is in a reviewable status
+        $current_status = get_post_meta( $design_id, '_grip_artwork_status', true );
+        if ( 'pending_review' !== $current_status ) {
+            wp_send_json_error( __( 'This design is not currently awaiting review.', 'twintack-custom-grips' ) );
+        }
+
+        // Determine new status
+        $new_status = ( 'approve' === $action ) ? 'customer_approved' : 'customer_requested_changes';
+
+        // Update status via the Status class (which fires the ttcg_status_changed hook)
+        $result = TTCG_Status::update_status( $design_id, $new_status );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        // Store customer feedback
+        if ( ! empty( $feedback ) ) {
+            $timestamp = current_time( 'mysql' );
+            $action_label = ( 'approve' === $action ) ? 'Approved' : 'Requested Changes';
+            $feedback_entry = "[{$timestamp}] Customer {$action_label}: {$feedback}";
+
+            $existing = get_post_meta( $design_id, '_grip_customer_feedback', true );
+            if ( ! empty( $existing ) ) {
+                $feedback_entry = $existing . "\n\n" . $feedback_entry;
+            }
+
+            update_post_meta( $design_id, '_grip_customer_feedback', $feedback_entry );
+            update_post_meta( $design_id, '_grip_latest_customer_feedback', $feedback );
+            update_post_meta( $design_id, '_grip_latest_customer_action', $action );
+        }
+
+        // Create a customer message in the thread for visibility
+        $current_user = wp_get_current_user();
+        $system_text = ( 'approve' === $action )
+            ? sprintf( __( '%s approved the design.', 'twintack-custom-grips' ), $current_user->display_name )
+            : sprintf( __( '%s requested changes.', 'twintack-custom-grips' ), $current_user->display_name );
+
+        if ( ! empty( $feedback ) ) {
+            $system_text .= ' ' . __( 'Feedback:', 'twintack-custom-grips' ) . ' ' . $feedback;
+        }
+
+        TTCG_Messaging::create_message( $design_id, $system_text, get_current_user_id(), 'text' );
+
+        // Prepare response message
+        $message = ( 'approve' === $action )
+            ? __( 'Design approved! You can now proceed to purchase your custom grips.', 'twintack-custom-grips' )
+            : __( 'Your feedback has been submitted. Our design team will work on the revisions.', 'twintack-custom-grips' );
+
+        wp_send_json_success( array(
+            'message'    => $message,
+            'new_status' => $new_status,
+            'action'     => $action,
+        ) );
     }
 }

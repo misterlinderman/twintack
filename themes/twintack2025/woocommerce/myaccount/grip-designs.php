@@ -393,9 +393,9 @@ wp_enqueue_script('magnific-popup', 'https://cdnjs.cloudflare.com/ajax/libs/magn
         } else {
             // Fallback mapping if function doesn't exist
             $status_map = array(
-                'draft'     => 'Artwork Pending',
-                'pending'   => 'Pending Review', 
-                'publish'   => 'Artwork Approved',
+                'draft'     => 'Mockup Required',
+                'pending'   => 'Customer Review', 
+                'publish'   => 'Customer Approved',
                 'private'   => 'Internal Review',
                 'future'    => 'Scheduled'
             );
