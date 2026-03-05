@@ -58,7 +58,7 @@ This is a WordPress project for TwinTack, featuring:
 ## Plugin-Specific Guidelines
 
 ### TwinTack Grip Manager (`plugins/twintack-grip-manager`)
-- **Version**: Currently 1.6.01 - maintain semantic versioning
+- **Version**: Currently 1.7.01 - maintain semantic versioning
 - **Main class**: `TwinTack_Grip_Manager` - singleton pattern
 - **Dependencies**: Requires WooCommerce and Gravity Forms
 - **File organization**: Use `/includes/` for classes, `/assets/` for CSS/JS, `/templates/` for template overrides
