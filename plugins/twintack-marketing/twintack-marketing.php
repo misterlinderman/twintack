@@ -44,6 +44,7 @@ class TwinTack_Marketing {
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-featured-products.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-banner-blocks.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-landing-page.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-target-page.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-hero-carousel.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-admin.php';
         
@@ -58,6 +59,7 @@ class TwinTack_Marketing {
         TwinTack_Marketing_Featured_Products::get_instance();
         TwinTack_Marketing_Banner_Blocks::get_instance();
         TwinTack_Marketing_Landing_Page::get_instance();
+        TwinTack_Marketing_Target_Page::get_instance();
         TwinTack_Marketing_Hero_Carousel::get_instance();
         
         // Admin interface
@@ -105,6 +107,24 @@ class TwinTack_Marketing {
             filemtime(plugin_dir_path(__FILE__) . 'assets/js/marketing.js'),
             true
         );
+        
+        // Target page assets — only when the template is active
+        if (is_page_template('templates/template-target-page.php')) {
+            wp_enqueue_style(
+                'twintack-marketing-target-page',
+                plugin_dir_url(__FILE__) . 'assets/css/marketing-target-page.css',
+                array('twintack-marketing'),
+                filemtime(plugin_dir_path(__FILE__) . 'assets/css/marketing-target-page.css')
+            );
+            
+            wp_enqueue_script(
+                'twintack-marketing-target-page',
+                plugin_dir_url(__FILE__) . 'assets/js/marketing-target-page.js',
+                array('jquery', 'slick'),
+                filemtime(plugin_dir_path(__FILE__) . 'assets/js/marketing-target-page.js'),
+                true
+            );
+        }
     }
     
     public function activate() {

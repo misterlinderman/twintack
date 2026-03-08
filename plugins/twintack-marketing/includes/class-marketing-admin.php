@@ -296,6 +296,13 @@ class TwinTack_Marketing_Admin {
                     <a href="<?php echo admin_url('admin.php?page=twintack-bundle-counter'); ?>" class="button button-primary"><?php _e('Configure Bundle Counter', 'twintack-marketing'); ?></a>
                 </div>
                 
+                <!-- Target Pages Card -->
+                <div class="twintack-marketing-card">
+                    <h2><?php echo $this->get_card_icon('landing-page'); ?><?php _e('Target Pages', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Create campaign target pages with video hero, product grids, and video feature blocks. Use the "Marketing Target Page" template on any page.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('post-new.php?post_type=page'); ?>" class="button button-primary"><?php _e('Create Target Page', 'twintack-marketing'); ?></a>
+                </div>
+                
                 <!-- Templates Card -->
                 <div class="twintack-marketing-card">
                     <h2><?php echo $this->get_card_icon('landing-page'); ?><?php _e('Marketing Templates', 'twintack-marketing'); ?></h2>

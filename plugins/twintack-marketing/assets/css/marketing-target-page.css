@@ -1,0 +1,562 @@
+/**
+ * TwinTack Marketing — Target Page Styles
+ *
+ * Loaded only on pages using the "Marketing Target Page" template.
+ */
+
+/* ==========================================================================
+ * Global — override base theme .container background within target pages
+ * ======================================================================= */
+
+.twintack-target-page .container {
+    background-color: transparent;
+}
+
+/* ==========================================================================
+ * Hero Section — shared
+ * ======================================================================= */
+
+.twintack-target-hero {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background-color: #000;
+}
+
+.target-hero-video-wrap {
+    width: 100%;
+    line-height: 0;
+}
+
+.target-hero-video {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+}
+
+@media (max-width: 768px) {
+    .twintack-target-hero .mobile-only .target-hero-video,
+    .twintack-target-hero .mobile-only img {
+        height: calc(100vh - var(--header-height, 75px));
+        height: calc(100dvh - var(--header-height, 75px));
+        width: 100%;
+        object-fit: cover;
+    }
+}
+
+.target-hero-image {
+    display: block;
+    width: 100%;
+    line-height: 0;
+}
+
+.target-hero-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Desktop / Mobile visibility */
+.twintack-target-hero .desktop-only {
+    display: block;
+}
+
+.twintack-target-hero .mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .twintack-target-hero .desktop-only {
+        display: none;
+    }
+
+    .twintack-target-hero .mobile-only {
+        display: block;
+    }
+}
+
+/* ==========================================================================
+ * Hero Overlay (video_background + image)
+ * ======================================================================= */
+
+.target-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    z-index: 2;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0.4) 100%
+    );
+}
+
+.target-hero-title {
+    font-family: var(--font-primary, 'Saira Condensed', sans-serif);
+    font-size: 3.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 0.5rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.target-hero-subtitle {
+    font-family: var(--font-primary, 'Saira Condensed', sans-serif);
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin: 0 0 1.5rem;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.target-hero-cta {
+    display: inline-block;
+    padding: 14px 40px;
+    background: var(--primary, #a9ff00);
+    color: var(--color-text-dark, #000);
+    font-family: var(--font-primary, 'Saira Condensed', sans-serif);
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm, 4px);
+    transition: background 0.3s ease, transform 0.2s ease, color 0.3s ease;
+}
+
+.target-hero-cta:hover {
+    background: #fff;
+    color: var(--color-text-dark, #000);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .target-hero-title {
+        font-size: 2rem;
+    }
+
+    .target-hero-subtitle {
+        font-size: 1.1rem;
+    }
+
+    .target-hero-cta {
+        padding: 12px 30px;
+        font-size: 0.9rem;
+    }
+}
+
+/* ==========================================================================
+ * Page Content
+ * ======================================================================= */
+
+.twintack-target-content {
+    padding: 40px 0;
+}
+
+.twintack-target-content .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ==========================================================================
+ * Product Grid
+ * ======================================================================= */
+
+.twintack-target-product-grid {
+    padding: 60px 0;
+    background: var(--color-background, #000);
+    color: var(--color-text, #fff);
+}
+
+.twintack-target-product-grid .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    background-color: black;
+}
+
+.target-product-heading {
+    text-align: center;
+    font-family: var(--font-primary, 'Saira Condensed', sans-serif);
+    font-size: 2.5rem;
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    margin-bottom: 40px;
+}
+
+.twintack-target-product-grid .products {
+    display: grid;
+    gap: 20px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.twintack-target-product-grid .products.columns-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.twintack-target-product-grid .products.columns-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.twintack-target-product-grid .products .product {
+    text-align: center;
+}
+
+.twintack-target-product-grid .products .product img {
+    border: 3px solid var(--color-text, #fff);
+    transition: border-color 0.3s ease;
+    background-color: #fff;
+    border-radius: 5px;
+}
+
+.twintack-target-product-grid .products .product:hover img {
+    border-color: var(--color-highlight, #a9ff00);
+}
+
+.twintack-target-product-grid .products .product .woocommerce-loop-product__title {
+    color: var(--color-text, #fff);
+}
+
+.twintack-target-product-grid .products .product .price {
+    color: var(--color-highlight, #a9ff00) !important;
+    font-size: 1.4em;
+    font-weight: 700;
+}
+
+/* Hide variation swatches and add-to-cart button in target page grid */
+.twintack-target-product-grid .wvs-archive-variations-wrapper {
+    display: none !important;
+}
+
+.twintack-target-product-grid .products .product .button,
+.twintack-target-product-grid .products .product .add_to_cart_button,
+.twintack-target-product-grid .products .product .product_type_variable,
+.twintack-target-product-grid .products .product .product_type_simple {
+    display: none !important;
+}
+
+@media (max-width: 1024px) {
+    .twintack-target-product-grid .products.columns-4 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .twintack-target-product-grid {
+        padding: 40px 0;
+    }
+
+    .target-product-heading {
+        font-size: 2rem;
+        margin-bottom: 25px;
+    }
+
+    .twintack-target-product-grid .products.columns-4,
+    .twintack-target-product-grid .products.columns-3 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .twintack-target-product-grid .products.columns-4,
+    .twintack-target-product-grid .products.columns-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+ * Image Row / Carousel
+ * ======================================================================= */
+
+.twintack-target-image-row {
+    padding: 60px 0;
+    background: var(--color-background, #000);
+}
+
+.twintack-target-image-row .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.target-image-row-heading {
+    text-align: center;
+    font-family: var(--font-primary, 'Saira Condensed', sans-serif);
+    font-size: 2.5rem;
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    color: var(--color-text, #fff);
+    margin: 0 0 40px;
+}
+
+.target-image-row-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.target-image-row-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--border-radius-md, 8px);
+}
+
+/* Slick overrides when carousel is active on mobile */
+.target-image-row-grid.slick-initialized {
+    display: block;
+}
+
+.target-image-row-grid.slick-initialized .target-image-row-item {
+    padding: 0 8px;
+}
+
+.target-image-row-grid .slick-prev,
+.target-image-row-grid .slick-next {
+    z-index: 10;
+    width: 36px;
+    height: 36px;
+}
+
+.target-image-row-grid .slick-prev {
+    left: -4px;
+}
+
+.target-image-row-grid .slick-next {
+    right: -4px;
+}
+
+.target-image-row-grid .slick-prev:before,
+.target-image-row-grid .slick-next:before {
+    font-size: 28px;
+    color: var(--primary, #a9ff00);
+    opacity: 1;
+}
+
+.target-image-row-grid .slick-dots {
+    bottom: -30px;
+}
+
+.target-image-row-grid .slick-dots li button:before {
+    color: var(--primary, #a9ff00);
+    font-size: 10px;
+}
+
+@media (max-width: 768px) {
+    .twintack-target-image-row {
+        padding: 40px 0;
+    }
+
+    .target-image-row-heading {
+        font-size: 2rem;
+        margin-bottom: 25px;
+    }
+
+    .target-image-row-grid {
+        display: block;
+    }
+}
+
+/* ==========================================================================
+ * Video Feature Blocks
+ * ======================================================================= */
+
+.twintack-target-video-blocks {
+    padding: 0;
+}
+
+.target-video-block {
+    padding: 60px 0;
+}
+
+.target-video-block:nth-child(odd) {
+    background: var(--color-surface, #1a1a1a);
+}
+
+.target-video-block:nth-child(even) {
+    background: var(--color-background, #000);
+}
+
+.target-video-block .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.target-video-block-inner {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+/* Layout: video left / text right (default) */
+.layout-video_left .target-video-block-inner {
+    flex-direction: row;
+}
+
+/* Layout: video right / text left */
+.layout-video_right .target-video-block-inner {
+    flex-direction: row-reverse;
+}
+
+/* Layout: full width */
+.layout-full_width .target-video-block-inner {
+    flex-direction: column;
+    text-align: center;
+}
+
+.target-video-block-media {
+    flex: 1;
+    min-width: 0;
+}
+
+.target-video-block-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.layout-full_width .target-video-block-media {
+    width: 100%;
+}
+
+.layout-full_width .target-video-block-text {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.target-feature-video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--border-radius-md, 8px);
+}
+
+/* Responsive embed container (16:9) */
+.target-video-embed {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: var(--border-radius-md, 8px);
+}
+
+.target-video-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.target-video-block-heading {
+    font-family: var(--font-primary, 'Saira Condensed', sans-serif);
+    font-size: 2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 0 0 1rem;
+    color: var(--color-text, #fff);
+}
+
+.target-video-block-desc {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-text-muted, #ccc);
+}
+
+.target-video-block-desc p:last-child {
+    margin-bottom: 0;
+}
+
+.target-video-block-cta {
+    display: inline-block;
+    margin-top: 1.5rem;
+    padding: 12px 32px;
+    background: var(--primary, #a9ff00);
+    color: var(--color-text-dark, #000);
+    font-family: var(--font-primary, 'Saira Condensed', sans-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: var(--border-radius-sm, 4px);
+    transition: background 0.3s ease, transform 0.2s ease, color 0.3s ease;
+}
+
+.target-video-block-cta:hover {
+    background: #fff;
+    color: var(--color-text-dark, #000);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .target-video-block {
+        padding: 40px 0;
+    }
+
+    .target-video-block-inner {
+        flex-direction: column !important;
+        gap: 25px;
+    }
+
+    .target-video-block-heading {
+        font-size: 1.5rem;
+    }
+}
+
+/* ==========================================================================
+ * Admin — Meta box styles (scoped to target page meta boxes)
+ * ======================================================================= */
+
+.twintack-video-block-row {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    padding: 15px;
+}
+
+.video-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    cursor: move;
+}
+
+.video-block-header strong {
+    font-size: 14px;
+}
+
+.twintack-video-block-row .form-table th {
+    width: 150px;
+    padding: 8px 10px 8px 0;
+}
+
+.twintack-video-block-row .form-table td {
+    padding: 8px 0;
+}
+
+.sortable-placeholder {
+    background: #e8f5e9;
+    border: 2px dashed #a9ff00;
+    height: 60px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}

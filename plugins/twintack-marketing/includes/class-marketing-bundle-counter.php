@@ -201,7 +201,13 @@ class TwinTack_Marketing_Bundle_Counter {
         if (!get_option('twintack_bundle_counter_enabled')) {
             return;
         }
-        
+
+        // Allow per-page suppression (used by Marketing Target Page template)
+        $current_page_id = get_queried_object_id();
+        if ($current_page_id && get_post_meta($current_page_id, '_twintack_target_hide_bundle_counter', true) === '1') {
+            return;
+        }
+
         // Don't show if WooCommerce is not active
         if (!function_exists('WC') || !WC()->cart) {
             return;
