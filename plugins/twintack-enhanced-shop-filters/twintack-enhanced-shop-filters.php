@@ -907,48 +907,40 @@ class TwinTack_Enhanced_Shop_Filters {
     }
     
     /**
-     * Render category filter
+     * Render category filter.
+     * Shows model subcategories (children of "baseball") plus Accessories.
      */
     private function render_category_filter($current_filters) {
-        $categories = get_terms(array(
-            'taxonomy' => 'product_cat',
+        $bat_grips_parent = get_term_by('slug', 'baseball', 'product_cat');
+        $parent_id = $bat_grips_parent ? $bat_grips_parent->term_id : 0;
+
+        $model_categories = get_terms(array(
+            'taxonomy'   => 'product_cat',
             'hide_empty' => true,
+            'parent'     => $parent_id,
         ));
-        
-        if (empty($categories) || is_wp_error($categories)) {
-            return;
-        }
-        
-        // Get hidden categories from settings
-        $hidden_categories = get_option('twintack_hidden_categories', array('fees', 'uncategorized'));
-        
-        // Filter out hidden categories
-        $visible_categories = array();
-        foreach ($categories as $category) {
-            if (!in_array($category->slug, $hidden_categories)) {
-                $visible_categories[] = $category;
-            }
-        }
-        
-        // If no visible categories after filtering, don't show the filter
-        if (empty($visible_categories)) {
-            return;
-        }
-        
+
+        $accessories = get_term_by('slug', 'accessory', 'product_cat');
+
         $current_value = isset($current_filters['product_cat']) ? $current_filters['product_cat'] : '';
-        
+
         echo '<div class="filter-control category-filter">';
         echo '<label for="product_cat">Category</label>';
         echo '<select name="product_cat" id="product_cat" class="filter-select">';
         echo '<option value="">All Categories</option>';
-        
-        foreach ($visible_categories as $category) {
-            $selected = ($current_value === $category->slug) ? 'selected' : '';
-            echo '<option value="' . esc_attr($category->slug) . '" ' . $selected . '>';
-            echo esc_html($category->name);
-            echo '</option>';
+
+        if (!empty($model_categories) && !is_wp_error($model_categories)) {
+            foreach ($model_categories as $cat) {
+                $selected = ($current_value === $cat->slug) ? 'selected' : '';
+                echo '<option value="' . esc_attr($cat->slug) . '" ' . $selected . '>' . esc_html($cat->name) . '</option>';
+            }
         }
-        
+
+        if ($accessories && !is_wp_error($accessories)) {
+            $selected = ($current_value === $accessories->slug) ? 'selected' : '';
+            echo '<option value="' . esc_attr($accessories->slug) . '" ' . $selected . '>' . esc_html($accessories->name) . '</option>';
+        }
+
         echo '</select>';
         echo '</div>';
     }

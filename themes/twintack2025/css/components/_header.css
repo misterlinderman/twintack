@@ -1006,3 +1006,101 @@ a.callout-card-link:hover {
         max-width: 90%;
     }
 }
+
+/* ==========================================================================
+ * Models Navigation (New — TT Pro Flex Launch)
+ * Mirrors .sport-icons / .sport-icon pattern for product model icons
+ * ======================================================================= */
+
+.model-icons {
+    display: flex;
+    gap: 2rem;
+}
+
+.model-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: var(--color-white, #fff);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.model-icon span {
+    margin: 1rem 0 0.5rem;
+    display: inline-block;
+}
+
+.model-icon-svg {
+    width: 64px;
+    height: auto;
+    margin-bottom: -0.4em;
+    fill: var(--color-text, #fff);
+    transition: fill 0.3s ease;
+}
+
+.model-icon:hover .model-icon-svg {
+    fill: var(--color-highlight, #a9ff00);
+}
+
+.model-icon:hover {
+    color: var(--color-highlight, #a9ff00);
+}
+
+/* ==========================================================================
+ * Catalog Navigation (New — TT Pro Flex Launch)
+ * Matches .product-nav indentation pattern with an added sub-level
+ * ======================================================================= */
+
+.catalog-nav {
+    padding: 0 2rem 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.catalog-group {
+    margin-bottom: 0.25rem;
+}
+
+.catalog-parent {
+    display: block;
+    color: var(--color-text, #fff);
+    text-decoration: none;
+    font-size: 1.25rem;
+    padding: 0 0 0.5rem 0;
+    transition: color 0.3s ease;
+}
+
+.catalog-parent:hover {
+    color: var(--color-highlight, #a9ff00);
+}
+
+.catalog-subnav {
+    padding-left: 1.25rem;
+}
+
+.catalog-subnav a {
+    display: block;
+    color: var(--color-text, #fff);
+    text-decoration: none;
+    font-size: 1.25rem;
+    padding: 0 0 0.5rem 0;
+    transition: color 0.3s ease;
+}
+
+.catalog-subnav a:hover {
+    color: var(--color-highlight, #a9ff00);
+}
+
+.catalog-nav > a {
+    display: block;
+    color: var(--color-text, #fff);
+    text-decoration: none;
+    font-size: 1.25rem;
+    padding: 0 0 0.5rem 0;
+    transition: color 0.3s ease;
+}
+
+.catalog-nav > a:hover {
+    color: var(--color-highlight, #a9ff00);
+}

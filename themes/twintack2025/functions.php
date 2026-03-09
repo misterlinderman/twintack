@@ -30,6 +30,7 @@ require_once get_template_directory() . '/inc/marquee/class-marquee-configuratio
 require_once get_template_directory() . '/inc/team/class-team-member.php';
 // Console fixes moved to plugin: twintack-admin-console-fixes
 
+
 /**
  * Mail header enforcement for deliverability
  * - Force From to a site-owned address

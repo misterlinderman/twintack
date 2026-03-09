@@ -230,7 +230,7 @@ $has_hero = $video_desktop || $image_desktop || $image_mobile || $hero_title;
                         <div class="target-video-block-media">
                             <?php if ($vb_type === 'mp4') : ?>
                                 <video class="target-feature-video"
-                                       muted playsinline preload="metadata"
+                                       muted loop playsinline preload="metadata"
                                        data-autoplay-on-scroll="true">
                                     <source src="<?php echo esc_url($vb_url); ?>" type="video/mp4">
                                 </video>
@@ -310,7 +310,20 @@ $has_hero = $video_desktop || $image_desktop || $image_mobile || $hero_title;
                 <?php
                 while ($products_query->have_posts()) :
                     $products_query->the_post();
-                    wc_get_template_part('content', 'product');
+                    global $product;
+
+                    if ($product && $product->is_type('variable')) :
+                        $variations = $product->get_available_variations();
+                        $filtered   = twintack_filter_variations_by_active_filters($variations);
+
+                        if (!empty($filtered)) :
+                            foreach ($filtered as $variation) :
+                                twintack_display_single_variation($variation, $product);
+                            endforeach;
+                        endif;
+                    else :
+                        wc_get_template_part('content', 'product');
+                    endif;
                 endwhile;
                 ?>
             </ul>

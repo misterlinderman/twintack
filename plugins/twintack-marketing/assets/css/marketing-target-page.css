@@ -210,29 +210,62 @@
     grid-template-columns: repeat(3, 1fr);
 }
 
-.twintack-target-product-grid .products .product {
+.twintack-target-product-grid .products .product,
+.twintack-target-product-grid .products .product-variation {
     text-align: center;
 }
 
-.twintack-target-product-grid .products .product img {
+.twintack-target-product-grid .products .product img,
+.twintack-target-product-grid .products .product-variation img {
     border: 3px solid var(--color-text, #fff);
     transition: border-color 0.3s ease;
     background-color: #fff;
     border-radius: 5px;
 }
 
-.twintack-target-product-grid .products .product:hover img {
+.twintack-target-product-grid .products .product:hover img,
+.twintack-target-product-grid .products .product-variation:hover img {
     border-color: var(--color-highlight, #a9ff00);
 }
 
-.twintack-target-product-grid .products .product .woocommerce-loop-product__title {
+.twintack-target-product-grid .products .product .woocommerce-loop-product__title,
+.twintack-target-product-grid .products .product-variation .woocommerce-loop-product__title {
     color: var(--color-text, #fff);
+    margin-bottom: 0;
 }
 
-.twintack-target-product-grid .products .product .price {
+.twintack-target-product-grid .products .product .price,
+.twintack-target-product-grid .products .product-variation .price {
     color: var(--color-highlight, #a9ff00) !important;
-    font-size: 1.4em;
+    font-size: 1.6em;
     font-weight: 700;
+}
+
+.twintack-target-product-grid .products .product-variation .product-title-structured {
+    min-height: 3.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+    line-height: 1.2;
+}
+
+.twintack-target-product-grid .products .product-variation .product-pattern {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.1rem;
+}
+
+.twintack-target-product-grid .products .product-variation .product-model {
+    color: var(--color-text-muted, #aaa);
+}
+
+.twintack-target-product-grid .products .product-variation .product-color {
+    color: #888;
 }
 
 /* Hide variation swatches and add-to-cart button in target page grid */
