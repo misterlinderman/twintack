@@ -22,6 +22,19 @@ Guidelines and best practices for developing and modifying the TwinTack theme.
 ### [Claude Notes Reference](CLAUDE_NOTES.md)
 Information about the Claude notes directory and how to use these AI conversation exports as reference for development.
 
+### Plugin Documentation
+
+Individual custom plugins maintain their own README files:
+
+- [TwinTack Grip Manager](../../plugins/twintack-grip-manager/README.md) - Grip customization and order management
+- [TwinTack Manual Order Payments](../../plugins/twintack-manual-order-payments/README.md) - Stripe/gateway support for admin orders
+- [TwinTack Amazon Tracking Bridge](../../plugins/twintack-amazon-tracking-bridge/README.md) - Shippo-to-Amazon tracking sync
+- [TwinTack Marketing](../../plugins/twintack-marketing/README.md) - Marketing tools and promotions
+- [TwinTack Enhanced Shop Filters](../../plugins/twintack-enhanced-shop-filters/README.md) - Custom product filtering
+- [TwinTack How-To Videos](../../plugins/twintack-how-to-videos/README.md) - Tutorial video management
+- [TwinTack Security](../../plugins/twintack-security/README.md) - Security hardening
+- [TwinTack Admin Console Fixes](../../plugins/twintack-admin-console-fixes/README.md) - Admin UI improvements
+
 ## Using This Documentation
 
 This documentation is designed to be a living resource that grows and evolves with the project. When making changes to the theme:

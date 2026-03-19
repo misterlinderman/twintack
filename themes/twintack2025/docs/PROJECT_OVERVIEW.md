@@ -25,10 +25,25 @@ The TwinTack theme is built on a modern WordPress architecture with the followin
 - **Class-Based Functionality**: Object-oriented approach to theme functionality
 - **Unified Login System**: Centralized login experience for customers, wholesale buyers, and affiliate partners with custom user type selection
 
+### Custom Plugins
+
+The TwinTack ecosystem includes several custom plugins that extend WordPress and WooCommerce functionality:
+
+- **TwinTack Grip Manager**: Grip customization and order management system with Monday.com/Make.com integration
+- **TwinTack Manual Order Payments**: Stripe and gateway support for admin-created WooCommerce orders
+- **TwinTack Amazon Tracking Bridge**: Bridges Shippo tracking data from WooCommerce order notes to WP-Lister Amazon fulfillment feeds (see `plugins/twintack-amazon-tracking-bridge/README.md`)
+- **TwinTack Marketing**: Marketing tools and promotional features
+- **TwinTack Enhanced Shop Filters**: Custom product filtering for the shop pages
+- **TwinTack How-To Videos**: Video content management for tutorials
+- **TwinTack Security**: Security hardening and protections
+- **TwinTack Admin Console Fixes**: Admin UI improvements and fixes
+
 ### Technology Stack
 
 - **WordPress**: Core CMS platform
 - **WooCommerce**: E-commerce functionality
+- **WP-Lister for Amazon**: Amazon marketplace integration
+- **Shippo**: Shipping label creation and tracking (API integration via WooCommerce Shipping)
 - **PHP**: Server-side scripting
 - **JavaScript/jQuery**: Client-side interactivity
 - **CSS/SASS**: Styling with preprocessor support

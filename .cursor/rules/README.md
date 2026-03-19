@@ -82,6 +82,13 @@ This directory contains specialized cursor rules for the TwinTack WordPress buil
 - Make.com webhook processing
 - Proper error handling and logging
 
+### Amazon Tracking Sync (Shippo → WP-Lister)
+**Reference**: `plugins/twintack-amazon-tracking-bridge/README.md`
+- Shippo writes tracking to order notes only (no meta keys)
+- Bridge plugin intercepts notes via `woocommerce_order_note_added`
+- Writes `_wpla_tracking_number` before WP-Lister's completion handler
+- Filter fallbacks parse notes at feed-build time as safety net
+
 ### Volume Pricing System
 **Reference**: `data-workflow.cursor-rules`
 - Configurable quantity rules and pricing tiers

@@ -161,7 +161,33 @@ This document catalogs the features of the TwinTack theme, serving as both docum
 
 ---
 
+## Plugin Features
+
+These features are implemented as standalone plugins rather than within the theme. They are documented here for project-wide visibility.
+
+### Amazon Tracking Bridge
+
+**Description**: Bridges Shippo tracking data from WooCommerce order notes to WP-Lister Amazon fulfillment feeds. Solves a gap where Shippo writes tracking numbers only to order notes while WP-Lister reads only from order meta keys, causing Amazon orders to be flagged with "Invalid Tracking."
+
+**Implementation**:
+- Bridge plugin (`plugins/twintack-amazon-tracking-bridge/twintack-amazon-tracking-bridge.php`)
+- Real-time order note interception via `woocommerce_order_note_added` hook
+- Filter fallbacks via `wpla_custom_tracking_number` and related WP-Lister hooks
+
+**Status**: Implemented (v1.1.0, deployed March 2026)
+
+**Context**: 29 Amazon orders from Feb 10 – Mar 14, 2026 were affected before the fix was deployed. These could not be retroactively corrected as they had passed Amazon's delivery window. The bridge plugin prevents this issue for all future orders. Full details in `plugins/twintack-amazon-tracking-bridge/README.md`.
+
+---
+
 ## Feature Changelog
+
+### [Date: 03/18/2026] - Amazon Tracking Bridge Plugin Added
+
+- Identified root cause of Amazon tracking sync failure: Shippo writes tracking to order notes only, not to meta keys that WP-Lister reads
+- Created `twintack-amazon-tracking-bridge` plugin to intercept Shippo order notes in real-time and write tracking data to WP-Lister meta keys
+- 29 historical orders (Feb 10 – Mar 14, 2026) could not be backfilled as they had passed Amazon's delivery window
+- Plugin prevents all future orders from having this issue
 
 ### [Date: 03/01/2024] - Unified Login System Added
 
