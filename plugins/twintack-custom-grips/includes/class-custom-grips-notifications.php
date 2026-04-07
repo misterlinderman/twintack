@@ -99,15 +99,23 @@ class TTCG_Notifications {
             'new_status_slug'  => $new_status,
         );
 
-        // Always notify the customer of a status change
-        $this->notify_customer(
-            $design_id,
-            __( 'Your Grip Design Status Has Been Updated', 'twintack-custom-grips' ),
-            'status-update',
-            $data
-        );
+        // Mockup upload sets pending_review and sends "mockup ready" — skip duplicate status email.
+        $skip_customer_status_email = ( 'pending_review' === $new_status && TTCG_Status::should_suppress_customer_status_email() );
 
-        // If customer approved → also notify the team
+        if ( ! $skip_customer_status_email ) {
+            $subject = __( 'Your Grip Design Status Has Been Updated', 'twintack-custom-grips' );
+            if ( 'customer_approved' === $new_status ) {
+                $subject = __( 'Thank You — Your Custom Grip Design Is Approved', 'twintack-custom-grips' );
+            }
+            $this->notify_customer(
+                $design_id,
+                $subject,
+                'status-update',
+                $data
+            );
+        }
+
+        // If customer approved → notify the team (exclude the customer's own inbox if they are also staff/admin).
         if ( 'customer_approved' === $new_status ) {
             $this->notify_team(
                 $design_id,
@@ -163,7 +171,7 @@ class TTCG_Notifications {
             return;
         }
 
-        $data = $this->get_base_data( $design_id );
+        $data = $this->get_base_data( $design_id, 'customer' );
         $data = array_merge( $data, $extra_data );
 
         $body = $this->render_template( $template, $data );
@@ -190,11 +198,16 @@ class TTCG_Notifications {
             return;
         }
 
-        $data = $this->get_base_data( $design_id );
+        $data = $this->get_base_data( $design_id, 'team' );
         $data = array_merge( $data, $extra_data );
         $body = $this->render_template( $template, $data );
 
+        $customer_email = strtolower( trim( (string) get_post_meta( $design_id, '_grip_customer_email', true ) ) );
+
         foreach ( $team_users as $user ) {
+            if ( $customer_email && strtolower( trim( $user->user_email ) ) === $customer_email ) {
+                continue;
+            }
             if ( $this->is_opted_out_user( $user->ID, $template ) ) {
                 continue;
             }
@@ -207,17 +220,22 @@ class TTCG_Notifications {
     /**
      * Get standard template data for a grip design.
      *
-     * @param  int $design_id
+     * @param  int    $design_id  Grip design post ID.
+     * @param  string $review_for 'customer' uses My Account detail URL; 'team' uses the team dashboard URL.
      * @return array
      */
-    private function get_base_data( $design_id ) {
+    private function get_base_data( $design_id, $review_for = 'team' ) {
         $data = TTCG_Dashboard::get_design_data( $design_id );
 
         $data['status_label']  = TTCG_Dashboard::get_status_label( $data['artwork_status'] );
-        $data['review_url']    = TTCG_Router::get_design_url( $design_id );
+        if ( 'customer' === $review_for && class_exists( 'TTCG_Customer' ) ) {
+            $data['review_url'] = TTCG_Customer::get_detail_url( $design_id );
+        } else {
+            $data['review_url'] = TTCG_Router::get_design_url( $design_id );
+        }
         $data['site_name']     = get_bloginfo( 'name' );
         $data['site_url']      = home_url();
-        $data['current_year']  = date( 'Y' );
+        $data['current_year']  = gmdate( 'Y' );
 
         return $data;
     }

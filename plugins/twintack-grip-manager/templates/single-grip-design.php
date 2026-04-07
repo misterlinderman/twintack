@@ -6,7 +6,7 @@
 get_header(); ?>
 
 <div class="grip-design-container">
-    <a href="<?php echo esc_url(wc_get_account_endpoint_url('grip-designs')); ?>" class="back-to-designs">&laquo; Back to My Grip Designs</a>
+    <a href="<?php echo esc_url( class_exists( 'TTCG_Customer' ) ? wc_get_account_endpoint_url( 'my-custom-grips' ) : wc_get_account_endpoint_url( 'grip-designs' ) ); ?>" class="back-to-designs">&laquo; Back to My Grip Designs</a>
     
     <div class="grip-design-header">
         <h1><?php the_title(); ?></h1>

@@ -24,6 +24,9 @@ class TwinTack_Grip_Account {
         // Display grip design data in cart
         add_filter('woocommerce_get_item_data', array($this, 'display_cart_item_data'), 10, 2);
         
+        // Show the grip mockup as the cart line image when applicable
+        add_filter('woocommerce_cart_item_thumbnail', array($this, 'filter_cart_item_thumbnail'), 10, 3);
+        
         // Save cart item data to order
         add_action('woocommerce_checkout_create_order_line_item', array($this, 'save_cart_item_data_to_order'), 10, 4);
         
@@ -40,6 +43,18 @@ class TwinTack_Grip_Account {
     
     public function register_endpoints() {
         add_rewrite_endpoint('grip-designs', EP_ROOT | EP_PAGES);
+    }
+
+    /**
+     * Account URL for the customer grip list (canonical: my-custom-grips when TwinTack Custom Grips is active).
+     *
+     * @return string
+     */
+    private function customer_grips_list_url() {
+        if ( class_exists( 'TTCG_Customer' ) ) {
+            return wc_get_account_endpoint_url( 'my-custom-grips' );
+        }
+        return wc_get_account_endpoint_url( 'grip-designs' );
     }
     
     public function add_grip_designs_endpoint($items) {
@@ -189,7 +204,7 @@ class TwinTack_Grip_Account {
                         }
                         ?>
                         <p>Quantity: <?php echo get_post_meta(get_the_ID(), '_grip_quantity', true); ?></p>
-                        <a href="<?php echo esc_url(add_query_arg('grip_id', get_the_ID(), wc_get_account_endpoint_url('grip-designs'))); ?>" class="button view-grip-design">View Details</a>
+                        <a href="<?php echo esc_url( add_query_arg( 'grip_id', get_the_ID(), $this->customer_grips_list_url() ) ); ?>" class="button view-grip-design">View Details</a>
                     </div>
                 </div>
                 <?php
@@ -209,7 +224,7 @@ class TwinTack_Grip_Account {
         $post = get_post($grip_id);
         if (!$post || $post->post_type !== 'grip_design') {
             echo '<p>Grip design not found.</p>';
-            echo '<p><a href="' . esc_url(wc_get_account_endpoint_url('grip-designs')) . '">&laquo; Back to My Grip Designs</a></p>';
+            echo '<p><a href="' . esc_url( $this->customer_grips_list_url() ) . '">&laquo; Back to My Grip Designs</a></p>';
             return;
         }
         
@@ -218,12 +233,12 @@ class TwinTack_Grip_Account {
         
         if ($design_email !== $customer_email) {
             echo '<p>You do not have permission to view this design.</p>';
-            echo '<p><a href="' . esc_url(wc_get_account_endpoint_url('grip-designs')) . '">&laquo; Back to My Grip Designs</a></p>';
+            echo '<p><a href="' . esc_url( $this->customer_grips_list_url() ) . '">&laquo; Back to My Grip Designs</a></p>';
             return;
         }
         
         // Display back link
-        echo '<p><a href="' . esc_url(wc_get_account_endpoint_url('grip-designs')) . '" class="button">&laquo; Back to My Grip Designs</a></p>';
+        echo '<p><a href="' . esc_url( $this->customer_grips_list_url() ) . '" class="button">&laquo; Back to My Grip Designs</a></p>';
         
         // Display grip design details
         ?>
@@ -674,7 +689,8 @@ class TwinTack_Grip_Account {
      */
     public function enqueue_grip_scripts() {
         // Only load on individual grip design pages (with grip_id parameter)
-        if (is_account_page() && is_wc_endpoint_url('grip-designs') && isset($_GET['grip_id'])) {
+        $on_grips = is_wc_endpoint_url( 'grip-designs' ) || is_wc_endpoint_url( 'my-custom-grips' );
+        if ( is_account_page() && $on_grips && isset( $_GET['grip_id'] ) ) {
             wp_enqueue_script('jquery');
             
             // Create a separate JS file for better management
@@ -1070,6 +1086,63 @@ class TwinTack_Grip_Account {
         }
         
         return $item_data;
+    }
+
+    /**
+     * Replace product image with grip mockup in cart / mini-cart when a grip_design_id is present.
+     *
+     * @param string $thumbnail   Default product image HTML.
+     * @param array  $cart_item   Cart row.
+     * @param string $cart_item_key Key.
+     * @return string
+     */
+    public function filter_cart_item_thumbnail($thumbnail, $cart_item, $cart_item_key) {
+        if (empty($cart_item['grip_design_id'])) {
+            return $thumbnail;
+        }
+        $grip_id = absint($cart_item['grip_design_id']);
+        $url = self::get_grip_design_cart_image_url($grip_id);
+        if (!$url) {
+            return $thumbnail;
+        }
+        $alt = get_the_title($grip_id);
+        if (!is_string($alt) || $alt === '') {
+            $alt = __('Custom grip', 'twintack-grip-manager');
+        }
+        return sprintf(
+            '<img src="%s" alt="%s" class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail twintack-grip-cart-thumb" width="300" height="300" loading="lazy" decoding="async" />',
+            esc_url($url),
+            esc_attr($alt)
+        );
+    }
+
+    /**
+     * Best preview image URL for a grip design (featured / mockup meta / legacy Monday URL).
+     *
+     * @param int $grip_id Post ID.
+     * @return string URL or empty.
+     */
+    public static function get_grip_design_cart_image_url($grip_id) {
+        if (!$grip_id) {
+            return '';
+        }
+        $thumb = get_the_post_thumbnail_url($grip_id, 'woocommerce_thumbnail');
+        if ($thumb) {
+            return $thumb;
+        }
+        $thumb = get_the_post_thumbnail_url($grip_id, 'medium');
+        if ($thumb) {
+            return $thumb;
+        }
+        $asset = get_post_meta($grip_id, '_grip_mockup_asset_url', true);
+        if (!empty($asset) && filter_var($asset, FILTER_VALIDATE_URL)) {
+            return $asset;
+        }
+        $mockup = get_post_meta($grip_id, '_grip_mockup_url', true);
+        if (!empty($mockup) && filter_var($mockup, FILTER_VALIDATE_URL)) {
+            return $mockup;
+        }
+        return '';
     }
 
     /**

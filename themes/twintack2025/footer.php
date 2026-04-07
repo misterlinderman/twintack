@@ -53,7 +53,7 @@
 				<nav class="footer-nav">
 					<?php if ( is_user_logged_in() ) : ?>
 						<a href="/my-account">Dashboard</a>
-						<a href="/my-account/grip-designs/">My Grip Designs</a>
+						<a href="/my-account/my-custom-grips/">My Custom Grips</a>
 						<a href="/my-account/orders/">Orders</a>
 						<a href="/my-account/edit-address/">Addresses</a>
 						<a href="/my-account/edit-account/">Account Details</a>

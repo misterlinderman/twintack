@@ -47,6 +47,12 @@ class TTCG_Customer {
         // Add menu item to My Account
         add_filter( 'woocommerce_account_menu_items', array( $this, 'add_menu_item' ), 25 );
 
+        // Hide legacy "grip-designs" endpoint from the menu (URLs redirect to this endpoint).
+        add_filter( 'woocommerce_account_menu_items', array( $this, 'remove_legacy_grip_designs_menu_item' ), 100 );
+
+        // Send old /my-account/grip-designs/ traffic to the canonical customer dashboard.
+        add_action( 'template_redirect', array( $this, 'redirect_legacy_grip_designs_endpoint' ), 1 );
+
         // Render endpoint content
         add_action( 'woocommerce_account_' . self::ENDPOINT . '_endpoint', array( $this, 'render_endpoint' ) );
 
@@ -84,6 +90,38 @@ class TTCG_Customer {
         }
 
         return $new_items;
+    }
+
+    /**
+     * Remove the legacy WooCommerce menu item added by the theme / grip-manager plugin.
+     *
+     * @param array $items Account menu items.
+     * @return array
+     */
+    public function remove_legacy_grip_designs_menu_item( $items ) {
+        unset( $items['grip-designs'] );
+        return $items;
+    }
+
+    /**
+     * 301 redirect legacy grip-designs endpoint to my-custom-grips (preserve grip_id query arg).
+     */
+    public function redirect_legacy_grip_designs_endpoint() {
+        if ( ! is_user_logged_in() || ! function_exists( 'is_account_page' ) || ! is_account_page() ) {
+            return;
+        }
+        if ( ! function_exists( 'is_wc_endpoint_url' ) || ! is_wc_endpoint_url( 'grip-designs' ) ) {
+            return;
+        }
+
+        $target = self::get_list_url();
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- query arg for public redirect only
+        if ( isset( $_GET['grip_id'] ) ) {
+            $target = add_query_arg( 'grip_id', absint( wp_unslash( $_GET['grip_id'] ) ), $target );
+        }
+
+        wp_safe_redirect( $target, 301 );
+        exit;
     }
 
     /**

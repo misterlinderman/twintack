@@ -1817,7 +1817,7 @@ function twintack_fix_account_endpoints($url, $endpoint, $value, $permalink) {
     // Check if the URL incorrectly contains /login/ for account endpoints
     if (strpos($url, '/login/') !== false && 
         in_array($endpoint, ['orders', 'view-order', 'downloads', 'edit-account', 'edit-address', 
-                             'payment-methods', 'add-payment-method', 'grip-designs'])) {
+                             'payment-methods', 'add-payment-method', 'grip-designs', 'my-custom-grips'], true)) {
         
         // Get the my account page URL
         $my_account_url = wc_get_page_permalink('myaccount');
@@ -1934,7 +1934,8 @@ function twintack_debug_account_urls() {
         'payment-methods',
         'customer-logout',
         'add-payment-method',
-        'grip-designs'
+        'grip-designs',
+        'my-custom-grips',
     );
     
     echo '<h3>Endpoint URLs:</h3>';
@@ -2394,22 +2395,9 @@ function twintack_log_404_errors() {
 add_action('wp', 'twintack_log_404_errors');
 
 /**
- * Add grip designs to account menu items
- * NOTE: Re-enabled for menu item, but content is handled by plugin
+ * Legacy "My Grip Designs" menu item removed — TwinTack Custom Grips registers "My Custom Grips" (my-custom-grips).
+ * Old /my-account/grip-designs/ URLs redirect to my-custom-grips in the plugin.
  */
-function twintack_add_grip_designs_menu_item($items) {
-    $new_items = array();
-    
-    foreach ($items as $key => $value) {
-        $new_items[$key] = $value;
-        if ($key === 'dashboard') {
-            $new_items['grip-designs'] = __('My Grip Designs', 'twintack2025');
-        }
-    }
-    
-    return $new_items;
-}
-add_filter('woocommerce_account_menu_items', 'twintack_add_grip_designs_menu_item', 20);
 
 /**
  * Get grip design status label based on WordPress status

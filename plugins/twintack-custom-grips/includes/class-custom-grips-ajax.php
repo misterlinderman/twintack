@@ -654,8 +654,14 @@ class TTCG_Ajax {
         // Determine new status
         $new_status = ( 'approve' === $action ) ? 'customer_approved' : 'customer_requested_changes';
 
-        // Update status via the Status class (which fires the ttcg_status_changed hook)
-        $result = TTCG_Status::update_status( $design_id, $new_status );
+        // Update status via the Status class (which fires the ttcg_status_changed hook).
+        // Customers are not in the staff role matrix; use customer self-service path after ownership check above.
+        $result = TTCG_Status::update_status(
+            $design_id,
+            $new_status,
+            get_current_user_id(),
+            array( 'customer_self_service' => true )
+        );
 
         if ( is_wp_error( $result ) ) {
             wp_send_json_error( $result->get_error_message() );

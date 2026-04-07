@@ -242,7 +242,7 @@ get_header();
                                     ?>
                                     
                                     <?php if ($user_has_designs) : ?>
-                                        <a href="/my-account/grip-designs/" class="btn btn-secondary">Your Grip Library</a>
+                                        <a href="/my-account/my-custom-grips/" class="btn btn-secondary">Your Grip Library</a>
                                         <div class="step-timeline">2-week lead time</div>
                                     <?php else : ?>
                                         <div class="step-timeline">2-week lead time</div>

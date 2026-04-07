@@ -265,10 +265,13 @@ class TwinTack_Grip_Email_Notifications {
      * Get the URL for reviewing a grip design
      */
     private function get_grip_review_url($grip_id) {
+        if (class_exists('TTCG_Customer')) {
+            return TTCG_Customer::get_detail_url((int) $grip_id);
+        }
         $my_account_url = wc_get_page_permalink('myaccount');
         return add_query_arg(array(
-            'grip-designs' => '',
-            'grip_id' => $grip_id
+            'my-custom-grips' => '',
+            'grip_id' => $grip_id,
         ), $my_account_url);
     }
     

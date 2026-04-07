@@ -19,6 +19,14 @@ class TTCG_Status {
     private static $instance = null;
 
     /**
+     * When true, {@see TTCG_Notifications::on_status_changed} skips the customer email
+     * (used when a mockup upload sends the dedicated mockup-ready message instead).
+     *
+     * @var bool
+     */
+    private static $suppress_customer_status_email = false;
+
+    /**
      * Statuses the Art Team role can set.
      *
      * @var array
@@ -110,14 +118,36 @@ class TTCG_Status {
      * @param  int    $design_id Post ID of the grip design.
      * @param  string $new_status New artwork status slug.
      * @param  int|null $user_id  User performing the change. Defaults to current.
+     * @param  array  $options {
+     *     Optional flags.
+     *
+     *     @type bool $customer_self_service When true, the owner customer may set only
+     *                                      customer_approved or customer_requested_changes (caller must verify ownership).
+     *     @type bool $suppress_customer_status_email Skip customer "status update" email for this transition
+     *                                               (e.g. mockup flow sends mockup-ready instead).
+     * }
      * @return bool|WP_Error
      */
-    public static function update_status( $design_id, $new_status, $user_id = null ) {
+    public static function update_status( $design_id, $new_status, $user_id = null, $options = array() ) {
         if ( null === $user_id ) {
             $user_id = get_current_user_id();
         }
 
-        if ( ! self::can_set_status( $new_status, $user_id ) ) {
+        $options = wp_parse_args(
+            $options,
+            array(
+                'customer_self_service'          => false,
+                'suppress_customer_status_email' => false,
+            )
+        );
+
+        $customer_self = ! empty( $options['customer_self_service'] );
+
+        if ( $customer_self ) {
+            if ( ! in_array( $new_status, array( 'customer_approved', 'customer_requested_changes' ), true ) ) {
+                return new WP_Error( 'ttcg_forbidden', __( 'You do not have permission to set this status.', 'twintack-custom-grips' ) );
+            }
+        } elseif ( ! self::can_set_status( $new_status, $user_id ) ) {
             return new WP_Error( 'ttcg_forbidden', __( 'You do not have permission to set this status.', 'twintack-custom-grips' ) );
         }
 
@@ -147,6 +177,10 @@ class TTCG_Status {
             'status_change'
         );
 
+        if ( ! empty( $options['suppress_customer_status_email'] ) ) {
+            self::$suppress_customer_status_email = true;
+        }
+
         /**
          * Fires when a grip design's artwork status changes via the dashboard.
          *
@@ -156,6 +190,8 @@ class TTCG_Status {
          * @param int    $user_id    User who made the change.
          */
         do_action( 'ttcg_status_changed', $design_id, $new_status, $old_status, $user_id );
+
+        self::$suppress_customer_status_email = false;
 
         if ( WP_DEBUG ) {
             error_log( sprintf(
@@ -168,5 +204,14 @@ class TTCG_Status {
         }
 
         return true;
+    }
+
+    /**
+     * Whether the current status-change notification should skip emailing the customer.
+     *
+     * @return bool
+     */
+    public static function should_suppress_customer_status_email() {
+        return self::$suppress_customer_status_email;
     }
 }

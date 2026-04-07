@@ -42,7 +42,7 @@ jQuery(document).ready(function($) {
         
         // Look for grip_id pattern in URL
         for (var i = 0; i < pathParts.length; i++) {
-            if (pathParts[i] === 'grip-designs' && pathParts[i + 1]) {
+            if ((pathParts[i] === 'grip-designs' || pathParts[i] === 'my-custom-grips') && pathParts[i + 1]) {
                 // Check if next part contains grip_id
                 var nextPart = pathParts[i + 1];
                 if (nextPart.includes('grip_id=')) {

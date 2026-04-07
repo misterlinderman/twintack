@@ -144,14 +144,14 @@ defined( 'ABSPATH' ) || exit;
         <div class="dashboard-card-footer"><?php _e('View Orders →', 'twintack2025'); ?></div>
     </a>
 
-    <!-- Grip Designs Card -->
-    <a href="<?php echo esc_url(wc_get_account_endpoint_url('grip-designs')); ?>" class="dashboard-card">
+    <!-- Custom Grips Card (TwinTack Custom Grips — my-custom-grips endpoint) -->
+    <a href="<?php echo esc_url( wc_get_account_endpoint_url( 'my-custom-grips' ) ); ?>" class="dashboard-card">
         <div class="dashboard-card-icon">
             <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7zm1-11h-2v3H8v2h3v3h2v-3h3v-2h-3z"/></svg>
         </div>
-        <h2><?php _e('My Grip Designs', 'twintack2025'); ?></h2>
-        <p><?php _e('View and manage your custom grip designs.', 'twintack2025'); ?></p>
-        <div class="dashboard-card-footer"><?php _e('View Designs →', 'twintack2025'); ?></div>
+        <h2><?php _e( 'My Custom Grips', 'twintack2025' ); ?></h2>
+        <p><?php _e( 'View and manage your custom grip designs, mockups, and approvals.', 'twintack2025' ); ?></p>
+        <div class="dashboard-card-footer"><?php _e( 'View Custom Grips →', 'twintack2025' ); ?></div>
     </a>
 
     <!-- Account Details Card -->

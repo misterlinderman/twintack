@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Custom Grips
  * Description: Frontend team dashboard for managing custom grip design submissions. Provides art and production team workflows, threaded messaging, mockup uploads, and customer communication — all from the frontend.
- * Version: 1.2.0
+ * Version: 1.2.2
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'TTCG_VERSION', '1.2.0' );
+define( 'TTCG_VERSION', '1.2.2' );
 define( 'TTCG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TTCG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TTCG_PLUGIN_FILE', __FILE__ );
@@ -191,13 +191,14 @@ class TwinTack_Custom_Grips {
      * Enqueue the customer messaging script on the My Account grip designs page.
      */
     public function enqueue_customer_scripts() {
-        // Only load on the My Account page with the grip-designs endpoint
         if ( ! is_account_page() ) {
             return;
         }
 
         global $wp_query;
-        if ( ! isset( $wp_query->query_vars['grip-designs'] ) ) {
+        $qv = isset( $wp_query->query_vars ) ? $wp_query->query_vars : array();
+        // Legacy endpoint + canonical customer dashboard
+        if ( empty( $qv['grip-designs'] ) && empty( $qv['my-custom-grips'] ) ) {
             return;
         }
 

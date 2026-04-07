@@ -131,7 +131,12 @@ class TTCG_Mockups {
         // Auto-change status to pending_review
         $old_status = get_post_meta( $design_id, '_grip_artwork_status', true );
         if ( 'pending_review' !== $old_status ) {
-            TTCG_Status::update_status( $design_id, 'pending_review', $user_id );
+            TTCG_Status::update_status(
+                $design_id,
+                'pending_review',
+                $user_id,
+                array( 'suppress_customer_status_email' => true )
+            );
         }
 
         // Create system message
