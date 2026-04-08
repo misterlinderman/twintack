@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Custom Grips
  * Description: Frontend team dashboard for managing custom grip design submissions. Provides art and production team workflows, threaded messaging, mockup uploads, and customer communication — all from the frontend.
- * Version: 1.2.2
+ * Version: 1.2.3
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'TTCG_VERSION', '1.2.2' );
+define( 'TTCG_VERSION', '1.2.3' );
 define( 'TTCG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TTCG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TTCG_PLUGIN_FILE', __FILE__ );

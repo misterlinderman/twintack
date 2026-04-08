@@ -226,8 +226,15 @@ $back_url     = TTCG_Customer::get_list_url();
                         <span><strong><?php esc_html_e( 'Quantity:', 'twintack-custom-grips' ); ?></strong> <?php echo esc_html( $data['quantity'] ); ?> <?php esc_html_e( 'grips', 'twintack-custom-grips' ); ?></span>
                     </div>
                     <?php
-                    $product_id = 1196;
-                    $purchase_url = wc_get_cart_url() . '?add-to-cart=' . $product_id . '&quantity=' . intval( $data['quantity'] ) . '&grip_design_id=' . $grip_id;
+                    $product_id   = (int) apply_filters( 'twintack_custom_grip_product_id', 1196 );
+                    $purchase_url = add_query_arg(
+                        array(
+                            'add-to-cart'    => $product_id,
+                            'quantity'       => max( 1, (int) $data['quantity'] ),
+                            'grip_design_id' => $grip_id,
+                        ),
+                        wc_get_cart_url()
+                    );
                     ?>
                     <a href="<?php echo esc_url( $purchase_url ); ?>" class="ttcg-btn ttcg-btn--purchase">
                         <?php esc_html_e( 'Purchase Custom Grips', 'twintack-custom-grips' ); ?>
@@ -242,6 +249,23 @@ $back_url     = TTCG_Customer::get_list_url();
                 <div class="ttcg-design-detail__action-section ttcg-design-detail__action-section--shipped">
                     <h3><?php esc_html_e( 'Shipped!', 'twintack-custom-grips' ); ?></h3>
                     <p><?php esc_html_e( 'Your custom grips have been shipped. You should receive them soon!', 'twintack-custom-grips' ); ?></p>
+                    <?php
+                    $reorder_product_id = (int) apply_filters( 'twintack_custom_grip_product_id', 1196 );
+                    if ( $reorder_product_id > 0 && function_exists( 'wc_get_cart_url' ) ) :
+                        $reorder_url = add_query_arg(
+                            array(
+                                'add-to-cart'    => $reorder_product_id,
+                                'quantity'       => max( 1, (int) $data['quantity'] ),
+                                'grip_design_id' => $grip_id,
+                            ),
+                            wc_get_cart_url()
+                        );
+                        ?>
+                        <p class="ttcg-design-detail__reorder-hint"><?php esc_html_e( 'Need another run of this design? Add it to your cart with one click.', 'twintack-custom-grips' ); ?></p>
+                        <a href="<?php echo esc_url( $reorder_url ); ?>" class="ttcg-btn ttcg-btn--purchase">
+                            <?php esc_html_e( 'Order This Design Again', 'twintack-custom-grips' ); ?>
+                        </a>
+                    <?php endif; ?>
                 </div>
             <?php elseif ( 'customer_requested_changes' === $status ) : ?>
                 <div class="ttcg-design-detail__action-section ttcg-design-detail__action-section--changes">

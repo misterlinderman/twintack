@@ -60,6 +60,9 @@ if ( ! defined( 'ABSPATH' ) ) {
                     case 'customer_requested_changes':
                         $action_hint = __( 'Changes Submitted', 'twintack-custom-grips' );
                         break;
+                    case 'shipped':
+                        $action_hint = __( 'Reorder available', 'twintack-custom-grips' );
+                        break;
                 }
             ?>
                 <a href="<?php echo esc_url( $detail_url ); ?>" class="ttcg-my-grips__card">

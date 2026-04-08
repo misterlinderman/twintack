@@ -24,8 +24,8 @@ class TwinTack_Grip_Post_Type {
         add_filter('display_post_states', array($this, 'add_artwork_status_to_post_states'), 10, 2);
         add_action('admin_notices', array($this, 'display_status_change_notices'));
         
-        // Add WooCommerce order status change hook
-        add_action('woocommerce_order_status_changed', array($this, 'handle_order_status_changed'), 10, 3);
+        // Production webhook when order moves to processing (after grip-account sets meta)
+        add_action('woocommerce_order_status_changed', array($this, 'handle_order_status_changed'), 15, 3);
         
         // Add webhook URL filters
         add_filter('grip_customer_feedback_webhook_url', array($this, 'get_customer_feedback_webhook_url'));
@@ -1257,64 +1257,41 @@ class TwinTack_Grip_Post_Type {
     }
 
     /**
-     * Handle WooCommerce order status changes
+     * On order → processing: notify Make.com / integrations (meta is set by TwinTack_Grip_Account).
+     * Shipped / completed is handled there via TTCG_Status::sync_shipped_from_wc_order when applicable.
      */
     public function handle_order_status_changed($order_id, $old_status, $new_status) {
         if (WP_DEBUG) {
-            error_log('TwinTack: Order status changed - Order ID: ' . $order_id);
-            error_log('TwinTack: Status change from ' . $old_status . ' to ' . $new_status);
+            error_log('TwinTack: Order status changed - Order ID: ' . $order_id . ' (' . $old_status . ' → ' . $new_status . ')');
         }
 
-        if ($new_status !== 'completed') {
+        if ('processing' !== $new_status) {
             return;
         }
 
-        // Get the order
         $order = wc_get_order($order_id);
         if (!$order) {
-            if (WP_DEBUG) {
-                error_log('TwinTack: Could not find order with ID: ' . $order_id);
-            }
             return;
         }
 
-        // Loop through order items
         foreach ($order->get_items() as $item) {
+            $grip_id = $item->get_meta('grip_design_id');
+            if (!$grip_id) {
+                $cart_item_data = $item->get_meta('_cart_item_data');
+                if (is_array($cart_item_data) && !empty($cart_item_data['grip_design_id'])) {
+                    $grip_id = $cart_item_data['grip_design_id'];
+                }
+            }
+            if (!$grip_id) {
+                continue;
+            }
+
+            $grip_id = absint($grip_id);
             if (WP_DEBUG) {
-                error_log('TwinTack: Processing order item - Product ID: ' . $item->get_product_id());
-                error_log('TwinTack: Item meta data: ' . print_r($item->get_meta_data(), true));
+                error_log('TwinTack: Triggering production approval webhook for grip ' . $grip_id . ' (order ' . $order_id . ')');
             }
 
-            // Check if this is a custom grip product
-            if ($item->get_product_id() == 1196) {
-                // Get the grip design ID from the item meta
-                $grip_id = $item->get_meta('grip_design_id');
-                
-                if (WP_DEBUG) {
-                    error_log('TwinTack: Found custom grip product - Grip Design ID: ' . ($grip_id ? $grip_id : 'not found'));
-                }
-
-                if (!$grip_id) {
-                    continue;
-                }
-
-                // Update the grip design status
-                $current_status = get_post_meta($grip_id, '_grip_artwork_status', true);
-                if (WP_DEBUG) {
-                    error_log('TwinTack: Current grip status: ' . $current_status);
-                }
-
-                update_post_meta($grip_id, '_grip_artwork_status', 'approved_for_production');
-                update_post_meta($grip_id, '_grip_order_id', $order_id);
-                update_post_meta($grip_id, '_grip_production_started', current_time('mysql'));
-
-                if (WP_DEBUG) {
-                    error_log('TwinTack: Updated grip design ' . $grip_id . ' to approved_for_production');
-                }
-
-                // Trigger webhook for Make.com
-                $this->trigger_production_approval_webhook($grip_id, $order_id);
-            }
+            $this->trigger_production_approval_webhook($grip_id, $order_id);
         }
     }
 

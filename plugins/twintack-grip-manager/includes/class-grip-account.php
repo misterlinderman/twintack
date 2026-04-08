@@ -30,9 +30,8 @@ class TwinTack_Grip_Account {
         // Save cart item data to order
         add_action('woocommerce_checkout_create_order_line_item', array($this, 'save_cart_item_data_to_order'), 10, 4);
         
-        // Handle order status changes
-        add_action('woocommerce_order_status_completed', array($this, 'handle_grip_order_complete'));
-        add_action('woocommerce_order_status_processing', array($this, 'handle_grip_order_complete'));
+        // Sync grip artwork status with WooCommerce (processing → production, completed/shipped-unpaid → shipped)
+        add_action('woocommerce_order_status_changed', array($this, 'handle_grip_order_status_sync'), 10, 4);
         
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_grip_scripts'));
@@ -922,10 +921,13 @@ class TwinTack_Grip_Account {
         if ($product_id == 1196 && isset($_GET['grip_design_id'])) {
             $grip_id = intval($_GET['grip_design_id']);
             
-            // Verify the grip design is customer approved
             $artwork_status = get_post_meta($grip_id, '_grip_artwork_status', true);
-            if ($artwork_status !== 'customer_approved') {
-                wc_add_notice('This design must be approved before purchasing.', 'error');
+            $allowed_statuses = apply_filters(
+                'twintack_grip_cart_allowed_artwork_statuses',
+                array('customer_approved', 'shipped')
+            );
+            if (!in_array($artwork_status, $allowed_statuses, true)) {
+                wc_add_notice(__('This design is not available to add to the cart yet.', 'twintack-grip-manager'), 'error');
                 return $cart_item_data;
             }
             
@@ -996,73 +998,112 @@ class TwinTack_Grip_Account {
     }
 
     /**
-     * Handle order completion for grip designs
+     * Resolve grip design ID from a WooCommerce order line item.
+     *
+     * @param WC_Order_Item_Product $item Order line item.
+     * @return int
      */
-    public function handle_grip_order_complete($order_id) {
-        if (WP_DEBUG) {
-            error_log('TwinTack: Processing order #' . $order_id . ' for grip designs');
-        }
-
-        $order = wc_get_order($order_id);
-        if (!$order) {
-            if (WP_DEBUG) {
-                error_log('TwinTack: Could not find order #' . $order_id);
+    private function get_grip_design_id_from_order_item($item) {
+        $grip_design_id = $item->get_meta('grip_design_id');
+        if (!$grip_design_id) {
+            $cart_item_data = $item->get_meta('_cart_item_data');
+            if (is_array($cart_item_data) && !empty($cart_item_data['grip_design_id'])) {
+                $grip_design_id = $cart_item_data['grip_design_id'];
             }
+        }
+        return $grip_design_id ? absint($grip_design_id) : 0;
+    }
+
+    /**
+     * When WooCommerce order status changes, sync linked grip designs:
+     * - processing → production (approved_for_production)
+     * - completed, shipped-unpaid, etc. → shipped (fulfillment loop complete)
+     *
+     * @param int         $order_id   Order ID.
+     * @param string      $old_status Previous status slug.
+     * @param string      $new_status New status slug.
+     * @param WC_Order|null $order    Order object (WC 3.0+).
+     */
+    public function handle_grip_order_status_sync($order_id, $old_status, $new_status, $order = null) {
+        if (!$order instanceof WC_Order) {
+            $order = wc_get_order($order_id);
+        }
+        if (!$order) {
             return;
         }
 
-        // Check if any order items are grip designs
+        $shipped_statuses = apply_filters(
+            'twintack_grip_order_statuses_meaning_shipped',
+            array('completed', 'shipped-unpaid')
+        );
+
+        if (in_array($new_status, $shipped_statuses, true)) {
+            $this->mark_grips_shipped_for_order($order);
+            return;
+        }
+
+        if ('processing' === $new_status) {
+            $this->mark_grips_production_for_order($order);
+        }
+    }
+
+    /**
+     * Mark line-item-linked grip designs as in production (paid / processing).
+     *
+     * @param WC_Order $order Order.
+     */
+    private function mark_grips_production_for_order($order) {
+        $order_id = $order->get_id();
+
         foreach ($order->get_items() as $item_id => $item) {
-            if (WP_DEBUG) {
-                error_log('TwinTack: Checking order item #' . $item_id);
-                error_log('TwinTack: Item data: ' . print_r($item->get_data(), true));
-            }
-
-            // Try to get grip design ID from item meta
-            $grip_design_id = $item->get_meta('grip_design_id');
-            
-            // If not found in meta, check cart item data
+            $grip_design_id = $this->get_grip_design_id_from_order_item($item);
             if (!$grip_design_id) {
-                if (WP_DEBUG) {
-                    error_log('TwinTack: No grip_design_id in meta, checking cart item data');
-                }
-                
-                // Get all meta data for debugging
-                $all_meta = $item->get_meta_data();
-                if (WP_DEBUG) {
-                    error_log('TwinTack: All meta data: ' . print_r($all_meta, true));
-                }
-
-                // Check cart item data
-                $cart_item_data = $item->get_meta('_cart_item_data');
-                if (WP_DEBUG) {
-                    error_log('TwinTack: Cart item data: ' . print_r($cart_item_data, true));
-                }
-
-                if (is_array($cart_item_data) && isset($cart_item_data['grip_design_id'])) {
-                    $grip_design_id = $cart_item_data['grip_design_id'];
-                }
+                continue;
             }
-            
-            if ($grip_design_id) {
-                if (WP_DEBUG) {
-                    error_log('TwinTack: Found grip design #' . $grip_design_id);
-                    error_log('TwinTack: Current status: ' . get_post_meta($grip_design_id, '_grip_artwork_status', true));
-                }
 
-                // Update grip design status - Make.com will detect this via Watch Posts
-                update_post_meta($grip_design_id, '_grip_artwork_status', 'approved_for_production');
+            $current = get_post_meta($grip_design_id, '_grip_artwork_status', true);
+            if ('shipped' === $current) {
+                continue;
+            }
+
+            if (WP_DEBUG) {
+                error_log('TwinTack: Order #' . $order_id . ' processing — grip #' . $grip_design_id . ' → approved_for_production');
+            }
+
+            update_post_meta($grip_design_id, '_grip_artwork_status', 'approved_for_production');
+            update_post_meta($grip_design_id, '_grip_final_order_id', $order_id);
+            update_post_meta($grip_design_id, '_grip_production_started', current_time('mysql'));
+        }
+    }
+
+    /**
+     * Mark line-item-linked grip designs as shipped when the order is fulfilled.
+     *
+     * @param WC_Order $order Order.
+     */
+    private function mark_grips_shipped_for_order($order) {
+        $order_id = $order->get_id();
+
+        foreach ($order->get_items() as $item_id => $item) {
+            $grip_design_id = $this->get_grip_design_id_from_order_item($item);
+            if (!$grip_design_id) {
+                continue;
+            }
+
+            if (WP_DEBUG) {
+                error_log('TwinTack: Order #' . $order_id . ' fulfilled — marking grip #' . $grip_design_id . ' shipped');
+            }
+
+            if (!get_post_meta($grip_design_id, '_grip_final_order_id', true)) {
                 update_post_meta($grip_design_id, '_grip_final_order_id', $order_id);
-                update_post_meta($grip_design_id, '_grip_production_started', current_time('mysql'));
+            }
 
-                if (WP_DEBUG) {
-                    error_log('TwinTack: Updated grip design #' . $grip_design_id . ' status to approved_for_production');
-                    error_log('TwinTack: New status: ' . get_post_meta($grip_design_id, '_grip_artwork_status', true));
-                }
+            if (class_exists('TTCG_Status') && is_callable(array('TTCG_Status', 'sync_shipped_from_wc_order'))) {
+                TTCG_Status::sync_shipped_from_wc_order($grip_design_id, $order_id);
             } else {
-                if (WP_DEBUG) {
-                    error_log('TwinTack: No grip design ID found in order item');
-                }
+                update_post_meta($grip_design_id, '_grip_artwork_status', 'shipped');
+                update_post_meta($grip_design_id, '_grip_shipped_at', current_time('mysql'));
+                update_post_meta($grip_design_id, '_grip_shipped_order_id', $order_id);
             }
         }
     }

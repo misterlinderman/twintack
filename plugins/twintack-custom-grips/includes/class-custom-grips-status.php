@@ -214,4 +214,55 @@ class TTCG_Status {
     public static function should_suppress_customer_status_email() {
         return self::$suppress_customer_status_email;
     }
+
+    /**
+     * Set artwork status to shipped from WooCommerce fulfillment (no capability check).
+     *
+     * Updates meta, adds a system message, and fires {@see 'ttcg_status_changed'} so
+     * customer notifications and dashboards stay in sync with the order lifecycle.
+     *
+     * @param int $design_id Grip design post ID.
+     * @param int $order_id  WooCommerce order ID (optional, for messaging / meta).
+     * @return bool True if updated or already shipped.
+     */
+    public static function sync_shipped_from_wc_order( $design_id, $order_id = 0 ) {
+        $design_id = absint( $design_id );
+        if ( ! $design_id || 'grip_design' !== get_post_type( $design_id ) ) {
+            return false;
+        }
+
+        $old_status = get_post_meta( $design_id, '_grip_artwork_status', true );
+        if ( 'shipped' === $old_status ) {
+            return true;
+        }
+
+        update_post_meta( $design_id, '_grip_artwork_status', 'shipped' );
+        update_post_meta( $design_id, '_grip_shipped_at', current_time( 'mysql' ) );
+        if ( $order_id ) {
+            update_post_meta( $design_id, '_grip_shipped_order_id', absint( $order_id ) );
+        }
+
+        if ( class_exists( 'TTCG_Messaging' ) ) {
+            $msg = $order_id
+                ? sprintf(
+                    /* translators: %d: WooCommerce order ID */
+                    __( 'WooCommerce order #%d was marked fulfilled — your grips are on the way.', 'twintack-custom-grips' ),
+                    absint( $order_id )
+                )
+                : __( 'Your grip order has been marked as shipped.', 'twintack-custom-grips' );
+            TTCG_Messaging::create_system_message( $design_id, $msg, 'system' );
+        }
+
+        /**
+         * Fires after artwork status is set to shipped from an order (mirrors staff-driven changes).
+         *
+         * @param int    $design_id  Post ID.
+         * @param string $new_status Always "shipped".
+         * @param string $old_status Previous artwork status.
+         * @param int    $user_id    0 (system).
+         */
+        do_action( 'ttcg_status_changed', $design_id, 'shipped', $old_status, 0 );
+
+        return true;
+    }
 }
