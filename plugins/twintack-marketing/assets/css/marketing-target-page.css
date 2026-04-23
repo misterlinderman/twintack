@@ -166,6 +166,31 @@
     padding: 0 20px;
 }
 
+/*
+ * Classic editor / WYSIWYG alignment classes — the main LTR theme bundle omits
+ * full .align* rules (they exist in style-rtl only). Core block styles may
+ * define .aligncenter without block/auto margins, so images do not center.
+ */
+.twintack-target-page .entry-content .alignleft {
+    float: left;
+    margin-right: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.twintack-target-page .entry-content .alignright {
+    float: right;
+    margin-left: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.twintack-target-page .entry-content .aligncenter {
+    clear: both;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1.5em;
+}
+
 /* ==========================================================================
  * Product Grid
  * ======================================================================= */
@@ -473,6 +498,13 @@
 }
 
 .target-feature-video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--border-radius-md, 8px);
+}
+
+.target-feature-block-image {
     width: 100%;
     height: auto;
     display: block;

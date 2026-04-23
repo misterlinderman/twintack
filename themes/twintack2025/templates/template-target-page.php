@@ -234,6 +234,11 @@ $has_hero = $video_desktop || $image_desktop || $image_mobile || $hero_title;
                                        data-autoplay-on-scroll="true">
                                     <source src="<?php echo esc_url($vb_url); ?>" type="video/mp4">
                                 </video>
+                            <?php elseif ($vb_type === 'image') : ?>
+                                <img class="target-feature-block-image"
+                                     src="<?php echo esc_url($vb_url); ?>"
+                                     alt="<?php echo esc_attr($vb_heading ?: ''); ?>"
+                                     loading="lazy" />
                             <?php elseif ($vb_type === 'youtube') :
                                 $yt_id = twintack_extract_youtube_id($vb_url);
                                 if ($yt_id) :

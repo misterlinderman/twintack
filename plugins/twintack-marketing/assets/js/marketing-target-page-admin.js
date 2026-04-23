@@ -161,9 +161,15 @@
 
             if (val === 'mp4') {
                 $row.find('.video-block-mp4-field').show();
+                $row.find('.video-block-image-field').hide();
+                $row.find('.video-block-embed-field').hide();
+            } else if (val === 'image') {
+                $row.find('.video-block-mp4-field').hide();
+                $row.find('.video-block-image-field').show();
                 $row.find('.video-block-embed-field').hide();
             } else {
                 $row.find('.video-block-mp4-field').hide();
+                $row.find('.video-block-image-field').hide();
                 $row.find('.video-block-embed-field').show();
             }
         }).trigger('change.ttTarget');

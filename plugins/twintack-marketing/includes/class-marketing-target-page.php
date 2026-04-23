@@ -63,7 +63,7 @@ class TwinTack_Marketing_Target_Page {
 
         add_meta_box(
             'twintack_target_video_blocks',
-            __('Target Page — Video Feature Blocks', 'twintack-marketing'),
+            __('Target Page — Video & Image Feature Blocks', 'twintack-marketing'),
             array($this, 'render_video_blocks_meta_box'),
             'page',
             'normal',
@@ -395,7 +395,7 @@ class TwinTack_Marketing_Target_Page {
         }
         ?>
         <p class="description">
-            <?php _e('Add video feature sections to showcase product details. Blocks display in the order shown below.', 'twintack-marketing'); ?>
+            <?php _e('Add video or image feature sections to showcase product details. Blocks display in the order shown below.', 'twintack-marketing'); ?>
         </p>
 
         <div id="twintack-video-blocks-container">
@@ -406,7 +406,7 @@ class TwinTack_Marketing_Target_Page {
 
         <p>
             <button type="button" class="button button-primary" id="twintack-add-video-block">
-                <?php _e('+ Add Video Block', 'twintack-marketing'); ?>
+                <?php _e('+ Add Feature Block', 'twintack-marketing'); ?>
             </button>
         </p>
 
@@ -435,15 +435,16 @@ class TwinTack_Marketing_Target_Page {
         ?>
         <div class="twintack-video-block-row" data-index="<?php echo esc_attr($index); ?>">
             <div class="video-block-header">
-                <strong><?php _e('Video Block', 'twintack-marketing'); ?> <span class="block-number">#<?php echo is_numeric($index) ? intval($index) + 1 : ''; ?></span></strong>
+                <strong><?php _e('Feature Block', 'twintack-marketing'); ?> <span class="block-number">#<?php echo is_numeric($index) ? intval($index) + 1 : ''; ?></span></strong>
                 <button type="button" class="button twintack-remove-video-block"><?php _e('Remove', 'twintack-marketing'); ?></button>
             </div>
             <table class="form-table">
                 <tr>
-                    <th><label><?php _e('Video Type', 'twintack-marketing'); ?></label></th>
+                    <th><label><?php _e('Media Type', 'twintack-marketing'); ?></label></th>
                     <td>
                         <select name="<?php echo esc_attr($prefix); ?>[video_type]" class="video-type-select">
                             <option value="mp4" <?php selected($video_type, 'mp4'); ?>><?php _e('MP4 Upload', 'twintack-marketing'); ?></option>
+                            <option value="image" <?php selected($video_type, 'image'); ?>><?php _e('Image', 'twintack-marketing'); ?></option>
                             <option value="youtube" <?php selected($video_type, 'youtube'); ?>><?php _e('YouTube URL', 'twintack-marketing'); ?></option>
                             <option value="vimeo" <?php selected($video_type, 'vimeo'); ?>><?php _e('Vimeo URL', 'twintack-marketing'); ?></option>
                         </select>
@@ -453,7 +454,7 @@ class TwinTack_Marketing_Target_Page {
                     <th><label><?php _e('Video File', 'twintack-marketing'); ?></label></th>
                     <td>
                         <div class="twintack-media-upload" data-type="video">
-                            <input type="hidden" name="<?php echo esc_attr($prefix); ?>[video_url]" class="media-url" value="<?php echo esc_attr($video_url); ?>" />
+                            <input type="hidden" name="<?php echo esc_attr($prefix); ?>[video_url]" class="media-url" value="<?php echo esc_attr($video_type === 'mp4' ? $video_url : ''); ?>" />
                             <div class="media-preview" style="<?php echo $video_url && $video_type === 'mp4' ? '' : 'display:none;'; ?>">
                                 <?php if ($video_url && $video_type === 'mp4') : ?>
                                     <video src="<?php echo esc_url($video_url); ?>" style="max-width:250px;height:auto;" muted></video>
@@ -464,11 +465,29 @@ class TwinTack_Marketing_Target_Page {
                         </div>
                     </td>
                 </tr>
-                <tr class="video-block-embed-field" style="<?php echo ($video_type !== 'mp4') ? '' : 'display:none;'; ?>">
+                <tr class="video-block-image-field">
+                    <th><label><?php _e('Image File', 'twintack-marketing'); ?></label></th>
+                    <td>
+                        <?php
+                        $image_url_val = ($video_type === 'image') ? $video_url : '';
+                        ?>
+                        <div class="twintack-media-upload" data-type="image">
+                            <input type="hidden" name="<?php echo esc_attr($prefix); ?>[image_url]" class="media-url" value="<?php echo esc_attr($image_url_val); ?>" />
+                            <div class="media-preview" style="<?php echo $image_url_val ? '' : 'display:none;'; ?>">
+                                <?php if ($image_url_val) : ?>
+                                    <img src="<?php echo esc_url($image_url_val); ?>" alt="" style="max-width:250px;height:auto;" />
+                                <?php endif; ?>
+                            </div>
+                            <button type="button" class="button upload-media-btn"><?php _e('Upload Image', 'twintack-marketing'); ?></button>
+                            <button type="button" class="button remove-media-btn" style="<?php echo $image_url_val ? '' : 'display:none;'; ?>"><?php _e('Remove', 'twintack-marketing'); ?></button>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="video-block-embed-field" style="<?php echo ($video_type !== 'mp4' && $video_type !== 'image') ? '' : 'display:none;'; ?>">
                     <th><label><?php _e('Video URL', 'twintack-marketing'); ?></label></th>
                     <td>
                         <input type="url" name="<?php echo esc_attr($prefix); ?>[video_embed_url]" class="regular-text embed-url-input"
-                               value="<?php echo esc_attr($video_type !== 'mp4' ? $video_url : ''); ?>"
+                               value="<?php echo esc_attr(in_array($video_type, array('youtube', 'vimeo'), true) ? $video_url : ''); ?>"
                                placeholder="https://www.youtube.com/watch?v=..." />
                     </td>
                 </tr>
@@ -610,10 +629,18 @@ class TwinTack_Marketing_Target_Page {
                     continue;
                 }
                 $vtype = isset($block['video_type']) ? sanitize_text_field($block['video_type']) : 'mp4';
-                // MP4 uploads use video_url; YouTube/Vimeo use video_embed_url
-                $raw_url = ($vtype === 'mp4')
-                    ? (isset($block['video_url']) ? $block['video_url'] : '')
-                    : (isset($block['video_embed_url']) ? $block['video_embed_url'] : '');
+                if (!in_array($vtype, array('mp4', 'image', 'youtube', 'vimeo'), true)) {
+                    $vtype = 'mp4';
+                }
+                // MP4 and image uploads use video_url / image_url; embeds use video_embed_url
+                $raw_url = '';
+                if ($vtype === 'mp4') {
+                    $raw_url = isset($block['video_url']) ? $block['video_url'] : '';
+                } elseif ($vtype === 'image') {
+                    $raw_url = isset($block['image_url']) ? $block['image_url'] : '';
+                } else {
+                    $raw_url = isset($block['video_embed_url']) ? $block['video_embed_url'] : '';
+                }
 
                 $sanitized_blocks[] = array(
                     'video_url'   => esc_url_raw($raw_url),
