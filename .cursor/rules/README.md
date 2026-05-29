@@ -21,21 +21,19 @@ This directory contains specialized cursor rules for the TwinTack WordPress buil
 
 ### `api-integrations.cursor-rules`
 **Third-party API integration patterns**
-- Monday.com API endpoint specifications
-- Make.com webhook integration workflows
+- Native Custom Grips workflow (primary)
+- Legacy Monday.com / Make.com references (deprecated for grip workflow)
 - Klaviyo email marketing integration
 - Gravity Forms processing patterns
 - API security, authentication, and error handling
-- Testing and debugging for external integrations
 
 ### `data-workflow.cursor-rules`
 **Data structures and workflow patterns**
 - Grip design post structure and meta fields
 - Purchase-based grip creation workflow (CRITICAL)
+- Native artwork status flow (twintack-custom-grips)
 - Volume pricing system configuration
 - User role and access management
-- Meta field naming conventions
-- Status management and display logic
 - WooCommerce integration patterns
 
 ### `development-environment.cursor-rules`
@@ -70,17 +68,16 @@ This directory contains specialized cursor rules for the TwinTack WordPress buil
 
 ## Critical Workflows to Understand
 
-### Purchase-Based Grip Creation
-**Reference**: `data-workflow.cursor-rules`
-- Form submission → Cart storage → Payment → Post creation
+### Native Custom Grip Workflow
+**Reference**: `plugins/twintack-custom-grips/WORKFLOW.md` and `data-workflow.cursor-rules`
+- Form submission → Cart storage → Deposit payment → Post creation
+- Team dashboard mockup upload → customer review → approval → purchase → production → shipped
 - Never create grip posts before payment
-- Always link posts to orders
 
-### API Integration Flow
-**Reference**: `api-integrations.cursor-rules`
-- Monday.com status updates
-- Make.com webhook processing
-- Proper error handling and logging
+### Legacy API Integration (Deprecated)
+**Reference**: `plugins/twintack-grip-manager/MONDAY-API.md`
+- Monday.com / Make.com no longer used for production workflow
+- Legacy endpoints remain for backward compatibility only
 
 ### Amazon Tracking Sync (Shippo → WP-Lister)
 **Reference**: `plugins/twintack-amazon-tracking-bridge/README.md`

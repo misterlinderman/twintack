@@ -254,43 +254,75 @@ class TTCG_Admin {
                 </table>
             </div>
 
-            <!-- Webhook / External Integrations -->
+            <!-- Native Workflow Summary -->
             <div class="ttcg-admin-section">
                 <h2>
                     <span class="dashicons dashicons-rest-api"></span>
-                    <?php esc_html_e( 'Webhooks & External Integrations', 'twintack-custom-grips' ); ?>
+                    <?php esc_html_e( 'Native Workflow (WooCommerce Sync)', 'twintack-custom-grips' ); ?>
                 </h2>
-                <p class="description"><?php esc_html_e( 'External service integrations triggered by grip design events.', 'twintack-custom-grips' ); ?></p>
+                <p class="description"><?php esc_html_e( 'Artwork status transitions driven by WooCommerce order status. No external webhooks required.', 'twintack-custom-grips' ); ?></p>
 
                 <table class="widefat ttcg-notification-table">
                     <thead>
                         <tr>
                             <th><?php esc_html_e( 'Trigger', 'twintack-custom-grips' ); ?></th>
-                            <th><?php esc_html_e( 'Service', 'twintack-custom-grips' ); ?></th>
-                            <th><?php esc_html_e( 'Type', 'twintack-custom-grips' ); ?></th>
-                            <th><?php esc_html_e( 'Details', 'twintack-custom-grips' ); ?></th>
+                            <th><?php esc_html_e( 'Handler', 'twintack-custom-grips' ); ?></th>
+                            <th><?php esc_html_e( 'Artwork Status Set', 'twintack-custom-grips' ); ?></th>
                             <th><?php esc_html_e( 'Status', 'twintack-custom-grips' ); ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><strong><?php esc_html_e( 'Customer submits feedback (approve/request changes)', 'twintack-custom-grips' ); ?></strong></td>
-                            <td><span class="ttcg-badge ttcg-badge--webhook"><?php esc_html_e( 'Make.com', 'twintack-custom-grips' ); ?></span></td>
-                            <td><?php esc_html_e( 'Webhook POST', 'twintack-custom-grips' ); ?></td>
-                            <td>
-                                <code><?php esc_html_e( 'grip_customer_feedback_webhook_url', 'twintack-custom-grips' ); ?></code><br>
-                                <small><?php esc_html_e( 'Sends: grip_design_id, customer_action, feedback, artwork_status, monday_item_id', 'twintack-custom-grips' ); ?></small>
-                            </td>
+                            <td><strong><?php esc_html_e( 'WooCommerce order → Processing', 'twintack-custom-grips' ); ?></strong></td>
+                            <td><code>TTCG_Status::sync_in_production_from_wc_order()</code></td>
+                            <td><code>in_production</code></td>
                             <td><span class="ttcg-status-active"><?php esc_html_e( 'Active', 'twintack-custom-grips' ); ?></span></td>
                         </tr>
                         <tr>
-                            <td><strong><?php esc_html_e( 'Order completed with grip design', 'twintack-custom-grips' ); ?></strong></td>
-                            <td><span class="ttcg-badge ttcg-badge--webhook"><?php esc_html_e( 'Make.com (Watch Posts)', 'twintack-custom-grips' ); ?></span></td>
-                            <td><?php esc_html_e( 'Status update detection', 'twintack-custom-grips' ); ?></td>
-                            <td>
-                                <small><?php esc_html_e( 'Updates _grip_artwork_status to approved_for_production. Make.com detects via Watch Posts module.', 'twintack-custom-grips' ); ?></small>
-                            </td>
+                            <td><strong><?php esc_html_e( 'WooCommerce order → Completed / shipped-unpaid', 'twintack-custom-grips' ); ?></strong></td>
+                            <td><code>TTCG_Status::sync_shipped_from_wc_order()</code></td>
+                            <td><code>shipped</code></td>
                             <td><span class="ttcg-status-active"><?php esc_html_e( 'Active', 'twintack-custom-grips' ); ?></span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="description" style="margin-top: 12px;">
+                    <?php
+                    printf(
+                        /* translators: %s: path to WORKFLOW.md */
+                        esc_html__( 'Full workflow reference: %s', 'twintack-custom-grips' ),
+                        '<code>plugins/twintack-custom-grips/WORKFLOW.md</code>'
+                    );
+                    ?>
+                </p>
+            </div>
+
+            <!-- Legacy Integrations (Deprecated) -->
+            <div class="ttcg-admin-section">
+                <h2>
+                    <span class="dashicons dashicons-warning"></span>
+                    <?php esc_html_e( 'Legacy Integrations (Deprecated)', 'twintack-custom-grips' ); ?>
+                </h2>
+                <p class="description"><?php esc_html_e( 'Monday.com and Make.com are no longer used for the grip production workflow. Code remains for backward compatibility only.', 'twintack-custom-grips' ); ?></p>
+
+                <table class="widefat ttcg-notification-table">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e( 'Integration', 'twintack-custom-grips' ); ?></th>
+                            <th><?php esc_html_e( 'Previous Use', 'twintack-custom-grips' ); ?></th>
+                            <th><?php esc_html_e( 'Status', 'twintack-custom-grips' ); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong><?php esc_html_e( 'Make.com webhooks', 'twintack-custom-grips' ); ?></strong></td>
+                            <td><?php esc_html_e( 'Customer feedback and order status sync via legacy Grip Manager path', 'twintack-custom-grips' ); ?></td>
+                            <td><span class="ttcg-status-inactive"><?php esc_html_e( 'Retired', 'twintack-custom-grips' ); ?></span></td>
+                        </tr>
+                        <tr>
+                            <td><strong><?php esc_html_e( 'Monday.com API', 'twintack-custom-grips' ); ?></strong></td>
+                            <td><?php esc_html_e( 'External production board sync and mockup assets', 'twintack-custom-grips' ); ?></td>
+                            <td><span class="ttcg-status-inactive"><?php esc_html_e( 'Retired', 'twintack-custom-grips' ); ?></span></td>
                         </tr>
                     </tbody>
                 </table>
@@ -309,13 +341,13 @@ class TTCG_Admin {
                             <?php esc_html_e( 'Sends message → Team gets email', 'twintack-custom-grips' ); ?>
                         </div>
                         <div class="ttcg-flow-item ttcg-flow-item--customer">
-                            <?php esc_html_e( 'Approves design → Team email + Make.com webhook', 'twintack-custom-grips' ); ?>
+                            <?php esc_html_e( 'Approves design → Team + customer email', 'twintack-custom-grips' ); ?>
                         </div>
                         <div class="ttcg-flow-item ttcg-flow-item--customer">
-                            <?php esc_html_e( 'Requests changes → Make.com webhook', 'twintack-custom-grips' ); ?>
+                            <?php esc_html_e( 'Requests changes → Team notified via status + messaging', 'twintack-custom-grips' ); ?>
                         </div>
                         <div class="ttcg-flow-item ttcg-flow-item--customer">
-                            <?php esc_html_e( 'Purchases grips → Status update (Make.com watches)', 'twintack-custom-grips' ); ?>
+                            <?php esc_html_e( 'Purchases grips → WC Processing → In Production', 'twintack-custom-grips' ); ?>
                         </div>
                     </div>
                     <div class="ttcg-flow-column">
@@ -971,7 +1003,7 @@ class TTCG_Admin {
                 <tr>
                     <td><strong><?php esc_html_e( 'Hide Legacy "My Grip Designs"', 'twintack-custom-grips' ); ?></strong></td>
                     <td>
-                        <?php esc_html_e( 'Remove the "My Grip Designs" menu item from WooCommerce My Account (registered by twintack-grip-manager). The new "My Custom Grips" experience replaces it. All other grip-manager features (cart, orders, webhooks) remain active.', 'twintack-custom-grips' ); ?>
+                        <?php esc_html_e( 'Remove the "My Grip Designs" menu item from WooCommerce My Account (registered by twintack-grip-manager). The new "My Custom Grips" experience replaces it. Grip Manager remains active for form intake, post creation, and WooCommerce order sync.', 'twintack-custom-grips' ); ?>
                     </td>
                     <td style="text-align: center;">
                         <label class="ttcg-toggle">

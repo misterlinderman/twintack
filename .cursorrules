@@ -3,9 +3,10 @@
 ## Project Overview
 This is a WordPress project for TwinTack, featuring:
 - **Custom Theme**: `themes/twintack2025` - A dual-purpose sports equipment theme (baseball/fishing)
-- **Custom Plugin**: `plugins/twintack-grip-manager` - Grip customization and order management system
+- **Custom Plugin**: `plugins/twintack-custom-grips` - Native team dashboard and customer grip design workflow
+- **Custom Plugin**: `plugins/twintack-grip-manager` - Grip design post type, form intake, and WooCommerce integration
 - **E-commerce**: WooCommerce integration with custom features
-- **Third-party integrations**: Monday.com, Make.com, Klaviyo, Gravity Forms
+- **Third-party integrations**: Klaviyo, Gravity Forms (Monday.com/Make.com retired for grip workflow — see `plugins/twintack-custom-grips/WORKFLOW.md`)
 
 ## WordPress Standards & Best Practices
 
@@ -67,7 +68,7 @@ This is a WordPress project for TwinTack, featuring:
 - **Custom post type**: `grip-design` for customer grip orders
 - **Status system**: Separate WordPress post status from artwork status
 - **Customer dashboard**: Integration with WooCommerce My Account
-- **API endpoints**: REST API for Monday.com and Make.com integrations
+- **API endpoints**: REST API in Grip Manager (legacy Monday.com — deprecated); native workflow in Custom Grips
 - **Purchase-based creation**: Only create grip posts when orders are completed
 
 ### API Development
@@ -80,11 +81,10 @@ This is a WordPress project for TwinTack, featuring:
 ## Integration Guidelines
 
 ### Third-Party Services
-- **Monday.com**: Use asset IDs for mockup storage, support direct asset URLs
-- **Make.com**: Webhook integration for status updates and notifications
 - **Klaviyo**: Email marketing integration with proper API handling
 - **Gravity Forms**: Form processing and data collection
 - **WooCommerce**: Custom product features and checkout modifications
+- **Legacy (retired)**: Monday.com / Make.com grip workflow — see `plugins/twintack-grip-manager/MONDAY-API.md`
 
 ### WooCommerce Customization
 - **Product variations**: Custom display logic for different product types
@@ -183,7 +183,7 @@ Remember: This is a complex e-commerce system with multiple integrations. Always
 
 For comprehensive guidance, also reference these specialized rule files in `.cursor/rules/`:
 
-- **api-integrations.cursor-rules** - Third-party API integration patterns (Monday.com, Make.com, Klaviyo, Gravity Forms)
+- **api-integrations.cursor-rules** - Third-party API patterns (native Custom Grips workflow; legacy Monday.com deprecated)
 - **data-workflow.cursor-rules** - Data structures, workflow patterns, and purchase-based grip creation
 - **development-environment.cursor-rules** - FTP-only environment debugging and deployment strategies
 - **README.md** - Complete documentation of all rule files and their usage

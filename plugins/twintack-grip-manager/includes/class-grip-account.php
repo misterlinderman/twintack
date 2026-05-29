@@ -146,9 +146,9 @@ class TwinTack_Grip_Account {
                     'artwork_approved'          => 'Artwork Approved',
                     'customer_requested_changes' => 'Customer Changes',
                     'customer_approved'         => 'Customer Approved',
-                    'approved_for_production'   => 'Production Ready',
-                    'internal_review'           => 'Internal Review',
+                    'approved_for_production'   => 'In Production',
                     'in_production'             => 'In Production',
+                    'internal_review'           => 'Internal Review',
                     'shipped'                   => 'Shipped'
                 );
                 $status_label = isset($status_labels[$artwork_status]) ? $status_labels[$artwork_status] : 'Mockup Required';
@@ -253,9 +253,9 @@ class TwinTack_Grip_Account {
                     'artwork_approved'          => 'Artwork Approved',
                     'customer_requested_changes' => 'Customer Changes',
                     'customer_approved'         => 'Customer Approved',
-                    'approved_for_production'   => 'Production Ready',
-                    'internal_review'           => 'Internal Review',
+                    'approved_for_production'   => 'In Production',
                     'in_production'             => 'In Production',
+                    'internal_review'           => 'Internal Review',
                     'shipped'                   => 'Shipped'
                 );
                 $status_label = isset($status_labels[$artwork_status]) ? $status_labels[$artwork_status] : 'Mockup Required';
@@ -528,12 +528,12 @@ class TwinTack_Grip_Account {
                                 Purchase Custom Grips
                             </a>
                         </div>
-                    <?php elseif ($artwork_status === 'approved_for_production'): ?>
+                    <?php elseif ( in_array( $artwork_status, array( 'in_production', 'approved_for_production' ), true ) ) : ?>
                         <div class="production-status">
                             <h3>🚀 In Production</h3>
                             <p>Your order has been sent to production! We'll update you when your grips are ready to ship.</p>
                         </div>
-                    <?php elseif ($artwork_status === 'shipped'): ?>
+                    <?php elseif ( $artwork_status === 'shipped' ) : ?>
                         <div class="shipped-status">
                             <h3>📦 Shipped</h3>
                             <p>Your custom grips have been shipped! You should receive them soon.</p>
@@ -1016,7 +1016,7 @@ class TwinTack_Grip_Account {
 
     /**
      * When WooCommerce order status changes, sync linked grip designs:
-     * - processing → production (approved_for_production)
+     * - processing → in production (customer purchased)
      * - completed, shipped-unpaid, etc. → shipped (fulfillment loop complete)
      *
      * @param int         $order_id   Order ID.
@@ -1061,18 +1061,27 @@ class TwinTack_Grip_Account {
                 continue;
             }
 
-            $current = get_post_meta($grip_design_id, '_grip_artwork_status', true);
-            if ('shipped' === $current) {
+            $current = get_post_meta( $grip_design_id, '_grip_artwork_status', true );
+            if ( class_exists( 'TTCG_Dashboard' ) ) {
+                $current = TTCG_Dashboard::normalize_status( $current );
+            } elseif ( 'approved_for_production' === $current ) {
+                $current = 'in_production';
+            }
+            if ( 'shipped' === $current ) {
                 continue;
             }
 
-            if (WP_DEBUG) {
-                error_log('TwinTack: Order #' . $order_id . ' processing — grip #' . $grip_design_id . ' → approved_for_production');
+            if ( WP_DEBUG ) {
+                error_log( 'TwinTack: Order #' . $order_id . ' processing — grip #' . $grip_design_id . ' → in_production' );
             }
 
-            update_post_meta($grip_design_id, '_grip_artwork_status', 'approved_for_production');
-            update_post_meta($grip_design_id, '_grip_final_order_id', $order_id);
-            update_post_meta($grip_design_id, '_grip_production_started', current_time('mysql'));
+            if ( class_exists( 'TTCG_Status' ) && is_callable( array( 'TTCG_Status', 'sync_in_production_from_wc_order' ) ) ) {
+                TTCG_Status::sync_in_production_from_wc_order( $grip_design_id, $order_id );
+            } else {
+                update_post_meta( $grip_design_id, '_grip_artwork_status', 'in_production' );
+                update_post_meta( $grip_design_id, '_grip_final_order_id', $order_id );
+                update_post_meta( $grip_design_id, '_grip_production_started', current_time( 'mysql' ) );
+            }
         }
     }
 

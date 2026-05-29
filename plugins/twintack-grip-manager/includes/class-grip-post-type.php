@@ -529,6 +529,9 @@ class TwinTack_Grip_Post_Type {
         if ($request->has_param('artwork_status')) {
             $old_status = get_post_meta($grip_id, '_grip_artwork_status', true);
             $artwork_status = $request->get_param('artwork_status');
+            if ( 'approved_for_production' === $artwork_status ) {
+                $artwork_status = 'in_production';
+            }
             $result = update_post_meta($grip_id, '_grip_artwork_status', $artwork_status);
             $updated_fields['artwork_status'] = $artwork_status;
             $updated_fields['artwork_status_label'] = $this->get_artwork_status_label($artwork_status);
@@ -644,7 +647,7 @@ class TwinTack_Grip_Post_Type {
             'customer_requested_changes' => 'Customer Changes',
             'customer_approved'          => 'Customer Approved',
             'artwork_approved'           => 'Artwork Approved',      // Legacy
-            'approved_for_production'    => 'Production Ready',
+            'approved_for_production'    => 'In Production',
             'internal_review'            => 'Internal Review',       // Legacy
             'in_production'              => 'In Production',
             'shipped'                    => 'Shipped'
@@ -743,13 +746,14 @@ class TwinTack_Grip_Post_Type {
             'pending_review'             => 'Customer Review',
             'customer_requested_changes' => 'Customer Changes',
             'customer_approved'          => 'Customer Approved',
-            'approved_for_production'    => 'Production Ready',
             'in_production'              => 'In Production',
             'shipped'                    => 'Shipped'
         );
         
+        $display_status = ( 'approved_for_production' === $current_artwork_status ) ? 'in_production' : $current_artwork_status;
+        
         foreach ($artwork_statuses as $status_value => $status_label) {
-            $selected = selected($current_artwork_status, $status_value, false);
+            $selected = selected($display_status, $status_value, false);
             echo '<option value="' . esc_attr($status_value) . '" ' . $selected . '>' . esc_html($status_label) . '</option>';
         }
         
@@ -762,9 +766,8 @@ class TwinTack_Grip_Post_Type {
         echo '<li><strong>Mockup Required:</strong> Waiting for design team to create mockup</li>';
         echo '<li><strong>Customer Review:</strong> Mockup ready, awaiting customer review</li>';
         echo '<li><strong>Customer Changes:</strong> Customer has requested design changes</li>';
-        echo '<li><strong>Customer Approved:</strong> Customer has approved the design</li>';
-        echo '<li><strong>Production Ready:</strong> Order placed, ready for production</li>';
-        echo '<li><strong>In Production:</strong> Currently being manufactured</li>';
+        echo '<li><strong>Customer Approved:</strong> Customer has approved the design (ready to purchase)</li>';
+        echo '<li><strong>In Production:</strong> Order placed and grips are being manufactured</li>';
         echo '<li><strong>Shipped:</strong> Order has been shipped to customer</li>';
         echo '</ul>';
         echo '</div>';
@@ -1051,12 +1054,15 @@ class TwinTack_Grip_Post_Type {
             $new_artwork_status = sanitize_text_field($_POST['grip_artwork_status']);
             $allowed_artwork_statuses = array(
                 'artwork_pending', 'pending_review',
-                'customer_requested_changes', 'customer_approved', 'approved_for_production',
+                'customer_requested_changes', 'customer_approved',
                 'in_production', 'shipped',
-                'artwork_approved', 'internal_review' // Legacy — still accepted for existing records
+                'artwork_approved', 'internal_review', 'approved_for_production' // Legacy — mapped below
             );
             
             if (in_array($new_artwork_status, $allowed_artwork_statuses)) {
+                if ( 'approved_for_production' === $new_artwork_status ) {
+                    $new_artwork_status = 'in_production';
+                }
                 // Update the artwork status meta field
                 update_post_meta($post_id, '_grip_artwork_status', $new_artwork_status);
                 
@@ -1244,7 +1250,7 @@ class TwinTack_Grip_Post_Type {
         }
         
         // Update grip design status and order info
-        update_post_meta($grip_id, '_grip_artwork_status', 'approved_for_production');
+        update_post_meta($grip_id, '_grip_artwork_status', 'in_production');
         update_post_meta($grip_id, '_grip_final_order_id', $order_id);
         update_post_meta($grip_id, '_grip_production_started', current_time('c'));
         
@@ -1312,7 +1318,7 @@ class TwinTack_Grip_Post_Type {
             'grip_design_id' => $grip_id,
             'grip_design_title' => $post->post_title,
             'order_id' => $order_id,
-            'artwork_status' => 'approved_for_production',
+            'artwork_status' => 'in_production',
             'monday_item_id' => $monday_item_id,
             'timestamp' => current_time('c'),
             'webhook_type' => 'production_approval'

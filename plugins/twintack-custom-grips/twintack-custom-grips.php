@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Custom Grips
  * Description: Frontend team dashboard for managing custom grip design submissions. Provides art and production team workflows, threaded messaging, mockup uploads, and customer communication — all from the frontend.
- * Version: 1.2.3
+ * Version: 1.2.4
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'TTCG_VERSION', '1.2.3' );
+define( 'TTCG_VERSION', '1.2.4' );
 define( 'TTCG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TTCG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TTCG_PLUGIN_FILE', __FILE__ );
@@ -132,12 +132,34 @@ class TwinTack_Custom_Grips {
         $current = get_option( $option );
 
         if ( $current !== TTCG_VERSION ) {
+            $this->migrate_legacy_artwork_statuses();
             flush_rewrite_rules();
             update_option( $option, TTCG_VERSION );
 
             if ( WP_DEBUG ) {
                 error_log( 'TwinTack Custom Grips: Flushed rewrite rules for v' . TTCG_VERSION );
             }
+        }
+    }
+
+    /**
+     * One-time migration: map deprecated approved_for_production → in_production.
+     */
+    private function migrate_legacy_artwork_statuses() {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $updated = $wpdb->query(
+            "UPDATE {$wpdb->postmeta} pm
+             INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+             SET pm.meta_value = 'in_production'
+             WHERE pm.meta_key = '_grip_artwork_status'
+               AND pm.meta_value = 'approved_for_production'
+               AND p.post_type = 'grip_design'"
+        );
+
+        if ( WP_DEBUG && false !== $updated ) {
+            error_log( 'TwinTack Custom Grips: Migrated ' . (int) $updated . ' grip design(s) from approved_for_production to in_production.' );
         }
     }
 

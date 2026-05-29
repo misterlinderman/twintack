@@ -1,134 +1,137 @@
-# TwinTack Grip Manager - Customer Feedback System
+# Customer Feedback System
+
+> **Primary documentation:** [`plugins/twintack-custom-grips/WORKFLOW.md`](../twintack-custom-grips/WORKFLOW.md)
+>
+> This document describes the customer feedback feature and clarifies which plugin owns what. The native experience lives in **TwinTack Custom Grips**. **TwinTack Grip Manager** provides the underlying post type, form intake, and WooCommerce bridge.
+
+---
 
 ## Overview
-The Customer Feedback Loop system allows customers to review design mockups and either approve them for purchase or request changes, with full integration to Make.com/Monday.com automation.
 
-## System Components
+Customers review design mockups and either approve them for purchase or request changes. The feedback loop is managed natively in WordPress — no Monday.com or Make.com involvement in the active workflow.
 
-### 1. Customer Interface
-- **Review Form**: Interactive feedback form with textarea and two action buttons
-- **Real-time Processing**: AJAX submission with loading states and instant feedback
-- **Purchase Integration**: Direct "Buy Now" button appears after approval
-- **Feedback History**: Displays previous feedback submissions with timestamps
+---
 
-### 2. Admin Interface (WordPress Backend)
+## Active System (TwinTack Custom Grips)
 
-#### Customer Feedback Meta Box
-- **Latest Customer Action**: Displays most recent approval/change request with visual indicators
-- **Complete Feedback History**: Chronological list of all customer interactions
-  - Action type (Approved/Requested Changes) with color coding
-  - Timestamp for each feedback entry
-  - Full feedback text display
-- **Customer Information**: Shows customer name and email for context
-- **Scrollable History**: For designs with extensive feedback, scrollable container prevents UI overload
+### Customer interface
 
-#### Monday.com Integration Fields
-- **Monday.com Item ID**: New field to store Monday.com item reference
-  - Used for updating Monday.com items with customer feedback
-  - Enables bidirectional synchronization between WordPress and Monday.com
-  - Accessible via API for Make.com scenarios
-- **Design Team Message**: Messages from Monday.com via Make.com automation
-- **Mockup Asset Management**: Direct links to Monday.com assets
+- **Location:** WooCommerce My Account → **My Custom Grips** (`/my-account/my-custom-grips/`)
+- **Actions:** Approve design, request changes (with optional feedback)
+- **Handler:** `TTCG_Ajax::handle_customer_review_design()`
+- **Messaging:** Feedback appears in the design message thread
 
-### 3. API Endpoints
+### Team interface
 
-#### Customer Feedback API
+- **Location:** Team Dashboard (`/team-dashboard/`)
+- **Mockup upload:** Sets status to `pending_review` and sends customer email
+- **Status management:** Role-based permissions via `TTCG_Status`
+
+### Status flow
+
+| Step | Status |
+|------|--------|
+| Design submitted (deposit paid) | `artwork_pending` |
+| Team uploads mockup | `pending_review` |
+| Customer requests changes | `customer_requested_changes` |
+| Team re-uploads mockup | `pending_review` |
+| Customer approves | `customer_approved` |
+| Customer purchases final grips (WC Processing) | `in_production` |
+| Order shipped (WC Completed) | `shipped` |
+
+There is no **Production Ready** (`approved_for_production`) step. Customer approval persists until purchase.
+
+---
+
+## Grip Manager Role (Infrastructure)
+
+Grip Manager still provides:
+
+- `grip_design` custom post type registration
+- Gravity Forms → cart → purchase-based post creation
+- WooCommerce order status sync (delegates to `TTCG_Status` when Custom Grips is active)
+- Cart thumbnail and reorder helpers
+- WordPress admin meta boxes for data inspection
+
+### Legacy customer feedback path
+
+The original implementation in `TwinTack_Grip_Account` (`wp_ajax_grip_customer_feedback`) and the REST endpoint `POST /wp-json/twintack/v1/grip-design/{id}/customer-feedback` remain for backward compatibility with the old **My Grip Designs** page. New development should use the Custom Grips endpoints and UI only.
+
+### Legacy Make.com webhooks
+
+Grip Manager can still fire Make.com webhooks from the **legacy** feedback handler if a webhook URL is configured via the `grip_customer_feedback_webhook_url` filter. The **native** Custom Grips customer review path does **not** use these webhooks.
+
+---
+
+## Database Meta Fields
+
+| Field | Description |
+|-------|-------------|
+| `_grip_customer_feedback` | Feedback history (string or array depending on entry path) |
+| `_grip_latest_customer_feedback` | Most recent feedback text |
+| `_grip_latest_customer_action` | Last action (`approve` / `request_changes`) |
+| `_grip_final_order_id` | WooCommerce order ID for final grip purchase |
+| `_grip_production_started` | Timestamp when order entered production |
+| `_grip_monday_item_id` | **Legacy** — Monday.com item reference |
+| `_grip_monday_feedback` | **Legacy** — Monday.com team messages |
+
+---
+
+## API Endpoints
+
+### Active (native)
+
+Customer review is handled via WordPress AJAX:
+
+```
+wp_ajax_ttcg_customer_review_design
+```
+
+Requires logged-in customer who owns the design; design must be in `pending_review`.
+
+### Legacy (Grip Manager REST)
+
 ```
 POST /wp-json/twintack/v1/grip-design/{id}/customer-feedback
+POST /wp-json/twintack/v1/grip-design/{id}/purchase-complete
+POST /wp-json/twintack/v1/grip-design/{id}/monday  (deprecated — see MONDAY-API.md)
 ```
 
-#### Monday.com Integration API (Enhanced)
-```
-POST /wp-json/twintack/v1/grip-design/{id}/monday
-```
-**New Parameters:**
-- `monday_item_id`: Monday.com item ID for reference tracking
+Do not use these for new integrations.
 
-### 4. Status Management
+---
 
-#### Customer-Specific Statuses
-- `pending_review` → Customer can review mockup
-- `customer_approved` → Customer approved the design
-- `customer_requested_changes` → Customer wants modifications
-- `approved_for_production` → Final approval after purchase
+## WooCommerce Integration
 
-### 5. Make.com/Monday.com Integration
+- Final grip purchase adds the custom grip product to cart with design metadata
+- Purchase allowed when artwork status is `customer_approved` or `shipped` (reorder)
+- Order **Processing** → artwork status `in_production`
+- Order **Completed** / **shipped-unpaid** → artwork status `shipped`
 
-#### Webhook Data (Enhanced)
-```json
-{
-  "grip_design_id": 123,
-  "grip_design_title": "Custom Grip - Team Name",
-  "customer_action": "request_changes|approve",
-  "customer_feedback": "Customer feedback text",
-  "artwork_status": "customer_requested_changes|customer_approved",
-  "customer_name": "John Doe",
-  "customer_email": "john@example.com",
-  "team_name": "Fighting Grimaces",
-  "quantity": "200",
-  "monday_item_id": "1234567890",
-  "timestamp": "2024-06-08T14:30:00+00:00",
-  "webhook_type": "customer_feedback"
-}
-```
+---
 
-**Key Enhancement**: `monday_item_id` field enables Make.com scenarios to:
-- Update specific Monday.com items with customer feedback
-- Create follow-up tasks for change requests
-- Track approval status across both platforms
-- Maintain data consistency between systems
+## Security
 
-### 6. Database Schema
+- Customer must be logged in and own the design (email match)
+- Feedback only accepted when status is `pending_review`
+- Nonce verification on all AJAX requests
+- Staff status changes validated against role permission matrix
 
-#### Meta Fields
-- `_grip_customer_feedback` - Array of feedback entries with structure:
-  ```php
-  array(
-      array(
-          'action' => 'approve|request_changes',
-          'feedback' => 'Customer feedback text',
-          'timestamp' => '2024-06-08 14:30:00'
-      )
-  )
-  ```
-- `_grip_latest_customer_feedback` - Most recent feedback text
-- `_grip_latest_customer_action` - Most recent action (approve/request_changes)
-- `_grip_monday_item_id` - Monday.com item ID for reference
-- `_grip_final_order_id` - WooCommerce order ID after purchase
-- `_grip_production_started` - Production approval timestamp
+---
 
-## Workflow Examples
+## Troubleshooting
 
-### Approval Workflow
-1. Design team uploads mockup → Status: `pending_review`
-2. Customer clicks "Approve Design" → Status: `customer_approved`
-3. Purchase button appears → Customer completes purchase
-4. Purchase webhook triggered → Status: `approved_for_production`
-5. Make.com receives webhook with `monday_item_id` → Updates Monday.com item
+| Issue | Check |
+|-------|-------|
+| Feedback form not showing | Status must be `pending_review`; customer on **My Custom Grips** page |
+| Purchase button missing | Status must be `customer_approved` |
+| Status stuck after order | Verify WooCommerce order reached Processing/Completed; check `TTCG_Status` sync methods |
+| Legacy "Production Ready" showing | Deploy Custom Grips v1.2.4+ to run migration, or manually update meta to `in_production` |
 
-### Change Request Workflow
-1. Design team uploads mockup → Status: `pending_review`
-2. Customer clicks "Request Changes" with feedback → Status: `customer_requested_changes`
-3. Make.com webhook includes `monday_item_id` and feedback
-4. Monday.com item updated with customer feedback and new task created
-5. Design team makes changes → Process repeats until approval
+---
 
-## Admin Benefits
+## Related Documentation
 
-### For Project Managers
-- **Centralized Feedback View**: All customer interactions visible in WordPress admin
-- **Status at a Glance**: Color-coded status indicators show current state
-- **Customer Context**: Immediate access to customer details and history
-- **Monday.com Sync**: Item ID tracking ensures data consistency
-
-### For Design Team
-- **Historical Context**: Complete feedback history for design decisions
-- **Clear Instructions**: Customer feedback displayed with timestamps
-- **Status Tracking**: Visual indicators of approval/change request states
-- **Production Ready**: Clear transition from approval to production status
-
-## Technical Implementation
-
-The system uses structured data storage for scalability and maintains backward compatibility while providing enhanced admin interfaces. The Monday.com item ID integration enables sophisticated automation scenarios through Make.com while providing clear administrative oversight.
-
-All customer actions trigger both local status updates and external webhook notifications, ensuring all systems stay synchronized throughout the feedback and approval process. 
+- [`WORKFLOW.md`](../twintack-custom-grips/WORKFLOW.md) — Canonical native workflow
+- [`MONDAY-API.md`](MONDAY-API.md) — Deprecated Monday.com API
+- [`PURCHASE-BASED-GRIP-CREATION.md`](PURCHASE-BASED-GRIP-CREATION.md) — Form → post creation

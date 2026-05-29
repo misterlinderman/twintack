@@ -101,7 +101,7 @@ class TwinTack_Grip_Importer {
             'pending_review' => 'Customer Review',
             'customer_requested_changes' => 'Customer Changes',
             'customer_approved' => 'Customer Approved',
-            'approved_for_production' => 'Production Ready',
+            'in_production' => 'In Production',
             'in_production' => 'In Production',
             'shipped' => 'Shipped'
         );

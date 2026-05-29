@@ -54,7 +54,7 @@ $back_url     = TTCG_Customer::get_list_url();
             'artwork_pending'            => __( 'Submitted', 'twintack-custom-grips' ),
             'pending_review'             => __( 'Design Ready', 'twintack-custom-grips' ),
             'customer_approved'          => __( 'Approved', 'twintack-custom-grips' ),
-            'approved_for_production'    => __( 'Production Ready', 'twintack-custom-grips' ),
+            'in_production'              => __( 'In Production', 'twintack-custom-grips' ),
             'shipped'                    => __( 'Shipped', 'twintack-custom-grips' ),
         );
 
@@ -77,8 +77,8 @@ $back_url     = TTCG_Customer::get_list_url();
             case 'artwork_approved':      // Legacy — kept for backward compatibility
                 $mapped_index = 2;
                 break;
-            case 'approved_for_production':
             case 'in_production':
+            case 'approved_for_production': // Legacy — maps to in production
                 $mapped_index = 3;
                 break;
             case 'shipped':
@@ -240,10 +240,10 @@ $back_url     = TTCG_Customer::get_list_url();
                         <?php esc_html_e( 'Purchase Custom Grips', 'twintack-custom-grips' ); ?>
                     </a>
                 </div>
-            <?php elseif ( 'approved_for_production' === $status || 'in_production' === $status ) : ?>
+            <?php elseif ( 'in_production' === $status ) : ?>
                 <div class="ttcg-design-detail__action-section ttcg-design-detail__action-section--production">
                     <h3><?php esc_html_e( 'In Production', 'twintack-custom-grips' ); ?></h3>
-                    <p><?php esc_html_e( 'Your custom grips are being produced! We\'ll update you when they\'re ready to ship.', 'twintack-custom-grips' ); ?></p>
+                    <p><?php esc_html_e( 'Your custom grips are being produced! We\'ll update you when they ship.', 'twintack-custom-grips' ); ?></p>
                 </div>
             <?php elseif ( 'shipped' === $status ) : ?>
                 <div class="ttcg-design-detail__action-section ttcg-design-detail__action-section--shipped">

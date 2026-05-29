@@ -29,7 +29,8 @@ The TwinTack theme is built on a modern WordPress architecture with the followin
 
 The TwinTack ecosystem includes several custom plugins that extend WordPress and WooCommerce functionality:
 
-- **TwinTack Grip Manager**: Grip customization and order management system with Monday.com/Make.com integration
+- **TwinTack Custom Grips**: Native team dashboard and customer grip design workflow (statuses, mockups, messaging, notifications)
+- **TwinTack Grip Manager**: Grip design post type, Gravity Forms intake, purchase-based post creation, and WooCommerce order bridge
 - **TwinTack Manual Order Payments**: Stripe and gateway support for admin-created WooCommerce orders
 - **TwinTack Amazon Tracking Bridge**: Bridges Shippo tracking data from WooCommerce order notes to WP-Lister Amazon fulfillment feeds (see `plugins/twintack-amazon-tracking-bridge/README.md`)
 - **TwinTack Marketing**: Marketing tools and promotional features

@@ -45,7 +45,6 @@ class TTCG_Status {
         'pending_review',
         'customer_requested_changes',
         'customer_approved',
-        'approved_for_production',
         'in_production',
         'shipped',
     );
@@ -262,6 +261,51 @@ class TTCG_Status {
          * @param int    $user_id    0 (system).
          */
         do_action( 'ttcg_status_changed', $design_id, 'shipped', $old_status, 0 );
+
+        return true;
+    }
+
+    /**
+     * Set artwork status to in production when the customer completes purchase (no capability check).
+     *
+     * @param int $design_id Grip design post ID.
+     * @param int $order_id  WooCommerce order ID.
+     * @return bool
+     */
+    public static function sync_in_production_from_wc_order( $design_id, $order_id = 0 ) {
+        $design_id = absint( $design_id );
+        if ( ! $design_id || 'grip_design' !== get_post_type( $design_id ) ) {
+            return false;
+        }
+
+        $old_status = get_post_meta( $design_id, '_grip_artwork_status', true );
+        $old_status = TTCG_Dashboard::normalize_status( $old_status );
+
+        if ( in_array( $old_status, array( 'in_production', 'shipped' ), true ) ) {
+            if ( $order_id ) {
+                update_post_meta( $design_id, '_grip_final_order_id', absint( $order_id ) );
+            }
+            return true;
+        }
+
+        update_post_meta( $design_id, '_grip_artwork_status', 'in_production' );
+        update_post_meta( $design_id, '_grip_production_started', current_time( 'mysql' ) );
+        if ( $order_id ) {
+            update_post_meta( $design_id, '_grip_final_order_id', absint( $order_id ) );
+        }
+
+        if ( class_exists( 'TTCG_Messaging' ) ) {
+            $msg = $order_id
+                ? sprintf(
+                    /* translators: %d: WooCommerce order ID */
+                    __( 'Order #%d received — your custom grips are now in production.', 'twintack-custom-grips' ),
+                    absint( $order_id )
+                )
+                : __( 'Your custom grips are now in production.', 'twintack-custom-grips' );
+            TTCG_Messaging::create_system_message( $design_id, $msg, 'system' );
+        }
+
+        do_action( 'ttcg_status_changed', $design_id, 'in_production', $old_status, 0 );
 
         return true;
     }

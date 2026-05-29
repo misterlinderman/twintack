@@ -1,5 +1,17 @@
 # TwinTack Grip Manager - Changelog
 
+> **Current workflow:** See [`plugins/twintack-custom-grips/WORKFLOW.md`](plugins/twintack-custom-grips/WORKFLOW.md). Entries below are historical.
+
+## Version 1.7.05 / Custom Grips 1.2.4 - 2026-05-28
+
+### Native Workflow (Documentation Update)
+
+- Production workflow documented as native WordPress experience via **twintack-custom-grips**
+- Removed **Production Ready** (`approved_for_production`) status step; purchase → `in_production`
+- Monday.com / Make.com marked retired for grip production workflow
+
+---
+
 ## Version 1.5.1 - Customer Feedback Loop System (2024-01-15)
 
 ### 🎉 Major New Features

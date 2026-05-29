@@ -1,6 +1,18 @@
 # TwinTack Grip Manager Changelog
 
-## Version 1.7.01 - 2025-10-18
+> **Workflow documentation:** Native production workflow is documented in [`plugins/twintack-custom-grips/WORKFLOW.md`](../twintack-custom-grips/WORKFLOW.md). Monday.com / Make.com integrations are retired. Historical entries below describe legacy behavior.
+
+## Version 1.7.05 - 2026-05-28
+
+### Documentation & Workflow Alignment
+
+- Removed **Production Ready** (`approved_for_production`) as a team-facing artwork status step
+- WooCommerce order **Processing** now sets `in_production` directly (via `TTCG_Status` when Custom Grips is active)
+- Monday.com API marked deprecated in `MONDAY-API.md`; native workflow is the source of truth
+- Updated `CUSTOMER-FEEDBACK-SYSTEM.md` to reflect Custom Grips as primary customer/team experience
+
+---
+
 
 ### 🧠 Intelligent Import - Smart Partial Data Handling
 

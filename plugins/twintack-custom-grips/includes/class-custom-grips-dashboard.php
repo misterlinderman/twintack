@@ -31,7 +31,6 @@ class TTCG_Dashboard {
         'pending_review'              => array( 'label' => 'Customer Review',      'color' => '#5bc0de' ),
         'customer_requested_changes'  => array( 'label' => 'Customer Changes',     'color' => '#d9534f' ),
         'customer_approved'           => array( 'label' => 'Customer Approved',    'color' => '#5cb85c' ),
-        'approved_for_production'     => array( 'label' => 'Production Ready',     'color' => '#337ab7' ),
         'in_production'               => array( 'label' => 'In Production',        'color' => '#337ab7' ),
         'shipped'                     => array( 'label' => 'Shipped',              'color' => '#22b24c' ),
     );
@@ -70,12 +69,26 @@ class TTCG_Dashboard {
     }
 
     /**
+     * Normalize legacy status slugs to the current workflow.
+     *
+     * @param  string $status Raw status from post meta.
+     * @return string
+     */
+    public static function normalize_status( $status ) {
+        if ( 'approved_for_production' === $status ) {
+            return 'in_production';
+        }
+        return $status;
+    }
+
+    /**
      * Get a human-readable label for a status slug.
      *
      * @param  string $status
      * @return string
      */
     public static function get_status_label( $status ) {
+        $status = self::normalize_status( $status );
         return isset( self::$statuses[ $status ] ) ? self::$statuses[ $status ]['label'] : ucwords( str_replace( '_', ' ', $status ) );
     }
 
@@ -86,6 +99,7 @@ class TTCG_Dashboard {
      * @return string  Hex color.
      */
     public static function get_status_color( $status ) {
+        $status = self::normalize_status( $status );
         return isset( self::$statuses[ $status ] ) ? self::$statuses[ $status ]['color'] : '#999';
     }
 
@@ -127,10 +141,19 @@ class TTCG_Dashboard {
 
         // Filter by artwork status
         if ( ! empty( $args['status'] ) ) {
-            $query_args['meta_query'][] = array(
-                'key'   => '_grip_artwork_status',
-                'value' => sanitize_text_field( $args['status'] ),
-            );
+            $status = sanitize_text_field( $args['status'] );
+            if ( 'in_production' === $status ) {
+                $query_args['meta_query'][] = array(
+                    'key'     => '_grip_artwork_status',
+                    'value'   => array( 'in_production', 'approved_for_production' ),
+                    'compare' => 'IN',
+                );
+            } else {
+                $query_args['meta_query'][] = array(
+                    'key'   => '_grip_artwork_status',
+                    'value' => $status,
+                );
+            }
         }
 
         // Search by customer name, team or email
@@ -206,8 +229,12 @@ class TTCG_Dashboard {
 
         if ( $results ) {
             foreach ( $results as $row ) {
-                $counts[ $row->status ] = (int) $row->cnt;
-                $counts['all']         += (int) $row->cnt;
+                $slug = self::normalize_status( $row->status );
+                if ( ! isset( $counts[ $slug ] ) ) {
+                    $counts[ $slug ] = 0;
+                }
+                $counts[ $slug ] += (int) $row->cnt;
+                $counts['all']   += (int) $row->cnt;
             }
         }
 
@@ -248,7 +275,7 @@ class TTCG_Dashboard {
             'secondary_color'   => self::meta_val( $meta, '_grip_secondary_color' ),
             'tertiary_color'    => self::meta_val( $meta, '_grip_tertiary_color' ),
             'quantity'          => self::meta_val( $meta, '_grip_quantity' ),
-            'artwork_status'    => self::meta_val( $meta, '_grip_artwork_status', 'artwork_pending' ),
+            'artwork_status'    => self::normalize_status( self::meta_val( $meta, '_grip_artwork_status', 'artwork_pending' ) ),
             'artwork_url'       => self::meta_val( $meta, '_grip_artwork_url' ),
             'artwork_filename'  => self::meta_val( $meta, '_grip_artwork_filename' ),
             'mockup_url'        => self::meta_val( $meta, '_grip_mockup_url' ),

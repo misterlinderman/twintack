@@ -1,119 +1,142 @@
 # TwinTack API Integrations & Third-Party Services Rules
 
-## Monday.com Integration
+## Custom Grip Workflow (Primary)
 
-### API Endpoint Pattern
+**Native production workflow** is handled entirely in WordPress via **twintack-custom-grips**. See `plugins/twintack-custom-grips/WORKFLOW.md` for the canonical status flow.
+
+- **twintack-custom-grips** — Team dashboard, customer My Custom Grips, statuses, mockups, messaging, notifications
+- **twintack-grip-manager** — `grip_design` CPT, Gravity Forms intake, purchase-based post creation, WooCommerce order → artwork status bridge
+
+Monday.com and Make.com are **retired** for the grip production workflow. Do not build new features against those integrations.
+
+---
+
+## Artwork Status Codes (Current)
+
+| Slug | Label | Notes |
+|------|-------|-------|
+| `artwork_pending` | Mockup Required | Initial state after deposit |
+| `pending_review` | Customer Review | Team uploaded mockup |
+| `customer_requested_changes` | Customer Changes | Customer feedback loop |
+| `customer_approved` | Customer Approved | Stays until final purchase |
+| `in_production` | In Production | Set on WC order Processing |
+| `shipped` | Shipped | Set on WC order Completed / shipped-unpaid |
+
+### Legacy slugs (display / migration only)
+
+- `approved_for_production` → maps to `in_production` (removed as team step v1.2.4)
+- `artwork_approved`, `internal_review` → legacy records only
+
+### WooCommerce sync
+
+Grip Manager hooks `woocommerce_order_status_changed` and delegates to:
+
+- `TTCG_Status::sync_in_production_from_wc_order()` on `processing`
+- `TTCG_Status::sync_shipped_from_wc_order()` on `completed` / `shipped-unpaid`
+
+---
+
+## Monday.com Integration — DEPRECATED
+
+Legacy endpoint still registered in Grip Manager; **do not use for new work**.
+
 - **Endpoint**: `/wp-json/twintack/v1/grip-design/{id}/monday`
-- **Method**: POST only
+- **Method**: POST
 - **Authentication**: API key via `X-API-Key` header or `api_key` parameter
-- **Default API Key**: `twintack-monday-2024` (change in production)
-- **Custom API Key**: Use `TWINTACK_MONDAY_API_KEY` constant in wp-config.php
+- **Default API Key**: `twintack-monday-2024`
+- **Custom API Key**: `TWINTACK_MONDAY_API_KEY` in wp-config.php
 
-### Required Parameters
-- `id` (integer): Grip design post ID (URL path)
-- `monday_feedback` (string): Design team message
-- `mockup_asset_id` (string): Monday.com asset ID
-- `mockup_asset_url` (string): Direct URL to mockup asset
-- `artwork_status` (string): Status code from predefined list
+See `plugins/twintack-grip-manager/MONDAY-API.md` for legacy reference only.
 
-### Status Codes (Customer-Facing)
-- `artwork_pending` → "Artwork Pending"
-- `pending_review` → "Pending Review"
-- `customer_requested_changes` → "Requested Changes"
-- `customer_approved` → "Customer Approved"
-- `artwork_approved` → "Artwork Approved"
-- `approved_for_production` → "Approved for Production"
-- `in_production` → "In Production"
-- `shipped` → "Shipped"
-- `internal_review` → "Internal Review" (hidden from customer)
+---
 
-### Error Handling
-- Return proper HTTP status codes (401, 404, 500)
-- Use WordPress REST API error format
-- Log all API interactions for debugging
+## Make.com Integration — DEPRECATED (Grip Workflow)
 
-## Make.com Integration
+Legacy Make.com webhooks in Grip Manager (`grip_customer_feedback_webhook_url` filter) applied to the **old** customer feedback path only. The native Custom Grips customer review handler does not use Make.com.
 
-### Webhook Flow
-1. Monday.com trigger → Make.com scenario
-2. Extract customer email from Monday.com
-3. Find grip design via WordPress REST API
-4. Update grip design via Monday.com API endpoint
-
-### Finding Grip Designs
-```
-GET /wp-json/wp/v2/grip-designs?meta_key=_grip_customer_email&meta_value=customer@example.com
-```
-
-### Asset URL Requirements
-- `mockup_asset_url` must be publicly accessible
-- No authentication required for asset URLs
-- Make.com should convert Monday.com asset IDs to public URLs
+---
 
 ## Klaviyo Integration
 
 ### Email Marketing Integration
+
 - Use official Klaviyo API for email marketing
 - Implement proper API handling with error catching
 - Follow Klaviyo's rate limiting guidelines
 
+---
+
 ## Gravity Forms Integration
 
 ### Form Processing
-- **Dependencies**: Plugin requires Gravity Forms
+
+- **Dependencies**: Grip Manager requires Gravity Forms
 - **Entry IDs**: Always store `_grip_form_entry_id` for tracking
-- **Form Types**: Support both 'original' and 'new' form types
+- **Form Types**: Support both `original` and `new` form types
 - **Field Mapping**: Maintain consistent field mapping between forms
 
 ### Form Data Storage
+
 - Store form data in cart metadata before purchase
 - Only create grip design posts after successful payment
 - Use `_grip_form_type` to distinguish between form versions
 
+---
+
 ## API Security Best Practices
 
 ### Authentication
+
 - Always use API keys for external integrations
 - Implement nonce verification for AJAX requests
 - Use WordPress capability checks for admin functions
 - Never expose API keys in frontend code
 
 ### Data Validation
+
 - Validate all API inputs thoroughly
 - Sanitize data using WordPress functions
 - Use appropriate WordPress meta functions for storage
 - Implement comprehensive error logging
 
 ### Rate Limiting
+
 - Implement basic rate limiting for API endpoints
 - Monitor API usage through WordPress debug logs
 - Handle API failures gracefully with fallback options
 
+---
+
 ## Debugging & Monitoring
 
 ### Logging Patterns
-- Use descriptive prefixes: `TwinTack Grip Manager:`, `Monday.com API:`, etc.
+
+- Use descriptive prefixes: `TwinTack Custom Grips:`, `TwinTack Grip Manager:`, etc.
 - Log all API interactions for debugging
 - Include request/response data in logs
 - Use WordPress debug logging functions
 
 ### Error Handling
+
 - Provide meaningful error messages for debugging
 - Return user-friendly error messages in frontend
 - Log errors appropriately for different environments
 - Handle third-party API failures gracefully
 
+---
+
 ## Integration Testing
 
 ### Test Scenarios
-- Test complete API flows end-to-end
-- Verify error handling for invalid API keys
-- Test with missing or invalid grip design IDs
-- Validate webhook processing with various data formats
-- Test rate limiting and timeout scenarios
+
+- Test native workflow end-to-end (form → deposit → mockup → approve → purchase → ship)
+- Verify WooCommerce order status sync to artwork status
+- Test customer self-service approve/request-changes on My Custom Grips
+- Validate role-based status permissions on team dashboard
 
 ### Mock Data
+
 - Create mock endpoints for development testing
 - Use consistent test data formats
 - Implement proper test data cleanup
-- Document test scenarios and expected results 
+- Document test scenarios and expected results
