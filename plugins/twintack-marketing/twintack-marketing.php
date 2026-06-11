@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TwinTack Marketing
  * Description: Marketing features for TwinTack homepage including hero carousel, featured products, banner blocks, announcement bar, bundle counter, and landing page templates.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: TwinTack Team
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -46,6 +46,11 @@ class TwinTack_Marketing {
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-landing-page.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-target-page.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-hero-carousel.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-homepage-v2.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-product-layout.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-video-tabs.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-marquee.php';
+        require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-vibe-pixel.php';
         require_once plugin_dir_path(__FILE__) . 'includes/class-marketing-admin.php';
         
         // Initialize components
@@ -61,6 +66,11 @@ class TwinTack_Marketing {
         TwinTack_Marketing_Landing_Page::get_instance();
         TwinTack_Marketing_Target_Page::get_instance();
         TwinTack_Marketing_Hero_Carousel::get_instance();
+        TwinTack_Marketing_Homepage_V2::get_instance();
+        TwinTack_Marketing_Product_Layout::get_instance();
+        TwinTack_Marketing_Video_Tabs::get_instance();
+        TwinTack_Marketing_Marquee::get_instance();
+        TwinTack_Marketing_Vibe_Pixel::get_instance();
         
         // Admin interface
         if (is_admin()) {
@@ -116,7 +126,7 @@ class TwinTack_Marketing {
                 array('twintack-marketing'),
                 filemtime(plugin_dir_path(__FILE__) . 'assets/css/marketing-target-page.css')
             );
-            
+
             wp_enqueue_script(
                 'twintack-marketing-target-page',
                 plugin_dir_url(__FILE__) . 'assets/js/marketing-target-page.js',
@@ -125,13 +135,33 @@ class TwinTack_Marketing {
                 true
             );
         }
+
+        $is_homepage_v2 = is_page_template('templates/template-homepage-v2.php');
+        $is_product_v2  = class_exists('TwinTack_Marketing_Product_Layout')
+            && TwinTack_Marketing_Product_Layout::is_marketing_v2();
+
+        if ($is_homepage_v2 || $is_product_v2) {
+            wp_enqueue_style(
+                'twintack-marketing-v2',
+                plugin_dir_url(__FILE__) . 'assets/css/marketing-v2.css',
+                array('twintack-marketing'),
+                filemtime(plugin_dir_path(__FILE__) . 'assets/css/marketing-v2.css')
+            );
+
+            wp_enqueue_script(
+                'twintack-marketing-v2',
+                plugin_dir_url(__FILE__) . 'assets/js/marketing-v2.js',
+                array('jquery'),
+                filemtime(plugin_dir_path(__FILE__) . 'assets/js/marketing-v2.js'),
+                true
+            );
+        }
     }
-    
+
     public function activate() {
-        // Flush rewrite rules on activation
         flush_rewrite_rules();
     }
-    
+
     public function woocommerce_missing_notice() {
         ?>
         <div class="notice notice-error">

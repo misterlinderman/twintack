@@ -198,6 +198,14 @@
         $(document).on('change', '.banner-layout', function() {
             var layout = $(this).val();
             var $block = $(this).closest('.twintack-banner-block-editor');
+            var context = $block.data('context') || $('#banner-context').val();
+
+            if (context === 'homepage-v2') {
+                $block.find('.v2-overlay-fields').show();
+                $block.find('.text-fields').hide();
+                $block.find('.link-field').hide();
+                return;
+            }
             
             if (layout === '50-50') {
                 $block.find('.text-fields').show();
@@ -308,7 +316,8 @@
                 image_desktop: $block.find('input[name="image_desktop"]').val(),
                 image_mobile: $block.find('input[name="image_mobile"]').val(),
                 title: $block.find('input[name="title"]').val(),
-                text: $block.find('textarea[name="text"]').val(),
+                text: $block.find('input[name="text"]').val() || $block.find('textarea[name="text"]').val(),
+                description: $block.find('textarea[name="description"]').val(),
                 cta_text: $block.find('input[name="cta_text"]').val(),
                 cta_link: $block.find('input[name="cta_link"]').val(),
                 link: $block.find('input[name="link"]').val(),
@@ -366,7 +375,7 @@
         });
         
         // Video upload for hero slides (MP4)
-        $(document).on('click', '.twintack-hero-slide-editor .upload-video', function() {
+        $(document).on('click', '.twintack-hero-slide-editor .upload-video, .twintack-video-tab-editor .upload-video', function() {
             var $wrapper = $(this).closest('.video-upload-wrapper');
             var $input = $wrapper.find('.video-url');
             var $preview = $wrapper.find('.video-preview');

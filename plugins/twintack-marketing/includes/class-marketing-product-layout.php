@@ -1,0 +1,517 @@
+<?php
+/**
+ * Product page Marketing V2 layout flag and meta.
+ *
+ * @package TwinTack_Marketing
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class TwinTack_Marketing_Product_Layout {
+    const META_LAYOUT = '_twintack_product_layout';
+    const META_PREFIX = '_twintack_v2_product_';
+
+    /** @var self|null */
+    private static $instance = null;
+
+    /**
+     * @return self
+     */
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    private function __construct() {
+        add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
+        add_action('save_post', array($this, 'save_meta_boxes'), 10, 2);
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+        add_filter('body_class', array($this, 'body_class'));
+    }
+
+    /**
+     * @param int|null $product_id Product ID.
+     * @return bool
+     */
+    public static function is_marketing_v2($product_id = null) {
+        if (!is_product() && !$product_id) {
+            return false;
+        }
+
+        if (!$product_id) {
+            $product_id = get_the_ID();
+        }
+
+        if (!$product_id) {
+            return false;
+        }
+
+        if (isset($_GET['preview_layout']) && 'marketing-v2' === sanitize_text_field(wp_unslash($_GET['preview_layout']))) {
+            if (current_user_can('manage_woocommerce') || current_user_can('edit_product', $product_id)) {
+                return true;
+            }
+        }
+
+        return 'marketing-v2' === get_post_meta($product_id, self::META_LAYOUT, true);
+    }
+
+    /**
+     * @param string[] $classes Body classes.
+     * @return string[]
+     */
+    public function body_class($classes) {
+        if (self::is_marketing_v2()) {
+            $classes[] = 'tt-v2-product';
+        }
+        return $classes;
+    }
+
+    /**
+     * @param string $hook Admin hook.
+     */
+    public function enqueue_admin_assets($hook) {
+        if (!in_array($hook, array('post.php', 'post-new.php'), true)) {
+            return;
+        }
+
+        $screen = get_current_screen();
+        if (!$screen || $screen->post_type !== 'product') {
+            return;
+        }
+
+        wp_enqueue_media();
+        wp_enqueue_style(
+            'twintack-v2-admin',
+            plugin_dir_url(dirname(__FILE__)) . 'assets/css/marketing-v2-admin.css',
+            array(),
+            filemtime(plugin_dir_path(dirname(__FILE__)) . 'assets/css/marketing-v2-admin.css')
+        );
+        wp_enqueue_script(
+            'twintack-v2-admin',
+            plugin_dir_url(dirname(__FILE__)) . 'assets/js/marketing-v2-admin.js',
+            array('jquery'),
+            filemtime(plugin_dir_path(dirname(__FILE__)) . 'assets/js/marketing-v2-admin.js'),
+            true
+        );
+    }
+
+    /**
+     * Rating line for V2 product summary — real reviews when available, placeholder otherwise.
+     *
+     * @param int $product_id Product ID.
+     * @return string
+     */
+    public static function get_display_rating_line($product_id) {
+        $display = self::get_summary_rating_display($product_id);
+
+        return $display ? $display['line'] : '';
+    }
+
+    /**
+     * Summary rating block for V2 hero — stars + text line.
+     *
+     * @param int $product_id Product ID.
+     * @return array{rating:float,line:string,is_placeholder:bool}|null
+     */
+    public static function get_summary_rating_display($product_id) {
+        $product = wc_get_product($product_id);
+        if (!$product) {
+            return null;
+        }
+
+        $custom = get_post_meta($product_id, self::META_PREFIX . 'rating_line', true);
+        if ($product->get_review_count() >= 1) {
+            return array(
+                'rating'         => (float) $product->get_average_rating(),
+                'line'           => !empty($custom) ? $custom : sprintf(
+                    /* translators: 1: average rating, 2: review count */
+                    __('Rated %1$s / 5.0 • %2$s Reviews', 'twintack-marketing'),
+                    number_format((float) $product->get_average_rating(), 1),
+                    number_format_i18n($product->get_review_count())
+                ),
+                'is_placeholder' => false,
+            );
+        }
+
+        if (!empty($custom)) {
+            return array(
+                'rating'         => 4.9,
+                'line'           => $custom,
+                'is_placeholder' => true,
+            );
+        }
+
+        return array(
+            'rating'         => 4.9,
+            'line'           => __('Rated 4.9 / 5.0 • 127 Reviews', 'twintack-marketing'),
+            'is_placeholder' => true,
+        );
+    }
+
+    /**
+     * Register product meta boxes.
+     */
+    public function add_meta_boxes() {
+        add_meta_box(
+            'twintack_product_layout',
+            __('Marketing Layout', 'twintack-marketing'),
+            array($this, 'render_layout_meta_box'),
+            'product',
+            'side',
+            'default'
+        );
+
+        add_meta_box(
+            'twintack_product_v2_content',
+            __('Product V2 — Extra Content', 'twintack-marketing'),
+            array($this, 'render_content_meta_box'),
+            'product',
+            'normal',
+            'high'
+        );
+    }
+
+    /**
+     * @param WP_Post $post Product post.
+     */
+    public function render_layout_meta_box($post) {
+        wp_nonce_field('twintack_product_layout_nonce', 'twintack_product_layout_nonce');
+        $layout = get_post_meta($post->ID, self::META_LAYOUT, true) ?: 'default';
+        ?>
+        <p>
+            <label for="twintack_product_layout"><?php esc_html_e('Product template', 'twintack-marketing'); ?></label>
+        </p>
+        <select name="twintack_product_layout" id="twintack_product_layout" style="width:100%;">
+            <option value="default" <?php selected($layout, 'default'); ?>><?php esc_html_e('Default', 'twintack-marketing'); ?></option>
+            <option value="marketing-v2" <?php selected($layout, 'marketing-v2'); ?>><?php esc_html_e('Marketing V2', 'twintack-marketing'); ?></option>
+        </select>
+        <p class="description"><?php esc_html_e('Use a private duplicate product to preview V2 before enabling on live SKUs.', 'twintack-marketing'); ?></p>
+        <?php
+    }
+
+    /**
+     * @param WP_Post $post Product post.
+     */
+    public function render_content_meta_box($post) {
+        $meta         = self::get_product_v2_meta($post->ID);
+        $review_count = 0;
+        if (function_exists('wc_get_product')) {
+            $product = wc_get_product($post->ID);
+            if ($product) {
+                $review_count = (int) $product->get_review_count();
+            }
+        }
+        ?>
+        <div class="tt-v2-admin-wrap">
+            <div class="tt-v2-admin-intro">
+                <p><?php esc_html_e('Content blocks for the Marketing V2 product layout. Gallery and variations come from the standard WooCommerce product data.', 'twintack-marketing'); ?></p>
+                <p>
+                    <?php
+                    printf(
+                        wp_kses_post(
+                            /* translators: %s: admin settings URL */
+                            __('The bottom “How TwinTack Works” video tabs are managed globally under <a href="%s">Marketing → How TwinTack Works</a>.', 'twintack-marketing')
+                        ),
+                        esc_url(admin_url('admin.php?page=twintack-marketing-video-tabs'))
+                    );
+                    ?>
+                </p>
+                <p>
+                    <?php esc_html_e('Reviews summary', 'twintack-marketing'); ?>:
+                    <?php if ($review_count > 0) : ?>
+                        <span class="tt-v2-admin-status tt-v2-admin-status--ok"><?php echo esc_html(sprintf(_n('%d review', '%d reviews', $review_count, 'twintack-marketing'), $review_count)); ?></span>
+                    <?php else : ?>
+                        <span class="tt-v2-admin-status tt-v2-admin-status--empty"><?php esc_html_e('Showing placeholder until reviews exist', 'twintack-marketing'); ?></span>
+                    <?php endif; ?>
+                </p>
+            </div>
+
+            <details class="tt-v2-admin-panel" open>
+                <summary><?php esc_html_e('Above the fold — Summary', 'twintack-marketing'); ?></summary>
+                <div class="tt-v2-admin-panel__body">
+                    <div class="tt-v2-admin-field">
+                        <label for="twintack_v2_rating_line"><?php esc_html_e('Rating line override', 'twintack-marketing'); ?></label>
+                        <input type="text" name="twintack_v2_rating_line" id="twintack_v2_rating_line" value="<?php echo esc_attr($meta['rating_line']); ?>" class="large-text" placeholder="<?php esc_attr_e('Rated 4.9 / 5.0 • 127 Reviews', 'twintack-marketing'); ?>">
+                        <p class="description"><?php esc_html_e('Optional override. Leave blank to use WooCommerce reviews when available, or the preview placeholder until then.', 'twintack-marketing'); ?></p>
+                    </div>
+                    <div class="tt-v2-admin-field">
+                        <label for="twintack_v2_short_pitch"><?php esc_html_e('Short pitch', 'twintack-marketing'); ?></label>
+                        <textarea name="twintack_v2_short_pitch" id="twintack_v2_short_pitch" rows="2" class="large-text"><?php echo esc_textarea($meta['short_pitch']); ?></textarea>
+                    </div>
+                    <div class="tt-v2-admin-field">
+                        <label for="twintack_v2_summary_bullets"><?php esc_html_e('Summary bullets (one per line: title|description optional)', 'twintack-marketing'); ?></label>
+                        <textarea name="twintack_v2_summary_bullets" id="twintack_v2_summary_bullets" rows="4" class="large-text"><?php
+                            $lines = array();
+                            foreach ((array) $meta['summary_bullets'] as $bullet) {
+                                $line = $bullet['title'];
+                                if (!empty($bullet['desc'])) {
+                                    $line .= '|' . $bullet['desc'];
+                                }
+                                $lines[] = $line;
+                            }
+                            echo esc_textarea(implode("\n", $lines));
+                        ?></textarea>
+                    </div>
+                    <div class="tt-v2-admin-field">
+                        <label for="twintack_v2_trust_icons"><?php esc_html_e('Trust badges (one phrase per line, e.g. “Waterproof Technology”)', 'twintack-marketing'); ?></label>
+                        <textarea name="twintack_v2_trust_icons" id="twintack_v2_trust_icons" rows="3" class="large-text"><?php
+                            echo esc_textarea(implode("\n", (array) $meta['trust_icons']));
+                        ?></textarea>
+                    </div>
+                    <div class="tt-v2-admin-field">
+                        <label for="twintack_v2_howto_video"><?php esc_html_e('How-to apply video URL', 'twintack-marketing'); ?></label>
+                        <input type="url" name="twintack_v2_howto_video" id="twintack_v2_howto_video" value="<?php echo esc_url($meta['howto_video']); ?>" class="large-text">
+                    </div>
+                </div>
+            </details>
+
+            <details class="tt-v2-admin-panel">
+                <summary><?php esc_html_e('Below the fold — Comparison chart', 'twintack-marketing'); ?></summary>
+                <div class="tt-v2-admin-panel__body">
+                    <div class="tt-v2-admin-field">
+                        <label for="twintack_v2_comparison_title"><?php esc_html_e('Chart title', 'twintack-marketing'); ?></label>
+                        <input type="text" name="twintack_v2_comparison_title" id="twintack_v2_comparison_title" value="<?php echo esc_attr($meta['comparison_title']); ?>" class="large-text">
+                    </div>
+                    <div class="tt-v2-admin-field">
+                        <label for="twintack_v2_comparison_rows"><?php esc_html_e('Rows (feature|benefit|us|them — one per line)', 'twintack-marketing'); ?></label>
+                        <textarea name="twintack_v2_comparison_rows" id="twintack_v2_comparison_rows" rows="6" class="large-text"><?php
+                            $rows = array();
+                            foreach ((array) $meta['comparison_rows'] as $row) {
+                                $rows[] = implode('|', array(
+                                    $row['feature'] ?? '',
+                                    $row['benefit'] ?? '',
+                                    $row['us'] ?? '',
+                                    $row['them'] ?? '',
+                                ));
+                            }
+                            echo esc_textarea(implode("\n", $rows));
+                        ?></textarea>
+                    </div>
+                </div>
+            </details>
+        </div>
+        <?php
+    }
+
+    /**
+     * @param int     $post_id Post ID.
+     * @param WP_Post $post    Post object.
+     */
+    public function save_meta_boxes($post_id, $post) {
+        if (!isset($_POST['twintack_product_layout_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['twintack_product_layout_nonce'])), 'twintack_product_layout_nonce')) {
+            return;
+        }
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+        if ($post->post_type !== 'product') {
+            return;
+        }
+
+        if (isset($_POST['twintack_product_layout'])) {
+            $layout = sanitize_text_field(wp_unslash($_POST['twintack_product_layout']));
+            if (!in_array($layout, array('default', 'marketing-v2'), true)) {
+                $layout = 'default';
+            }
+            update_post_meta($post_id, self::META_LAYOUT, $layout);
+        }
+
+        $map = array(
+            'rating_line'       => 'twintack_v2_rating_line',
+            'short_pitch'       => 'twintack_v2_short_pitch',
+            'comparison_title'  => 'twintack_v2_comparison_title',
+        );
+        foreach ($map as $meta_key => $post_key) {
+            if (isset($_POST[ $post_key ])) {
+                update_post_meta($post_id, self::META_PREFIX . $meta_key, sanitize_text_field(wp_unslash($_POST[ $post_key ])));
+            }
+        }
+
+        if (isset($_POST['twintack_v2_howto_video'])) {
+            update_post_meta($post_id, self::META_PREFIX . 'howto_video', esc_url_raw(wp_unslash($_POST['twintack_v2_howto_video'])));
+        }
+
+        if (isset($_POST['twintack_v2_summary_bullets'])) {
+            $bullets = array();
+            $lines   = array_filter(array_map('trim', explode("\n", wp_unslash($_POST['twintack_v2_summary_bullets']))));
+            foreach ($lines as $line) {
+                $parts = array_map('trim', explode('|', $line, 2));
+                $bullets[] = array(
+                    'title' => sanitize_text_field($parts[0]),
+                    'desc'  => isset($parts[1]) ? sanitize_text_field($parts[1]) : '',
+                );
+            }
+            update_post_meta($post_id, self::META_PREFIX . 'summary_bullets', $bullets);
+        }
+
+        if (isset($_POST['twintack_v2_trust_icons'])) {
+            $icons = array_filter(array_map('trim', explode("\n", wp_unslash($_POST['twintack_v2_trust_icons']))));
+            update_post_meta($post_id, self::META_PREFIX . 'trust_icons', array_map('sanitize_text_field', $icons));
+        }
+
+        if (isset($_POST['twintack_v2_comparison_rows'])) {
+            $rows  = array();
+            $lines = array_filter(array_map('trim', explode("\n", wp_unslash($_POST['twintack_v2_comparison_rows']))));
+            foreach ($lines as $line) {
+                $parts = array_map('trim', explode('|', $line));
+                if (empty($parts[0])) {
+                    continue;
+                }
+                $rows[] = array(
+                    'feature' => sanitize_text_field($parts[0] ?? ''),
+                    'benefit' => sanitize_text_field($parts[1] ?? ''),
+                    'us'      => sanitize_text_field($parts[2] ?? ''),
+                    'them'    => sanitize_text_field($parts[3] ?? ''),
+                );
+            }
+            update_post_meta($post_id, self::META_PREFIX . 'comparison_rows', $rows);
+        }
+    }
+
+    /**
+     * @param int $product_id Product ID.
+     * @return array<string,mixed>
+     */
+    public static function get_product_v2_meta($product_id) {
+        $fields = array(
+            'rating_line', 'short_pitch', 'summary_bullets', 'trust_icons',
+            'howto_video', 'comparison_title', 'comparison_rows', 'ugc_videos',
+        );
+
+        $meta = array();
+        foreach ($fields as $field) {
+            $meta[ $field ] = get_post_meta($product_id, self::META_PREFIX . $field, true);
+        }
+
+        if (!is_string($meta['rating_line'])) {
+            $meta['rating_line'] = '';
+        }
+        if (empty($meta['short_pitch'])) {
+            $meta['short_pitch'] = 'The Twin Tack Grip gives you a locked-in feel that holds up through every swing, in any condition.';
+        }
+        if (!is_array($meta['summary_bullets'])) {
+            $meta['summary_bullets'] = array(
+                array('title' => 'Provides Exceptional Grip', 'desc' => ''),
+                array('title' => 'Reusable on Multiple Bats', 'desc' => ''),
+                array('title' => 'Repels Water & Moisture', 'desc' => ''),
+            );
+        }
+        if (!is_array($meta['trust_icons']) || empty($meta['trust_icons'])) {
+            if (!metadata_exists('post', $product_id, self::META_PREFIX . 'trust_icons')) {
+                $meta['trust_icons'] = self::default_trust_icons();
+            } else {
+                $meta['trust_icons'] = is_array($meta['trust_icons']) ? $meta['trust_icons'] : array();
+            }
+        }
+        $meta['trust_icons'] = self::normalize_trust_icons($meta['trust_icons']);
+        if (!is_array($meta['comparison_rows']) || empty($meta['comparison_rows'])) {
+            if (!metadata_exists('post', $product_id, self::META_PREFIX . 'comparison_rows')) {
+                $meta['comparison_rows'] = self::default_comparison_rows();
+            } else {
+                $meta['comparison_rows'] = is_array($meta['comparison_rows']) ? $meta['comparison_rows'] : array();
+            }
+        }
+        if (empty($meta['comparison_title'])) {
+            $meta['comparison_title'] = 'Why TwinTack Wins';
+        }
+
+        if (is_array($meta['ugc_videos'])) {
+            $normalized = array();
+            foreach ($meta['ugc_videos'] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $video = isset($item['video']) ? $item['video'] : (isset($item['url']) ? $item['url'] : '');
+                if ('' === $video) {
+                    continue;
+                }
+                $normalized[] = array(
+                    'video'  => $video,
+                    'poster' => isset($item['poster']) ? $item['poster'] : (isset($item['thumb']) ? $item['thumb'] : ''),
+                );
+            }
+            $meta['ugc_videos'] = $normalized;
+        } else {
+            $meta['ugc_videos'] = array();
+        }
+
+        return $meta;
+    }
+
+    /**
+     * Default trust badge labels below add-to-cart.
+     *
+     * @return array<int,string>
+     */
+    public static function default_trust_icons() {
+        return array(
+            'Waterproof Technology',
+            'Buy 3 & Save 15%',
+            'Fast Shipping',
+        );
+    }
+
+    /**
+     * Normalize trust badges saved with line breaks or split across rows.
+     *
+     * @param array<int,string> $icons Trust badge labels.
+     * @return array<int,string>
+     */
+    public static function normalize_trust_icons($icons) {
+        if (!is_array($icons) || empty($icons)) {
+            return self::default_trust_icons();
+        }
+
+        $icons = array_values(array_filter(array_map(
+            static function ($label) {
+                return trim(str_replace(array("\r\n", "\r", "\n"), ' ', (string) $label));
+            },
+            $icons
+        )));
+
+        if (6 === count($icons)) {
+            return array(
+                trim($icons[0] . ' ' . $icons[1]),
+                trim($icons[2] . ' ' . $icons[3]),
+                trim($icons[4] . ' ' . $icons[5]),
+            );
+        }
+
+        return $icons;
+    }
+
+    /**
+     * Default comparison chart rows for first preview.
+     *
+     * @return array<int,array<string,string>>
+     */
+    public static function default_comparison_rows() {
+        return array(
+            array(
+                'feature' => 'Water resistance',
+                'benefit' => 'Maintains tack in wet conditions',
+                'us'      => 'Yes',
+                'them'    => 'No',
+            ),
+            array(
+                'feature' => 'Reusable design',
+                'benefit' => 'Reapply when you change bats or style',
+                'us'      => 'Yes',
+                'them'    => 'Limited',
+            ),
+            array(
+                'feature' => 'Edge-to-edge graphics',
+                'benefit' => 'Full-wrap clarity without seams',
+                'us'      => 'Yes',
+                'them'    => 'No',
+            ),
+        );
+    }
+}

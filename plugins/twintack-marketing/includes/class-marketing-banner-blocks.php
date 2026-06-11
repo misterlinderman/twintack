@@ -69,13 +69,15 @@ class TwinTack_Marketing_Banner_Blocks {
         
         ob_start();
         
+        $use_overlay = ('homepage-v2' === $atts['context']);
+
         foreach ($blocks as $block) {
             // If ID is specified, only show that block
             if (!empty($atts['id']) && $block['id'] !== $atts['id']) {
                 continue;
             }
             
-            $this->render_single_banner($block);
+            $this->render_single_banner($block, $use_overlay);
         }
         
         return ob_get_clean();
@@ -83,8 +85,16 @@ class TwinTack_Marketing_Banner_Blocks {
     
     /**
      * Render a single banner block
+     *
+     * @param array $block        Banner data.
+     * @param bool  $force_overlay Use image-background overlay layout (Homepage V2).
      */
-    private function render_single_banner($block) {
+    private function render_single_banner($block, $force_overlay = false) {
+        if ($force_overlay) {
+            $this->render_overlay_banner($block);
+            return;
+        }
+
         $layout = isset($block['layout']) ? $block['layout'] : 'fullwidth';
         $image_desktop = isset($block['image_desktop']) ? $block['image_desktop'] : '';
         $image_mobile = isset($block['image_mobile']) ? $block['image_mobile'] : '';
@@ -150,6 +160,92 @@ class TwinTack_Marketing_Banner_Blocks {
         </div>
         <?php
     }
+
+    /**
+     * Normalize tag vs hover body for overlay cards.
+     *
+     * @param string $text        Tag line field.
+     * @param string $description Hover body field.
+     * @return array{tag:string,body:string}
+     */
+    private function normalize_overlay_copy($text, $description) {
+        $text        = trim(wp_strip_all_tags($text));
+        $description = trim(wp_strip_all_tags($description));
+
+        if ('' !== $description) {
+            return array(
+                'tag'  => $text,
+                'body' => $description,
+            );
+        }
+
+        if (strlen($text) > 48) {
+            return array(
+                'tag'  => '',
+                'body' => $text,
+            );
+        }
+
+        return array(
+            'tag'  => $text,
+            'body' => '',
+        );
+    }
+
+    /**
+     * Render Homepage V2 overlay card (background image + centered content).
+     *
+     * @param array $block Banner data.
+     */
+    private function render_overlay_banner($block) {
+        $image_desktop = isset($block['image_desktop']) ? $block['image_desktop'] : '';
+        $image_mobile  = isset($block['image_mobile']) ? $block['image_mobile'] : '';
+        $title         = isset($block['title']) ? $block['title'] : '';
+        $text          = isset($block['text']) ? $block['text'] : '';
+        $description   = isset($block['description']) ? $block['description'] : '';
+        $cta_text      = isset($block['cta_text']) ? $block['cta_text'] : '';
+        $cta_link      = isset($block['cta_link']) ? $block['cta_link'] : '';
+
+        $copy = $this->normalize_overlay_copy($text, $description);
+
+        $bg_image = $image_desktop;
+        if (empty($bg_image) && !empty($image_mobile)) {
+            $bg_image = $image_mobile;
+        }
+
+        $bg_style = '';
+        if ($bg_image) {
+            $bg_style = sprintf(' style="background-image: url(%s);"', esc_url($bg_image));
+        }
+        ?>
+        <article
+            class="twintack-banner-block twintack-banner-overlay"
+            tabindex="0"
+            <?php if (!empty($block['id'])) : ?>
+                data-banner-id="<?php echo esc_attr($block['id']); ?>"
+            <?php endif; ?>
+        >
+            <div class="twintack-banner-overlay__bg"<?php echo $bg_style; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> aria-hidden="true"></div>
+            <div class="twintack-banner-overlay__scrim" aria-hidden="true"></div>
+            <div class="twintack-banner-overlay__content">
+                <?php if ($copy['tag']) : ?>
+                    <p class="twintack-banner-tag"><?php echo esc_html($copy['tag']); ?></p>
+                <?php endif; ?>
+                <?php if ($title) : ?>
+                    <h3 class="twintack-banner-title"><?php echo esc_html($title); ?></h3>
+                <?php endif; ?>
+                <?php if ($copy['body']) : ?>
+                    <p class="twintack-banner-body"><?php echo esc_html($copy['body']); ?></p>
+                <?php endif; ?>
+                <?php if ($cta_text && $cta_link) : ?>
+                    <a href="<?php echo esc_url($cta_link); ?>" class="twintack-banner-cta button">
+                        <?php echo esc_html($cta_text); ?>
+                    </a>
+                <?php endif; ?>
+            </div>
+        </article>
+        <?php
+    }
     
     /**
      * AJAX: Get banner blocks
@@ -188,6 +284,7 @@ class TwinTack_Marketing_Banner_Blocks {
             'image_mobile' => isset($block['image_mobile']) ? esc_url_raw($block['image_mobile']) : '',
             'title' => isset($block['title']) ? sanitize_text_field($block['title']) : '',
             'text' => isset($block['text']) ? wp_kses_post($block['text']) : '',
+            'description' => isset($block['description']) ? sanitize_textarea_field($block['description']) : '',
             'cta_text' => isset($block['cta_text']) ? sanitize_text_field($block['cta_text']) : '',
             'cta_link' => isset($block['cta_link']) ? esc_url_raw($block['cta_link']) : '',
             'link' => isset($block['link']) ? esc_url_raw($block['link']) : '',

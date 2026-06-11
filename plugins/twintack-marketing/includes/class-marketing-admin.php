@@ -60,6 +60,24 @@ class TwinTack_Marketing_Admin {
             array($this, 'render_hero_carousel_page')
         );
         
+        add_submenu_page(
+            'twintack-marketing',
+            __('Scrolling Marquee', 'twintack-marketing'),
+            __('Scrolling Marquee', 'twintack-marketing'),
+            'manage_options',
+            'twintack-marketing-marquee',
+            array($this, 'render_marquee_page')
+        );
+
+        add_submenu_page(
+            'twintack-marketing',
+            __('How TwinTack Works', 'twintack-marketing'),
+            __('How TwinTack Works', 'twintack-marketing'),
+            'manage_options',
+            'twintack-marketing-video-tabs',
+            array($this, 'render_video_tabs_page')
+        );
+
         // Add Announcement Bar submenu here to ensure parent exists
         add_submenu_page(
             'twintack-marketing',
@@ -81,6 +99,14 @@ class TwinTack_Marketing_Admin {
         );
     }
     
+    public function render_marquee_page() {
+        TwinTack_Marketing_Marquee::get_instance()->render_settings_page();
+    }
+
+    public function render_video_tabs_page() {
+        TwinTack_Marketing_Video_Tabs::get_instance()->render_settings_page();
+    }
+
     public function render_announcement_bar_page() {
         // Delegate to announcement bar class
         $announcement_bar = TwinTack_Marketing_Announcement_Bar::get_instance();
@@ -162,7 +188,8 @@ class TwinTack_Marketing_Admin {
     public function enqueue_admin_assets($hook) {
         if (strpos($hook, 'twintack-marketing') === false && 
             strpos($hook, 'twintack-announcement-bar') === false && 
-            strpos($hook, 'twintack-bundle-counter') === false) {
+            strpos($hook, 'twintack-bundle-counter') === false &&
+            strpos($hook, 'twintack-marketing-video-tabs') === false) {
             return;
         }
         
@@ -275,6 +302,13 @@ class TwinTack_Marketing_Admin {
                     <a href="<?php echo admin_url('admin.php?page=twintack-marketing-featured'); ?>" class="button button-primary"><?php _e('Manage Featured Products', 'twintack-marketing'); ?></a>
                 </div>
                 
+                <!-- How TwinTack Works Card -->
+                <div class="twintack-marketing-card">
+                    <h2><?php echo $this->get_card_icon('content'); ?><?php _e('How TwinTack Works', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Manage the tabbed video section shown on Homepage V2 and Marketing V2 product pages. One set of videos and copy for all grip products.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=twintack-marketing-video-tabs'); ?>" class="button button-primary"><?php _e('Manage Video Tabs', 'twintack-marketing'); ?></a>
+                </div>
+
                 <!-- Banner Blocks Card -->
                 <div class="twintack-marketing-card">
                     <h2><?php echo $this->get_card_icon('content'); ?><?php _e('Banner Blocks', 'twintack-marketing'); ?></h2>
@@ -335,6 +369,7 @@ class TwinTack_Marketing_Admin {
                     <label for="featured-context"><?php _e('Context:', 'twintack-marketing'); ?></label>
                     <select id="featured-context" name="context">
                         <option value="homepage" <?php selected($context, 'homepage'); ?>><?php _e('Homepage', 'twintack-marketing'); ?></option>
+                        <option value="homepage-v2" <?php selected($context, 'homepage-v2'); ?>><?php _e('Homepage V2 (Preview)', 'twintack-marketing'); ?></option>
                         <option value="landing" <?php selected($context, 'landing'); ?>><?php _e('Landing Pages', 'twintack-marketing'); ?></option>
                     </select>
                 </div>
@@ -375,12 +410,16 @@ class TwinTack_Marketing_Admin {
         <div class="wrap">
             <h1><?php _e('Banner Blocks', 'twintack-marketing'); ?></h1>
             <p class="description"><?php _e('Create promotional banner blocks with images and optional text. Choose between full-width or 50/50 layouts.', 'twintack-marketing'); ?></p>
+            <?php if ('homepage-v2' === $context) : ?>
+                <p class="description"><strong><?php esc_html_e('Homepage V2:', 'twintack-marketing'); ?></strong> <?php esc_html_e('Blocks render as image-background cards under “Built for Peak Performance.” Tag line + title + CTA show by default; hover description reveals on mouseover.', 'twintack-marketing'); ?></p>
+            <?php endif; ?>
             
             <div class="twintack-marketing-admin">
                 <div class="twintack-context-selector">
                     <label for="banner-context"><?php _e('Context:', 'twintack-marketing'); ?></label>
                     <select id="banner-context" name="context">
                         <option value="homepage" <?php selected($context, 'homepage'); ?>><?php _e('Homepage', 'twintack-marketing'); ?></option>
+                        <option value="homepage-v2" <?php selected($context, 'homepage-v2'); ?>><?php _e('Homepage V2 (Preview)', 'twintack-marketing'); ?></option>
                         <option value="landing" <?php selected($context, 'landing'); ?>><?php _e('Landing Pages', 'twintack-marketing'); ?></option>
                     </select>
                 </div>
@@ -413,10 +452,12 @@ class TwinTack_Marketing_Admin {
         $image_mobile = isset($block['image_mobile']) ? $block['image_mobile'] : '';
         $title = isset($block['title']) ? $block['title'] : '';
         $text = isset($block['text']) ? $block['text'] : '';
+        $description = isset($block['description']) ? $block['description'] : '';
         $cta_text = isset($block['cta_text']) ? $block['cta_text'] : '';
         $cta_link = isset($block['cta_link']) ? $block['cta_link'] : '';
         $link = isset($block['link']) ? $block['link'] : '';
         $order = isset($block['order']) ? $block['order'] : 0;
+        $is_v2_overlay = ('homepage-v2' === $context);
         
         ?>
         <div class="twintack-banner-block-editor" data-block-id="<?php echo esc_attr($block_id); ?>" data-context="<?php echo esc_attr($context); ?>">
@@ -466,13 +507,47 @@ class TwinTack_Marketing_Admin {
                             </div>
                         </td>
                     </tr>
-                    <tr class="text-fields" style="<?php echo ($layout === '50-50') ? '' : 'display:none;'; ?>">
+                    <?php if ($is_v2_overlay) : ?>
+                    <tr class="v2-overlay-fields">
+                        <th><label><?php _e('Tag line', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <input type="text" name="text" class="regular-text" value="<?php echo esc_attr(wp_strip_all_tags($text)); ?>" placeholder="<?php esc_attr_e('Ready to Ship', 'twintack-marketing'); ?>">
+                            <p class="description"><?php _e('Small label above the title (e.g. “New Drop”).', 'twintack-marketing'); ?></p>
+                        </td>
+                    </tr>
+                    <tr class="v2-overlay-fields">
+                        <th><label><?php _e('Title', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <input type="text" name="title" class="regular-text" value="<?php echo esc_attr($title); ?>" placeholder="<?php esc_attr_e('Shop Grips', 'twintack-marketing'); ?>">
+                        </td>
+                    </tr>
+                    <tr class="v2-overlay-fields">
+                        <th><label><?php _e('Hover description', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <textarea name="description" class="large-text" rows="3"><?php echo esc_textarea($description); ?></textarea>
+                            <p class="description"><?php _e('Reveals on hover between the title and button.', 'twintack-marketing'); ?></p>
+                        </td>
+                    </tr>
+                    <tr class="v2-overlay-fields">
+                        <th><label><?php _e('CTA Text', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <input type="text" name="cta_text" class="regular-text" value="<?php echo esc_attr($cta_text); ?>" placeholder="<?php esc_attr_e('Shop Now', 'twintack-marketing'); ?>">
+                        </td>
+                    </tr>
+                    <tr class="v2-overlay-fields">
+                        <th><label><?php _e('CTA Link', 'twintack-marketing'); ?></label></th>
+                        <td>
+                            <input type="url" name="cta_link" class="regular-text" value="<?php echo esc_attr($cta_link); ?>">
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                    <tr class="text-fields" style="<?php echo ($is_v2_overlay || $layout !== '50-50') ? 'display:none;' : ''; ?>">
                         <th><label><?php _e('Title', 'twintack-marketing'); ?></label></th>
                         <td>
                             <input type="text" name="title" class="regular-text" value="<?php echo esc_attr($title); ?>" />
                         </td>
                     </tr>
-                    <tr class="text-fields" style="<?php echo ($layout === '50-50') ? '' : 'display:none;'; ?>">
+                    <tr class="text-fields" style="<?php echo ($is_v2_overlay || $layout !== '50-50') ? 'display:none;' : ''; ?>">
                         <th><label><?php _e('Text', 'twintack-marketing'); ?></label></th>
                         <td>
                             <?php wp_editor($text, 'banner_text_' . $block_id, array(
@@ -483,19 +558,19 @@ class TwinTack_Marketing_Admin {
                             )); ?>
                         </td>
                     </tr>
-                    <tr class="text-fields" style="<?php echo ($layout === '50-50') ? '' : 'display:none;'; ?>">
+                    <tr class="text-fields" style="<?php echo ($is_v2_overlay || $layout !== '50-50') ? 'display:none;' : ''; ?>">
                         <th><label><?php _e('CTA Text', 'twintack-marketing'); ?></label></th>
                         <td>
                             <input type="text" name="cta_text" class="regular-text" value="<?php echo esc_attr($cta_text); ?>" />
                         </td>
                     </tr>
-                    <tr class="text-fields" style="<?php echo ($layout === '50-50') ? '' : 'display:none;'; ?>">
+                    <tr class="text-fields" style="<?php echo ($is_v2_overlay || $layout !== '50-50') ? 'display:none;' : ''; ?>">
                         <th><label><?php _e('CTA Link', 'twintack-marketing'); ?></label></th>
                         <td>
                             <input type="url" name="cta_link" class="regular-text" value="<?php echo esc_attr($cta_link); ?>" />
                         </td>
                     </tr>
-                    <tr class="link-field" style="<?php echo ($layout === 'fullwidth') ? '' : 'display:none;'; ?>">
+                    <tr class="link-field" style="<?php echo ($is_v2_overlay || $layout !== 'fullwidth') ? 'display:none;' : ''; ?>">
                         <th><label><?php _e('Link URL (Optional)', 'twintack-marketing'); ?></label></th>
                         <td>
                             <input type="url" name="link" class="regular-text" value="<?php echo esc_attr($link); ?>" />

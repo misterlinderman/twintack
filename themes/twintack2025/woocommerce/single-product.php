@@ -34,18 +34,27 @@ get_header( 'shop' ); ?>
 		<?php while ( have_posts() ) : ?>
 			<?php the_post(); ?>
 
-			<?php wc_get_template_part( 'content', 'single-product' ); ?>
-            
-            <?php
-            // Add our how-to videos section after the product content (grid layout)
-            if (function_exists('twintack_htv_display_videos')) {
-                twintack_htv_display_videos(array(
-                    'layout' => 'grid',
-                    'show_title' => true,
-                    'title' => 'How-To Videos'
-                ));
-            }
-            ?>
+			<?php
+			$use_marketing_v2 = class_exists( 'TwinTack_Marketing_Product_Layout' )
+				&& TwinTack_Marketing_Product_Layout::is_marketing_v2();
+
+			if ( $use_marketing_v2 ) {
+				wc_get_template( 'content-single-product-marketing-v2.php' );
+			} else {
+				wc_get_template_part( 'content', 'single-product' );
+
+				// Add our how-to videos section after the product content (grid layout)
+				if ( function_exists( 'twintack_htv_display_videos' ) ) {
+					twintack_htv_display_videos(
+						array(
+							'layout'     => 'grid',
+							'show_title' => true,
+							'title'      => 'How-To Videos',
+						)
+					);
+				}
+			}
+			?>
 
 		<?php endwhile; // end of the loop. ?>
 
