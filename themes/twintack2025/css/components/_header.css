@@ -1041,11 +1041,11 @@ a.callout-card-link:hover {
 }
 
 .model-icon:hover .model-icon-svg {
-    fill: var(--color-highlight, #a9ff00);
+    fill: var(--color-highlight, #ff0b00);
 }
 
 .model-icon:hover {
-    color: var(--color-highlight, #a9ff00);
+    color: var(--color-highlight, #ff0b00);
 }
 
 /* ==========================================================================
@@ -1072,7 +1072,7 @@ a.callout-card-link:hover {
 }
 
 .catalog-parent:hover {
-    color: var(--color-highlight, #a9ff00);
+    color: var(--color-highlight, #ff0b00);
 }
 
 .catalog-subnav {
@@ -1089,7 +1089,7 @@ a.callout-card-link:hover {
 }
 
 .catalog-subnav a:hover {
-    color: var(--color-highlight, #a9ff00);
+    color: var(--color-highlight, #ff0b00);
 }
 
 .catalog-nav > a {
@@ -1102,5 +1102,5 @@ a.callout-card-link:hover {
 }
 
 .catalog-nav > a:hover {
-    color: var(--color-highlight, #a9ff00);
+    color: var(--color-highlight, #ff0b00);
 }

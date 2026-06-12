@@ -120,7 +120,7 @@
 .target-hero-cta {
     display: inline-block;
     padding: 14px 40px;
-    background: var(--primary, #a9ff00);
+    background: var(--primary, #ff0b00);
     color: var(--color-text-dark, #000);
     font-family: var(--font-primary, 'Saira Condensed', sans-serif);
     font-size: 1rem;
@@ -250,7 +250,7 @@
 
 .twintack-target-product-grid .products .product:hover img,
 .twintack-target-product-grid .products .product-variation:hover img {
-    border-color: var(--color-highlight, #a9ff00);
+    border-color: var(--color-highlight, #ff0b00);
 }
 
 .twintack-target-product-grid .products .product .woocommerce-loop-product__title,
@@ -261,7 +261,7 @@
 
 .twintack-target-product-grid .products .product .price,
 .twintack-target-product-grid .products .product-variation .price {
-    color: var(--color-highlight, #a9ff00) !important;
+    color: var(--color-highlight, #ff0b00) !important;
     font-size: 1.6em;
     font-weight: 700;
 }
@@ -402,7 +402,7 @@
 .target-image-row-grid .slick-prev:before,
 .target-image-row-grid .slick-next:before {
     font-size: 28px;
-    color: var(--primary, #a9ff00);
+    color: var(--primary, #ff0b00);
     opacity: 1;
 }
 
@@ -411,7 +411,7 @@
 }
 
 .target-image-row-grid .slick-dots li button:before {
-    color: var(--primary, #a9ff00);
+    color: var(--primary, #ff0b00);
     font-size: 10px;
 }
 
@@ -551,7 +551,7 @@
     display: inline-block;
     margin-top: 1.5rem;
     padding: 12px 32px;
-    background: var(--primary, #a9ff00);
+    background: var(--primary, #ff0b00);
     color: var(--color-text-dark, #000);
     font-family: var(--font-primary, 'Saira Condensed', sans-serif);
     font-size: 0.95rem;
@@ -620,7 +620,7 @@
 
 .sortable-placeholder {
     background: #e8f5e9;
-    border: 2px dashed #a9ff00;
+    border: 2px dashed #ff0b00;
     height: 60px;
     margin-bottom: 15px;
     border-radius: 4px;

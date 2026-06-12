@@ -248,7 +248,7 @@ class TwinTack_Grip_Configurator {
                        text-transform: uppercase;
                        letter-spacing: 0.5px;
                    "
-                   onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.borderColor='#a9ff00'; this.style.color='#a9ff00'"
+                   onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ff0b00'; this.style.color='#ff0b00'"
                    onmouseout="this.style.background='transparent'; this.style.borderColor='rgba(255, 255, 255, 0.3)'; this.style.color='#ffffff'">
                     Sign In
                 </a>
@@ -278,21 +278,21 @@ class TwinTack_Grip_Configurator {
                     margin-top: 15px;
                 ">
                     <div style="display: flex; align-items: start; gap: 10px;">
-                        <span style="color: #a9ff00; font-size: 1.2rem; font-weight: bold;">✓</span>
+                        <span style="color: #ff0b00; font-size: 1.2rem; font-weight: bold;">✓</span>
                         <span style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem;">
                             <strong style="color: #ffffff;">Track Your Designs:</strong> View status updates and artwork progress
                         </span>
                     </div>
                     
                     <div style="display: flex; align-items: start; gap: 10px;">
-                        <span style="color: #a9ff00; font-size: 1.2rem; font-weight: bold;">✓</span>
+                        <span style="color: #ff0b00; font-size: 1.2rem; font-weight: bold;">✓</span>
                         <span style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem;">
                             <strong style="color: #ffffff;">Order History:</strong> Access all your past custom grip orders
                         </span>
                     </div>
                     
                     <div style="display: flex; align-items: start; gap: 10px;">
-                        <span style="color: #a9ff00; font-size: 1.2rem; font-weight: bold;">✓</span>
+                        <span style="color: #ff0b00; font-size: 1.2rem; font-weight: bold;">✓</span>
                         <span style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem;">
                             <strong style="color: #ffffff;">Secure Checkout:</strong> Save payment and shipping information
                         </span>
@@ -310,7 +310,7 @@ class TwinTack_Grip_Configurator {
             ">
                 <p style="margin: 0;">
                     Questions about custom grips? 
-                    <a href="/contact/" style="color: #a9ff00; text-decoration: none; font-weight: 600;">Contact our team</a> 
+                    <a href="/contact/" style="color: #ff0b00; text-decoration: none; font-weight: 600;">Contact our team</a> 
                     for assistance.
                 </p>
             </div>
@@ -464,7 +464,7 @@ class TwinTack_Grip_Configurator {
                     ?>
                     <a href="<?php echo esc_url($register_url); ?>" 
                        style="
-                           background: #a9ff00;
+                           background: #ff0b00;
                            color: #000000;
                            padding: 10px 20px;
                            text-decoration: none;

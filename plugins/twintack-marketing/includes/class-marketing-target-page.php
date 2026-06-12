@@ -147,7 +147,7 @@ class TwinTack_Marketing_Target_Page {
                 <td>
                     <input type="text" name="twintack_target_accent_color" id="twintack_target_accent_color"
                            value="<?php echo esc_attr($accent_color); ?>" class="twintack-color-picker"
-                           placeholder="#a9ff00" />
+                           placeholder="#ff0b00" />
                     <p class="description"><?php _e('Leave empty to use the default site accent color. Set a hex value to override --primary, --primary-dark, and --color-highlight for this page.', 'twintack-marketing'); ?></p>
                 </td>
             </tr>

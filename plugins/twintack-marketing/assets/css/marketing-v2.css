@@ -5,9 +5,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=Saira+Condensed:wght@400;600;700&display=swap');
 
 :root {
-    --tt-v2-accent: #0048ff;
+    --tt-v2-accent: var(--tt-v2-brand-pro);
     --tt-v2-brand-flex: #00a6ff;
-    --tt-v2-brand-pro: #ce3730;
+    --tt-v2-brand-pro: #ff0b00;
     --tt-v2-dark: #0a0a0a;
     --tt-v2-dark-2: #141414;
     --tt-v2-light: #f5f5f5;
@@ -144,10 +144,7 @@ body.tt-v2-product .tt-v2-product-accordions .woocommerce-Tabs-panel h2 {
     font-family: var(--tt-v2-font);
 }
 
-body.tt-v2-homepage {
-    --tt-v2-accent: var(--tt-v2-brand-flex);
-}
-
+body.tt-v2-homepage,
 body.tt-v2-product {
     --tt-v2-accent: var(--tt-v2-brand-pro);
 }
@@ -691,7 +688,7 @@ body.tt-v2-homepage .tt-v2-featured-wrap .twintack-featured-products .container 
     .tt-v2-peak-banners .twintack-banner-overlay:hover,
     .tt-v2-peak-banners .twintack-banner-overlay:focus-within {
         border-color: var(--tt-v2-accent);
-        box-shadow: 0 0 0 1px var(--tt-v2-accent), 0 0 28px rgba(0, 166, 255, 0.42);
+        box-shadow: 0 0 0 1px var(--tt-v2-accent), 0 0 28px color-mix(in srgb, var(--tt-v2-accent) 42%, transparent);
         transform: translateY(-2px);
     }
 
@@ -1615,16 +1612,16 @@ body.tt-v2-product .newsletter-form button {
 
 body.tt-v2-product button#klaviyo_submit:hover,
 body.tt-v2-product .newsletter-form button:hover {
-    background: #b02e28 !important;
-    background-color: #b02e28 !important;
-    border-color: #b02e28 !important;
+    background: var(--color-highlight-dark, #cc0900) !important;
+    background-color: var(--color-highlight-dark, #cc0900) !important;
+    border-color: var(--color-highlight-dark, #cc0900) !important;
 }
 
 body.tt-v2-homepage button#klaviyo_submit:hover,
 body.tt-v2-homepage .newsletter-form button:hover {
-    background: #3da8d9 !important;
-    background-color: #3da8d9 !important;
-    border-color: #3da8d9 !important;
+    background: var(--color-highlight-dark, #cc0900) !important;
+    background-color: var(--color-highlight-dark, #cc0900) !important;
+    border-color: var(--color-highlight-dark, #cc0900) !important;
 }
 
 /* Product V2 footer — keep dark footer readable (light tokens are scoped to main) */

@@ -13,8 +13,11 @@ if ($page_id) {
     $page_template = get_post_meta($page_id, '_wp_page_template', true);
     
     if ($page_template === 'templates/template-homepage-marketing.php') {
-        // Load the Marketing Homepage template
         include(locate_template('templates/template-homepage-marketing.php'));
+        return;
+    }
+    if ($page_template === 'templates/template-homepage-v2.php') {
+        include(locate_template('templates/template-homepage-v2.php'));
         return;
     }
 }

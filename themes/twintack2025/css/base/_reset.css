@@ -16,8 +16,9 @@
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
-  --color-sport: #84cc16;
-  --color-highlight: #a9ff00;
+  --color-sport: #ff0b00;
+  --color-highlight: #ff0b00;
+  --color-highlight-dark: #cc0900;
 
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

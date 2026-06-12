@@ -137,7 +137,7 @@ class TwinTack_Marketing_Bundle_Counter {
                         <td>
                             <input type="color" name="twintack_bundle_counter_progress_color" 
                                    id="twintack_bundle_counter_progress_color" 
-                                   value="<?php echo esc_attr(get_option('twintack_bundle_counter_progress_color', '#7ed321')); ?>" />
+                                   value="<?php echo esc_attr(get_option('twintack_bundle_counter_progress_color', '#ff0b00')); ?>" />
                         </td>
                     </tr>
                     </table>
@@ -222,7 +222,7 @@ class TwinTack_Marketing_Bundle_Counter {
         $discount_text = get_option('twintack_bundle_counter_discount_text', '15% off');
         $bg_color = get_option('twintack_bundle_counter_bg_color', '#1a1a1a');
         $text_color = get_option('twintack_bundle_counter_text_color', '#ffffff');
-        $progress_color = get_option('twintack_bundle_counter_progress_color', '#7ed321');
+        $progress_color = get_option('twintack_bundle_counter_progress_color', '#ff0b00');
         
         $current_count = $this->count_bundle_items();
         $progress_percent = min(100, ($current_count / $bundle_size) * 100);
