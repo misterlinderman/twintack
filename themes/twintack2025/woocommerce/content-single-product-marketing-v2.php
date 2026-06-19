@@ -69,12 +69,8 @@ remove_action('woocommerce_after_single_product_summary', 'woocommerce_output_re
                 ? TwinTack_Marketing_Product_Layout::get_summary_rating_display($product_id)
                 : null;
             if ($rating_display) :
-                $rating_class = 'tt-v2-product-rating';
-                if ($rating_display['is_placeholder']) {
-                    $rating_class .= ' tt-v2-product-rating--placeholder';
-                }
                 ?>
-                <div class="<?php echo esc_attr($rating_class); ?>">
+                <div class="tt-v2-product-rating">
                     <?php echo wc_get_rating_html($rating_display['rating']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                     <p class="tt-v2-product-rating-line"><?php echo esc_html($rating_display['line']); ?></p>
                 </div>
@@ -104,8 +100,25 @@ remove_action('woocommerce_after_single_product_summary', 'woocommerce_output_re
 
             <?php if (!empty($meta['trust_icons'])) : ?>
                 <ul class="tt-v2-product-trust">
-                    <?php foreach ((array) $meta['trust_icons'] as $icon_label) : ?>
-                        <li><?php echo esc_html($icon_label); ?></li>
+                    <?php foreach ((array) $meta['trust_icons'] as $index => $icon_label) : ?>
+                        <?php
+                        $trust_item = class_exists('TwinTack_Marketing_Product_Layout')
+                            ? TwinTack_Marketing_Product_Layout::get_trust_icon_item($icon_label, (int) $index)
+                            : array(
+                                'icon'  => 'fa-circle-check',
+                                'line1' => $icon_label,
+                                'line2' => '',
+                            );
+                        ?>
+                        <li class="tt-v2-product-trust__item">
+                            <i class="fa-solid <?php echo esc_attr($trust_item['icon']); ?>" aria-hidden="true"></i>
+                            <span class="tt-v2-product-trust__text">
+                                <span class="tt-v2-product-trust__line"><?php echo esc_html($trust_item['line1']); ?></span>
+                                <?php if (!empty($trust_item['line2'])) : ?>
+                                    <span class="tt-v2-product-trust__line"><?php echo esc_html($trust_item['line2']); ?></span>
+                                <?php endif; ?>
+                            </span>
+                        </li>
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
@@ -147,9 +160,7 @@ remove_action('woocommerce_after_single_product_summary', 'woocommerce_output_re
     <?php get_template_part('template-parts/marketing/v2/product-comparison', null, array('meta' => $meta)); ?>
 
     <?php
-    if ($product && $product->get_review_count() > 0) {
-        wc_get_template('single-product/tabs/review-content.php');
-    }
+    wc_get_template('single-product/tabs/review-content.php');
 
     $video_tabs_meta = class_exists('TwinTack_Marketing_Video_Tabs')
         ? TwinTack_Marketing_Video_Tabs::get_meta()

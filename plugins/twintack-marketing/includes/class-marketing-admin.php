@@ -78,6 +78,15 @@ class TwinTack_Marketing_Admin {
             array($this, 'render_video_tabs_page')
         );
 
+        add_submenu_page(
+            'twintack-marketing',
+            __('Product Layout', 'twintack-marketing'),
+            __('Product Layout', 'twintack-marketing'),
+            'manage_options',
+            'twintack-marketing-product-layout',
+            array($this, 'render_product_layout_page')
+        );
+
         // Add Announcement Bar submenu here to ensure parent exists
         add_submenu_page(
             'twintack-marketing',
@@ -105,6 +114,10 @@ class TwinTack_Marketing_Admin {
 
     public function render_video_tabs_page() {
         TwinTack_Marketing_Video_Tabs::get_instance()->render_settings_page();
+    }
+
+    public function render_product_layout_page() {
+        TwinTack_Marketing_Product_Layout::get_instance()->render_settings_page();
     }
 
     public function render_announcement_bar_page() {
@@ -189,7 +202,8 @@ class TwinTack_Marketing_Admin {
         if (strpos($hook, 'twintack-marketing') === false && 
             strpos($hook, 'twintack-announcement-bar') === false && 
             strpos($hook, 'twintack-bundle-counter') === false &&
-            strpos($hook, 'twintack-marketing-video-tabs') === false) {
+            strpos($hook, 'twintack-marketing-video-tabs') === false &&
+            strpos($hook, 'twintack-marketing-product-layout') === false) {
             return;
         }
         
@@ -307,6 +321,13 @@ class TwinTack_Marketing_Admin {
                     <h2><?php echo $this->get_card_icon('content'); ?><?php _e('How TwinTack Works', 'twintack-marketing'); ?></h2>
                     <p><?php _e('Manage the tabbed video section shown on Homepage V2 and Marketing V2 product pages. One set of videos and copy for all grip products.', 'twintack-marketing'); ?></p>
                     <a href="<?php echo admin_url('admin.php?page=twintack-marketing-video-tabs'); ?>" class="button button-primary"><?php _e('Manage Video Tabs', 'twintack-marketing'); ?></a>
+                </div>
+
+                <!-- Product Layout Card -->
+                <div class="twintack-marketing-card">
+                    <h2><?php echo $this->get_card_icon('input-product'); ?><?php _e('Product Layout', 'twintack-marketing'); ?></h2>
+                    <p><?php _e('Enable the Marketing V2 product page site-wide, or manage layout per product. Includes a go-live checklist.', 'twintack-marketing'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=twintack-marketing-product-layout'); ?>" class="button button-primary"><?php _e('Configure Product Layout', 'twintack-marketing'); ?></a>
                 </div>
 
                 <!-- Banner Blocks Card -->

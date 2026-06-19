@@ -141,6 +141,15 @@ class TwinTack_Marketing {
             && TwinTack_Marketing_Product_Layout::is_marketing_v2();
 
         if ($is_homepage_v2 || $is_product_v2) {
+            if ($is_product_v2) {
+                wp_enqueue_style(
+                    'font-awesome-6',
+                    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css',
+                    array(),
+                    '6.5.0'
+                );
+            }
+
             wp_enqueue_style(
                 'twintack-marketing-v2',
                 plugin_dir_url(__FILE__) . 'assets/css/marketing-v2.css',

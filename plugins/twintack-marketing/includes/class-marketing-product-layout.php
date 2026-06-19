@@ -12,6 +12,7 @@ if (!defined('ABSPATH')) {
 class TwinTack_Marketing_Product_Layout {
     const META_LAYOUT = '_twintack_product_layout';
     const META_PREFIX = '_twintack_v2_product_';
+    const OPTION_V2_GLOBAL = 'twintack_marketing_product_v2_global';
 
     /** @var self|null */
     private static $instance = null;
@@ -30,7 +31,34 @@ class TwinTack_Marketing_Product_Layout {
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post', array($this, 'save_meta_boxes'), 10, 2);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+        add_action('admin_init', array($this, 'register_settings'));
         add_filter('body_class', array($this, 'body_class'));
+    }
+
+    /**
+     * Register product layout settings.
+     */
+    public function register_settings() {
+        register_setting(
+            'twintack_product_layout',
+            self::OPTION_V2_GLOBAL,
+            array(
+                'type'              => 'string',
+                'sanitize_callback' => static function ($value) {
+                    return '1' === $value ? '1' : '0';
+                },
+                'default'           => '0',
+            )
+        );
+    }
+
+    /**
+     * Whether Marketing V2 is enabled site-wide (individual products may opt out).
+     *
+     * @return bool
+     */
+    public static function is_global_v2_enabled() {
+        return '1' === get_option(self::OPTION_V2_GLOBAL, '0');
     }
 
     /**
@@ -56,7 +84,37 @@ class TwinTack_Marketing_Product_Layout {
             }
         }
 
-        return 'marketing-v2' === get_post_meta($product_id, self::META_LAYOUT, true);
+        $layout = get_post_meta($product_id, self::META_LAYOUT, true);
+
+        if ('default' === $layout) {
+            return false;
+        }
+
+        if ('marketing-v2' === $layout) {
+            return true;
+        }
+
+        return self::is_global_v2_enabled();
+    }
+
+    /**
+     * Whether a product has approved WooCommerce reviews to display.
+     *
+     * @param int|null $product_id Product ID.
+     * @return bool
+     */
+    public static function product_has_active_reviews($product_id = null) {
+        if (!$product_id) {
+            $product_id = get_the_ID();
+        }
+
+        if (!$product_id || !function_exists('wc_get_product')) {
+            return false;
+        }
+
+        $product = wc_get_product($product_id);
+
+        return $product && $product->get_review_count() >= 1;
     }
 
     /**
@@ -137,19 +195,7 @@ class TwinTack_Marketing_Product_Layout {
             );
         }
 
-        if (!empty($custom)) {
-            return array(
-                'rating'         => 4.9,
-                'line'           => $custom,
-                'is_placeholder' => true,
-            );
-        }
-
-        return array(
-            'rating'         => 4.9,
-            'line'           => __('Rated 4.9 / 5.0 • 127 Reviews', 'twintack-marketing'),
-            'is_placeholder' => true,
-        );
+        return null;
     }
 
     /**
@@ -189,7 +235,7 @@ class TwinTack_Marketing_Product_Layout {
             <option value="default" <?php selected($layout, 'default'); ?>><?php esc_html_e('Default', 'twintack-marketing'); ?></option>
             <option value="marketing-v2" <?php selected($layout, 'marketing-v2'); ?>><?php esc_html_e('Marketing V2', 'twintack-marketing'); ?></option>
         </select>
-        <p class="description"><?php esc_html_e('Use a private duplicate product to preview V2 before enabling on live SKUs.', 'twintack-marketing'); ?></p>
+        <p class="description"><?php esc_html_e('Use a private duplicate product to preview V2 before enabling site-wide. Set a product to Default to keep the legacy layout when V2 is enabled globally.', 'twintack-marketing'); ?></p>
         <?php
     }
 
@@ -225,7 +271,7 @@ class TwinTack_Marketing_Product_Layout {
                     <?php if ($review_count > 0) : ?>
                         <span class="tt-v2-admin-status tt-v2-admin-status--ok"><?php echo esc_html(sprintf(_n('%d review', '%d reviews', $review_count, 'twintack-marketing'), $review_count)); ?></span>
                     <?php else : ?>
-                        <span class="tt-v2-admin-status tt-v2-admin-status--empty"><?php esc_html_e('Showing placeholder until reviews exist', 'twintack-marketing'); ?></span>
+                        <span class="tt-v2-admin-status tt-v2-admin-status--empty"><?php esc_html_e('Hidden until approved reviews exist', 'twintack-marketing'); ?></span>
                     <?php endif; ?>
                 </p>
             </div>
@@ -236,7 +282,7 @@ class TwinTack_Marketing_Product_Layout {
                     <div class="tt-v2-admin-field">
                         <label for="twintack_v2_rating_line"><?php esc_html_e('Rating line override', 'twintack-marketing'); ?></label>
                         <input type="text" name="twintack_v2_rating_line" id="twintack_v2_rating_line" value="<?php echo esc_attr($meta['rating_line']); ?>" class="large-text" placeholder="<?php esc_attr_e('Rated 4.9 / 5.0 • 127 Reviews', 'twintack-marketing'); ?>">
-                        <p class="description"><?php esc_html_e('Optional override. Leave blank to use WooCommerce reviews when available, or the preview placeholder until then.', 'twintack-marketing'); ?></p>
+                        <p class="description"><?php esc_html_e('Optional override when the product has approved reviews. Summary rating and the bottom reviews block stay hidden until then.', 'twintack-marketing'); ?></p>
                     </div>
                     <div class="tt-v2-admin-field">
                         <label for="twintack_v2_short_pitch"><?php esc_html_e('Short pitch', 'twintack-marketing'); ?></label>
@@ -261,6 +307,7 @@ class TwinTack_Marketing_Product_Layout {
                         <textarea name="twintack_v2_trust_icons" id="twintack_v2_trust_icons" rows="3" class="large-text"><?php
                             echo esc_textarea(implode("\n", (array) $meta['trust_icons']));
                         ?></textarea>
+                        <p class="description"><?php esc_html_e('Icons appear below Add to Cart. Use a pipe for custom line breaks, e.g. Waterproof|Technology.', 'twintack-marketing'); ?></p>
                     </div>
                     <div class="tt-v2-admin-field">
                         <label for="twintack_v2_howto_video"><?php esc_html_e('How-to apply video URL', 'twintack-marketing'); ?></label>
@@ -459,6 +506,101 @@ class TwinTack_Marketing_Product_Layout {
     }
 
     /**
+     * Font Awesome icon + two-line label for a trust badge.
+     *
+     * @param string $label Trust badge label.
+     * @param int    $index Zero-based position fallback.
+     * @return array{icon:string,line1:string,line2:string}
+     */
+    public static function get_trust_icon_item($label, $index = 0) {
+        $label = trim((string) $label);
+        $key   = strtolower(preg_replace('/\s+/', ' ', $label));
+
+        $known = array(
+            'waterproof technology' => array(
+                'icon'  => 'fa-droplet',
+                'line1' => 'Waterproof',
+                'line2' => 'Technology',
+            ),
+            'buy 3 & save 15%' => array(
+                'icon'  => 'fa-cart-arrow-down',
+                'line1' => 'Buy 3 &',
+                'line2' => 'Save 15%',
+            ),
+            'fast shipping' => array(
+                'icon'  => 'fa-box-open',
+                'line1' => 'Fast',
+                'line2' => 'Shipping',
+            ),
+        );
+
+        if (isset($known[ $key ])) {
+            return $known[ $key ];
+        }
+
+        foreach ($known as $needle => $item) {
+            if (false !== strpos($key, $needle)) {
+                return $item;
+            }
+        }
+
+        $fallback_icons = array('fa-droplet', 'fa-cart-arrow-down', 'fa-box-open');
+        $icon           = $fallback_icons[ $index % count($fallback_icons) ];
+        $lines          = self::split_trust_label_lines($label);
+
+        return array(
+            'icon'  => $icon,
+            'line1' => $lines['line1'],
+            'line2' => $lines['line2'],
+        );
+    }
+
+    /**
+     * Split a trust badge label into two display lines.
+     *
+     * @param string $label Trust badge label.
+     * @return array{line1:string,line2:string}
+     */
+    private static function split_trust_label_lines($label) {
+        if (false !== strpos($label, '|')) {
+            $parts = array_map('trim', explode('|', $label, 2));
+            return array(
+                'line1' => $parts[0],
+                'line2' => isset($parts[1]) ? $parts[1] : '',
+            );
+        }
+
+        if (preg_match('/^(.+?\s+\&)\s+(.+)$/i', $label, $matches)) {
+            return array(
+                'line1' => trim($matches[1]),
+                'line2' => trim($matches[2]),
+            );
+        }
+
+        $words = preg_split('/\s+/', $label);
+        if (count($words) <= 1) {
+            return array(
+                'line1' => $label,
+                'line2' => '',
+            );
+        }
+
+        if (count($words) === 2) {
+            return array(
+                'line1' => $words[0],
+                'line2' => $words[1],
+            );
+        }
+
+        $split_at = (int) ceil(count($words) / 2);
+
+        return array(
+            'line1' => implode(' ', array_slice($words, 0, $split_at)),
+            'line2' => implode(' ', array_slice($words, $split_at)),
+        );
+    }
+
+    /**
      * Normalize trust badges saved with line breaks or split across rows.
      *
      * @param array<int,string> $icons Trust badge labels.
@@ -513,5 +655,57 @@ class TwinTack_Marketing_Product_Layout {
                 'them'    => 'No',
             ),
         );
+    }
+
+    /**
+     * Render global product layout settings page.
+     */
+    public function render_settings_page() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $global_enabled = self::is_global_v2_enabled();
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('Product Layout', 'twintack-marketing'); ?></h1>
+            <p class="description"><?php esc_html_e('Control the Marketing V2 product template across your catalog.', 'twintack-marketing'); ?></p>
+
+            <form method="post" action="options.php">
+                <?php settings_fields('twintack_product_layout'); ?>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Marketing V2 for all products', 'twintack-marketing'); ?></th>
+                        <td>
+                            <input type="hidden" name="<?php echo esc_attr(self::OPTION_V2_GLOBAL); ?>" value="0" />
+                            <label for="<?php echo esc_attr(self::OPTION_V2_GLOBAL); ?>">
+                                <input type="checkbox"
+                                       name="<?php echo esc_attr(self::OPTION_V2_GLOBAL); ?>"
+                                       id="<?php echo esc_attr(self::OPTION_V2_GLOBAL); ?>"
+                                       value="1"
+                                       <?php checked($global_enabled); ?> />
+                                <?php esc_html_e('Use the Marketing V2 product page on every product', 'twintack-marketing'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('When enabled, all products use V2 unless a product is explicitly set to Default under Marketing Layout. Preview any product as an admin with ?preview_layout=marketing-v2 on the product URL.', 'twintack-marketing'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button(__('Save Product Layout Settings', 'twintack-marketing')); ?>
+            </form>
+
+            <hr>
+
+            <h2><?php esc_html_e('Go-live checklist', 'twintack-marketing'); ?></h2>
+            <ol>
+                <li><?php esc_html_e('Deploy the latest theme and TwinTack Marketing plugin files.', 'twintack-marketing'); ?></li>
+                <li><?php esc_html_e('Configure Marketing → How TwinTack Works (video tabs shown on every V2 product page).', 'twintack-marketing'); ?></li>
+                <li><?php esc_html_e('Spot-check one product with ?preview_layout=marketing-v2 before enabling globally.', 'twintack-marketing'); ?></li>
+                <li><?php esc_html_e('Enable Marketing V2 for all products above, or set Marketing V2 per product in the product editor sidebar.', 'twintack-marketing'); ?></li>
+                <li><?php esc_html_e('Optionally fill in Product V2 — Extra Content on key SKUs (pitch, bullets, comparison chart, how-to video).', 'twintack-marketing'); ?></li>
+            </ol>
+        </div>
+        <?php
     }
 }

@@ -261,6 +261,12 @@
     100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
+body.twintack-pswp-active .twintack-carousel-arrow,
+body.twintack-pswp-active .woocommerce-product-gallery__trigger {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 /* Accessibility Improvements */
 .twintack-carousel-arrow:focus,
 .twintack-carousel-thumb:focus {

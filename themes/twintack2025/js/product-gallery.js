@@ -31,8 +31,36 @@ jQuery(document).ready(function($) {
             handleVariationChanges($gallery);
         } else {
             // Single image - just initialize lightbox
+            useFullSizeGalleryImages($gallery);
             initLightbox($gallery);
         }
+    }
+
+    /**
+     * Use WooCommerce full-size source for display (not 100px gallery thumbs).
+     *
+     * @param {jQuery} $scope Gallery element or slide container.
+     */
+    function useFullSizeGalleryImages($scope) {
+        $scope.find('.woocommerce-product-gallery__image img').each(function() {
+            const $img = $(this);
+            const fullSrc = $img.attr('data-large_image') || $img.attr('data-src');
+
+            if (!fullSrc) {
+                return;
+            }
+
+            $img.attr('src', fullSrc);
+            $img.removeAttr('srcset sizes');
+
+            if ($img.attr('data-large_image_width')) {
+                $img.attr('width', $img.attr('data-large_image_width'));
+            }
+
+            if ($img.attr('data-large_image_height')) {
+                $img.attr('height', $img.attr('data-large_image_height'));
+            }
+        });
     }
     
     function createCarouselStructure($gallery, $wrapper, $images) {
@@ -47,6 +75,7 @@ jQuery(document).ready(function($) {
             const $image = $(this);
             const $slide = $('<div class="twintack-carousel-slide"></div>');
             $slide.append($image.clone());
+            useFullSizeGalleryImages($slide);
             $slides.append($slide);
         });
         
@@ -171,93 +200,135 @@ jQuery(document).ready(function($) {
     }
     
     function initLightbox($gallery) {
-        // Add PhotoSwipe markup if it doesn't exist
-        if (!$('.pswp').length) {
-            $('body').append(`
-                <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
-                    <div class="pswp__bg"></div>
-                    <div class="pswp__scroll-wrap">
-                        <div class="pswp__container">
-                            <div class="pswp__item"></div>
-                            <div class="pswp__item"></div>
-                            <div class="pswp__item"></div>
-                        </div>
-                        <div class="pswp__ui pswp__ui--hidden">
-                            <div class="pswp__top-bar">
-                                <div class="pswp__counter"></div>
-                                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
-                                <button class="pswp__button pswp__button--share" title="Share"></button>
-                                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-                                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
-                                <div class="pswp__preloader">
-                                    <div class="pswp__preloader__icn">
-                                        <div class="pswp__preloader__cut">
-                                            <div class="pswp__preloader__donut"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
-                                <div class="pswp__share-tooltip"></div>
-                            </div>
-                            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
-                            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
-                            <div class="pswp__caption">
-                                <div class="pswp__caption__center"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `);
-        }
-        
-        // Handle image clicks for lightbox
-        $gallery.on('click', 'img', function(e) {
+        ensureGalleryTrigger($gallery);
+
+        $gallery.off('.twintackLightbox');
+
+        $gallery.on('click.twintackLightbox', '.woocommerce-product-gallery__trigger', function(e) {
             e.preventDefault();
-            
-            const $clickedImg = $(this);
-            const $galleryImages = $gallery.find('img');
-            const items = [];
-            let startIndex = 0;
-            
-            // Build items array
-            $galleryImages.each(function(index) {
-                const $img = $(this);
-                const src = $img.attr('src') || $img.attr('data-src');
-                const alt = $img.attr('alt') || '';
-                
-                if (src) {
-                    items.push({
-                        src: src,
-                        w: $img.attr('data-width') || $img.width() || 800,
-                        h: $img.attr('data-height') || $img.height() || 600,
-                        title: alt
-                    });
-                    
-                    if ($img[0] === $clickedImg[0]) {
-                        startIndex = index;
-                    }
-                }
-            });
-            
-            if (items.length > 0) {
-                // Initialize PhotoSwipe
-                const pswpElement = document.querySelectorAll('.pswp')[0];
-                const options = {
-                    index: startIndex,
-                    bgOpacity: 0.85,
-                    showHideOpacity: true,
-                    shareButtons: [
-                        {id:'facebook', label:'Share on Facebook', url:'https://www.facebook.com/sharer/sharer.php?u={{url}}'},
-                        {id:'twitter', label:'Tweet', url:'https://twitter.com/intent/tweet?text={{text}}&url={{url}}'},
-                        {id:'pinterest', label:'Pin it', url:'http://www.pinterest.com/pin/create/button/?url={{url}}&media={{image_url}}&description={{text}}'}
-                    ]
-                };
-                
-                const gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
-                gallery.init();
-            }
+            e.stopImmediatePropagation();
+            openTwinTackLightbox($gallery, getCurrentSlideIndex($gallery));
         });
+
+        $gallery.on(
+            'click.twintackLightbox',
+            '.twintack-carousel-slides .woocommerce-product-gallery__image a, .woocommerce-product-gallery__wrapper > .woocommerce-product-gallery__image a',
+            function(e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                const $mainImages = getMainGalleryImages($gallery);
+                const $imageEl = $(this).closest('.woocommerce-product-gallery__image');
+                const index = $mainImages.index($imageEl);
+                openTwinTackLightbox($gallery, index >= 0 ? index : 0);
+            }
+        );
+    }
+
+    function ensureGalleryTrigger($gallery) {
+        if ($gallery.find('.woocommerce-product-gallery__trigger').length) {
+            return;
+        }
+
+        const label =
+            typeof wc_single_product_params !== 'undefined' && wc_single_product_params.i18n_product_gallery_trigger_text
+                ? wc_single_product_params.i18n_product_gallery_trigger_text
+                : 'View full-screen image gallery';
+
+        $gallery.prepend(
+            '<a href="#" role="button" class="woocommerce-product-gallery__trigger" aria-haspopup="dialog" ' +
+                'aria-controls="photoswipe-fullscreen-dialog" aria-label="' +
+                label +
+                '">' +
+                '<span aria-hidden="true"></span></a>'
+        );
+    }
+
+    function getMainGalleryImages($gallery) {
+        const $carouselImages = $gallery.find('.twintack-carousel-slides .woocommerce-product-gallery__image');
+        if ($carouselImages.length) {
+            return $carouselImages;
+        }
+
+        return $gallery.find('.woocommerce-product-gallery__wrapper > .woocommerce-product-gallery__image');
+    }
+
+    function getCurrentSlideIndex($gallery) {
+        const $slides = $gallery.find('.twintack-carousel-slides');
+        if ($slides.length && $slides.hasClass('slick-initialized')) {
+            return $slides.slick('slickCurrentSlide');
+        }
+
+        return 0;
+    }
+
+    function buildLightboxItems($images) {
+        const items = [];
+
+        $images.each(function() {
+            const $img = $(this).find('img').first();
+            if (!$img.length) {
+                return;
+            }
+
+            const src = $img.attr('data-large_image') || $img.attr('src') || $img.attr('data-src');
+            if (!src) {
+                return;
+            }
+
+            items.push({
+                src: src,
+                w: parseInt($img.attr('data-large_image_width'), 10) || 800,
+                h: parseInt($img.attr('data-large_image_height'), 10) || 600,
+                title: $img.attr('alt') || '',
+            });
+        });
+
+        return items;
+    }
+
+    function openTwinTackLightbox($gallery, index) {
+        if (typeof PhotoSwipe === 'undefined' || typeof PhotoSwipeUI_Default === 'undefined') {
+            return;
+        }
+
+        const pswpElement = document.getElementById('photoswipe-fullscreen-dialog') || document.querySelector('.pswp');
+        if (!pswpElement) {
+            return;
+        }
+
+        const items = buildLightboxItems(getMainGalleryImages($gallery));
+        if (!items.length) {
+            return;
+        }
+
+        index = Math.max(0, Math.min(index, items.length - 1));
+
+        const options = {
+            index: index,
+            bgOpacity: 0.92,
+            showHideOpacity: true,
+            timeToIdle: 0,
+            addCaptionHTMLFn: function(item, captionEl) {
+                if (!item.title) {
+                    captionEl.children[0].textContent = '';
+                    return false;
+                }
+                captionEl.children[0].textContent = item.title;
+                return true;
+            },
+        };
+
+        const photoswipe = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
+
+        photoswipe.listen('afterInit', function() {
+            $('body').addClass('twintack-pswp-active');
+        });
+
+        photoswipe.listen('destroy', function() {
+            $('body').removeClass('twintack-pswp-active');
+        });
+
+        photoswipe.init();
     }
     
     function handleVariationChanges($gallery) {

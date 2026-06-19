@@ -680,6 +680,23 @@ function custom_theme_setup() {
 }
 
 /**
+ * Slick replaces Flexslider; custom product-gallery.js owns the lightbox.
+ */
+add_filter('woocommerce_single_product_flexslider_enabled', '__return_false');
+add_filter('woocommerce_single_product_photoswipe_enabled', '__return_false');
+
+/**
+ * Slick shows every gallery image at full width; keep WC from outputting 100px thumbs.
+ *
+ * @param string|array $size Image size name or dimensions.
+ * @return string
+ */
+function twintack_slick_gallery_image_size( $size ) {
+	return 'woocommerce_single';
+}
+add_filter( 'woocommerce_gallery_image_size', 'twintack_slick_gallery_image_size' );
+
+/**
  * Enqueue product gallery scripts with Slick Carousel
  * Consolidated function to avoid conflicts between multiple carousel libraries
  */
@@ -701,10 +718,10 @@ function twintack_enqueue_product_gallery_scripts() {
         wp_enqueue_style('photoswipe', 'https://cdn.jsdelivr.net/npm/photoswipe@5.3.4/dist/photoswipe.css', array(), '5.3.4');
         
         // Enqueue our custom product gallery CSS
-        wp_enqueue_style('twintack-product-gallery', get_stylesheet_directory_uri() . '/css/components/_product-gallery.css', array('slick', 'slick-theme'), '1.0.0');
+        wp_enqueue_style('twintack-product-gallery', get_stylesheet_directory_uri() . '/css/components/_product-gallery.css', array('slick', 'slick-theme'), filemtime(get_stylesheet_directory() . '/css/components/_product-gallery.css'));
         
-        // Enqueue our custom product gallery script
-        wp_enqueue_script('twintack-product-gallery', get_stylesheet_directory_uri() . '/js/product-gallery.js', array('jquery', 'slick', 'photoswipe-ui-default'), '1.0.0', true);
+        // Enqueue after WC single-product (zoom); lightbox handled in product-gallery.js.
+        wp_enqueue_script('twintack-product-gallery', get_stylesheet_directory_uri() . '/js/product-gallery.js', array('jquery', 'slick', 'photoswipe-ui-default', 'wc-single-product'), filemtime(get_stylesheet_directory() . '/js/product-gallery.js'), true);
     }
 }
 

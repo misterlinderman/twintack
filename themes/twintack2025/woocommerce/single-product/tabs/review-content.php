@@ -11,6 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+global $product;
+
+if ( ! $product || $product->get_review_count() < 1 ) {
+	return;
+}
+
 // Get only reviews tab
 $product_tabs = apply_filters( 'woocommerce_product_tabs', array() );
 
