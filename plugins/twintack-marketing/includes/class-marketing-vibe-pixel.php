@@ -17,6 +17,12 @@ class TwinTack_Marketing_Vibe_Pixel {
     /** @var self|null */
     private static $instance = null;
 
+    /** @var array<string,mixed>|null */
+    private $purchase_payload = null;
+
+    /** @var bool */
+    private $purchase_rendered = false;
+
     /**
      * @return self
      */
@@ -29,11 +35,48 @@ class TwinTack_Marketing_Vibe_Pixel {
     }
 
     private function __construct() {
+        add_action('template_redirect', array($this, 'capture_purchase_context'), 20);
+        add_action('woocommerce_thankyou', array($this, 'capture_purchase_from_order'), 5);
         add_action('wp_head', array($this, 'render_head'), 0);
+        add_action('wp_footer', array($this, 'maybe_render_purchase_event'), 20);
     }
 
     /**
-     * Output Vibe pixel loader, page_view, and optional purchase event.
+     * Capture purchase context from the order-received endpoint after query setup.
+     */
+    public function capture_purchase_context() {
+        if ($this->should_skip() || null !== $this->purchase_payload) {
+            return;
+        }
+
+        $order = $this->get_valid_thankyou_order();
+        if (!$order) {
+            return;
+        }
+
+        $this->purchase_payload = $this->build_purchase_payload_from_order($order);
+    }
+
+    /**
+     * Capture purchase context from the checkout thank-you template.
+     *
+     * @param int $order_id Order ID.
+     */
+    public function capture_purchase_from_order($order_id) {
+        if ($this->should_skip() || null !== $this->purchase_payload) {
+            return;
+        }
+
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return;
+        }
+
+        $this->purchase_payload = $this->build_purchase_payload_from_order($order);
+    }
+
+    /**
+     * Output Vibe pixel loader and page_view event.
      */
     public function render_head() {
         if ($this->should_skip()) {
@@ -45,38 +88,48 @@ class TwinTack_Marketing_Vibe_Pixel {
             return;
         }
 
-        $purchase_payload = $this->get_purchase_payload();
-        $purchase_event   = null !== $purchase_payload ? array(
-            'price_usd' => $purchase_payload['price_usd'],
-        ) : null;
-
         ?>
         <script>
         !function(v,i,b,e,c,o){if(!v[c]){var s=v[c]=function(){s.process?s.process.apply(s,arguments):s.queue.push(arguments)};s.queue=[],s.b=1*new Date;var t=i.createElement(b);t.async=!0,t.src=e;var n=i.getElementsByTagName(b)[0];n.parentNode.insertBefore(t,n)}}(window,document,"script","<?php echo esc_url(self::SCRIPT_URL); ?>","vbpx");
         vbpx('init','<?php echo esc_js($pixel_id); ?>');
         vbpx('event', 'page_view');
-        <?php if (null !== $purchase_event) : ?>
-        vbpx('event', 'purchase', <?php echo wp_json_encode($purchase_event); ?>);
-        <?php endif; ?>
         </script>
         <?php
 
-        if (null !== $purchase_payload) {
-            $this->mark_order_tracked((int) $purchase_payload['order_id']);
-        }
+        $this->maybe_render_purchase_event();
     }
 
     /**
-     * Build purchase payload for validated thank-you orders (USD, tax + shipping total).
-     *
-     * @return array<string,mixed>|null
+     * Output purchase conversion event once per validated order.
      */
-    private function get_purchase_payload() {
-        $order = $this->get_valid_thankyou_order();
-        if (!$order) {
-            return null;
+    public function maybe_render_purchase_event() {
+        if ($this->purchase_rendered || null === $this->purchase_payload) {
+            return;
         }
 
+        $purchase_event = array(
+            'price_usd' => $this->purchase_payload['price_usd'],
+        );
+
+        ?>
+        <script>
+        if (typeof vbpx === 'function') {
+            vbpx('event', 'purchase', <?php echo wp_json_encode($purchase_event); ?>);
+        }
+        </script>
+        <?php
+
+        $this->purchase_rendered = true;
+        $this->mark_order_tracked((int) $this->purchase_payload['order_id']);
+    }
+
+    /**
+     * Build purchase payload for validated thank-you orders (USD order total).
+     *
+     * @param WC_Order $order Order object.
+     * @return array<string,mixed>|null
+     */
+    private function build_purchase_payload_from_order($order) {
         if ($order->get_meta(self::TRACKED_META)) {
             return null;
         }
@@ -85,21 +138,22 @@ class TwinTack_Marketing_Vibe_Pixel {
             return null;
         }
 
-        $price = wc_format_decimal($order->get_total(), 2);
-
         return array(
-            'price_usd' => $price,
+            'price_usd' => wc_format_decimal($order->get_total(), 2),
             'order_id'  => $order->get_id(),
         );
     }
 
     /**
-     * Validate order on the WooCommerce order-received endpoint.
+     * Validate order on any WooCommerce order-received endpoint.
+     *
+     * TwinTack routes post-checkout URLs to /my-account/order-received/, so we cannot
+     * rely on is_order_received_page() which only matches the checkout page.
      *
      * @return WC_Order|false
      */
     private function get_valid_thankyou_order() {
-        if (!function_exists('is_order_received_page') || !is_order_received_page()) {
+        if (!function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-received')) {
             return false;
         }
 
@@ -110,18 +164,22 @@ class TwinTack_Marketing_Vibe_Pixel {
             return false;
         }
 
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return false;
+        }
+
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $order_key = isset($_GET['key']) ? wc_clean(wp_unslash($_GET['key'])) : '';
-        if ('' === $order_key) {
-            return false;
+        if ('' !== $order_key && hash_equals($order->get_order_key(), $order_key)) {
+            return $order;
         }
 
-        $order = wc_get_order($order_id);
-        if (!$order || !hash_equals($order->get_order_key(), $order_key)) {
-            return false;
+        if (is_user_logged_in() && (int) $order->get_customer_id() === get_current_user_id()) {
+            return $order;
         }
 
-        return $order;
+        return false;
     }
 
     /**
