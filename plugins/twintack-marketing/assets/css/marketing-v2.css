@@ -210,9 +210,19 @@ body.tt-v2-product .tt-v2-product-shell .container {
     border-radius: 0 !important;
 }
 
-@media (min-width: 1800px) {
-    body.tt-v2-homepage .tt-v2-page .container,
+@media (min-width: 992px) {
     body.tt-v2-product .tt-v2-product-shell .container {
+        max-width: 1400px;
+    }
+
+    body.tt-v2-product .tt-v2-product-hero {
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+        gap: 56px;
+    }
+}
+
+@media (min-width: 1800px) {
+    body.tt-v2-homepage .tt-v2-page .container {
         max-width: 1200px;
     }
 }
@@ -1547,6 +1557,14 @@ body.tt-v2-product .tt-v2-product-feature__body {
 body.tt-v2-product .tt-v2-comparison {
     background: var(--tt-v2-white);
     color: var(--tt-v2-ink);
+}
+
+body.tt-v2-product .tt-v2-product-reviews {
+    padding: 48px 0 64px;
+}
+
+body.tt-v2-product .tt-v2-product-reviews .container {
+    max-width: 1400px;
 }
 
 body.tt-v2-product .woocommerce-reviews-section {

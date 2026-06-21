@@ -285,8 +285,9 @@ class TwinTack_Marketing_Product_Layout {
                         <p class="description"><?php esc_html_e('Optional override when the product has approved reviews. Summary rating and the bottom reviews block stay hidden until then.', 'twintack-marketing'); ?></p>
                     </div>
                     <div class="tt-v2-admin-field">
-                        <label for="twintack_v2_short_pitch"><?php esc_html_e('Short pitch', 'twintack-marketing'); ?></label>
+                        <label for="twintack_v2_short_pitch"><?php esc_html_e('Short pitch override', 'twintack-marketing'); ?></label>
                         <textarea name="twintack_v2_short_pitch" id="twintack_v2_short_pitch" rows="2" class="large-text"><?php echo esc_textarea($meta['short_pitch']); ?></textarea>
+                        <p class="description"><?php esc_html_e('Leave blank to use the WooCommerce product short description from the product editor.', 'twintack-marketing'); ?></p>
                     </div>
                     <div class="tt-v2-admin-field">
                         <label for="twintack_v2_summary_bullets"><?php esc_html_e('Summary bullets (one per line: title|description optional)', 'twintack-marketing'); ?></label>
@@ -440,8 +441,8 @@ class TwinTack_Marketing_Product_Layout {
         if (!is_string($meta['rating_line'])) {
             $meta['rating_line'] = '';
         }
-        if (empty($meta['short_pitch'])) {
-            $meta['short_pitch'] = 'The Twin Tack Grip gives you a locked-in feel that holds up through every swing, in any condition.';
+        if (!is_string($meta['short_pitch'])) {
+            $meta['short_pitch'] = '';
         }
         if (!is_array($meta['summary_bullets'])) {
             $meta['summary_bullets'] = array(
@@ -458,15 +459,15 @@ class TwinTack_Marketing_Product_Layout {
             }
         }
         $meta['trust_icons'] = self::normalize_trust_icons($meta['trust_icons']);
-        if (!is_array($meta['comparison_rows']) || empty($meta['comparison_rows'])) {
-            if (!metadata_exists('post', $product_id, self::META_PREFIX . 'comparison_rows')) {
-                $meta['comparison_rows'] = self::default_comparison_rows();
-            } else {
-                $meta['comparison_rows'] = is_array($meta['comparison_rows']) ? $meta['comparison_rows'] : array();
-            }
+        if (!is_array($meta['comparison_rows'])) {
+            $meta['comparison_rows'] = array();
         }
         if (empty($meta['comparison_title'])) {
             $meta['comparison_title'] = 'Why TwinTack Wins';
+        }
+
+        if (empty($meta['howto_video'])) {
+            $meta['howto_video'] = self::get_howto_video_url($product_id);
         }
 
         if (is_array($meta['ugc_videos'])) {
@@ -490,6 +491,81 @@ class TwinTack_Marketing_Product_Layout {
         }
 
         return $meta;
+    }
+
+    /**
+     * Short pitch for V2 hero — custom meta override, else WooCommerce short description.
+     *
+     * @param int|null $product_id Product ID.
+     * @return string
+     */
+    public static function get_short_pitch_display($product_id = null) {
+        if (!$product_id) {
+            $product_id = get_the_ID();
+        }
+
+        if ($product_id) {
+            $custom = get_post_meta($product_id, self::META_PREFIX . 'short_pitch', true);
+            if (is_string($custom) && '' !== trim($custom)) {
+                return $custom;
+            }
+        }
+
+        $product = $product_id ? wc_get_product($product_id) : null;
+        if (!$product) {
+            return '';
+        }
+
+        return apply_filters('woocommerce_short_description', $product->get_short_description());
+    }
+
+    /**
+     * How-to apply video URL — per-product meta, then global "How to Setup" tab.
+     *
+     * @param int|null $product_id Product ID.
+     * @return string Video URL or empty string.
+     */
+    public static function get_howto_video_url($product_id = null) {
+        if (!$product_id) {
+            $product_id = get_the_ID();
+        }
+
+        if ($product_id) {
+            $custom = get_post_meta($product_id, self::META_PREFIX . 'howto_video', true);
+            if (is_string($custom) && '' !== $custom) {
+                return esc_url($custom);
+            }
+        }
+
+        if (!class_exists('TwinTack_Marketing_Video_Tabs')) {
+            return '';
+        }
+
+        $tabs_meta = TwinTack_Marketing_Video_Tabs::get_meta();
+        if (empty($tabs_meta['video_tabs']) || !is_array($tabs_meta['video_tabs'])) {
+            return '';
+        }
+
+        foreach ($tabs_meta['video_tabs'] as $tab) {
+            if (!is_array($tab) || empty($tab['video'])) {
+                continue;
+            }
+
+            $label = isset($tab['label']) ? strtolower($tab['label']) : '';
+            if (
+                false !== strpos($label, 'setup')
+                || false !== strpos($label, 'apply')
+                || false !== strpos($label, 'install')
+            ) {
+                return esc_url($tab['video']);
+            }
+        }
+
+        if (isset($tabs_meta['video_tabs'][2]['video']) && !empty($tabs_meta['video_tabs'][2]['video'])) {
+            return esc_url($tabs_meta['video_tabs'][2]['video']);
+        }
+
+        return '';
     }
 
     /**

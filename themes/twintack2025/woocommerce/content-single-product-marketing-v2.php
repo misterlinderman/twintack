@@ -79,8 +79,15 @@ remove_action('woocommerce_after_single_product_summary', 'woocommerce_output_re
             <?php woocommerce_template_single_title(); ?>
             <?php woocommerce_template_single_price(); ?>
 
-            <?php if (!empty($meta['short_pitch'])) : ?>
-                <p class="tt-v2-product-pitch"><?php echo esc_html($meta['short_pitch']); ?></p>
+            <?php
+            $short_pitch = class_exists('TwinTack_Marketing_Product_Layout')
+                ? TwinTack_Marketing_Product_Layout::get_short_pitch_display($product_id)
+                : $product->get_short_description();
+            if (!empty(trim(wp_strip_all_tags($short_pitch)))) :
+                ?>
+                <div class="tt-v2-product-pitch woocommerce-product-details__short-description">
+                    <?php echo wp_kses_post($short_pitch); ?>
+                </div>
             <?php endif; ?>
 
             <?php if (!empty($meta['summary_bullets'])) : ?>
@@ -160,8 +167,6 @@ remove_action('woocommerce_after_single_product_summary', 'woocommerce_output_re
     <?php get_template_part('template-parts/marketing/v2/product-comparison', null, array('meta' => $meta)); ?>
 
     <?php
-    wc_get_template('single-product/tabs/review-content.php');
-
     $video_tabs_meta = class_exists('TwinTack_Marketing_Video_Tabs')
         ? TwinTack_Marketing_Video_Tabs::get_meta()
         : array();
@@ -171,9 +176,15 @@ remove_action('woocommerce_after_single_product_summary', 'woocommerce_output_re
         null,
         array('meta' => $video_tabs_meta)
     );
-
-    get_template_part('template-parts/marketing/v2/video-modal');
     ?>
+
+    <section class="tt-v2-product-reviews">
+        <div class="container">
+            <?php wc_get_template('single-product/tabs/review-content.php'); ?>
+        </div>
+    </section>
+
+    <?php get_template_part('template-parts/marketing/v2/video-modal'); ?>
 </div>
 
 <?php do_action('woocommerce_after_single_product'); ?>

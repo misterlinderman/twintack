@@ -692,9 +692,149 @@ add_filter('woocommerce_single_product_photoswipe_enabled', '__return_false');
  * @return string
  */
 function twintack_slick_gallery_image_size( $size ) {
-	return 'woocommerce_single';
+	return 'large';
 }
 add_filter( 'woocommerce_gallery_image_size', 'twintack_slick_gallery_image_size' );
+
+/**
+ * Get the largest available URL and dimensions for an attachment.
+ *
+ * @param int $attachment_id Attachment post ID.
+ * @return array|null {
+ *     @type string $url    Image URL.
+ *     @type int    $width  Width in pixels.
+ *     @type int    $height Height in pixels.
+ * }
+ */
+function twintack_get_largest_attachment_src( $attachment_id ) {
+	if ( ! $attachment_id ) {
+		return null;
+	}
+
+	$metadata = wp_get_attachment_metadata( $attachment_id );
+	$best     = array(
+		'url'    => wp_get_attachment_url( $attachment_id ),
+		'width'  => ! empty( $metadata['width'] ) ? (int) $metadata['width'] : 0,
+		'height' => ! empty( $metadata['height'] ) ? (int) $metadata['height'] : 0,
+	);
+
+	$full = wp_get_attachment_image_src( $attachment_id, 'full' );
+	if ( $full && (int) $full[1] > $best['width'] ) {
+		$best = array(
+			'url'    => $full[0],
+			'width'  => (int) $full[1],
+			'height' => (int) $full[2],
+		);
+	}
+
+	if ( ! empty( $metadata['sizes'] ) && ! empty( $metadata['file'] ) ) {
+		$upload_dir = wp_upload_dir();
+		$base_dir   = dirname( $metadata['file'] );
+
+		foreach ( $metadata['sizes'] as $size_data ) {
+			$width = isset( $size_data['width'] ) ? (int) $size_data['width'] : 0;
+
+			if ( $width <= $best['width'] || empty( $size_data['file'] ) ) {
+				continue;
+			}
+
+			$relative = ( $base_dir && '.' !== $base_dir ) ? $base_dir . '/' . $size_data['file'] : $size_data['file'];
+
+			$best = array(
+				'url'    => $upload_dir['baseurl'] . '/' . $relative,
+				'width'  => $width,
+				'height' => isset( $size_data['height'] ) ? (int) $size_data['height'] : 0,
+			);
+		}
+	}
+
+	if ( empty( $best['url'] ) ) {
+		return null;
+	}
+
+	return $best;
+}
+
+/**
+ * Output the largest available attachment source for gallery lightbox use.
+ *
+ * @param array $params        Image attributes for wc_get_gallery_image_html().
+ * @param int   $attachment_id Attachment post ID.
+ * @return array
+ */
+function twintack_gallery_full_resolution_params( $params, $attachment_id ) {
+	$largest = twintack_get_largest_attachment_src( $attachment_id );
+
+	if ( ! $largest ) {
+		return $params;
+	}
+
+	$params['data-large_image']         = esc_url( $largest['url'] );
+	$params['data-src']                 = esc_url( $largest['url'] );
+	$params['data-twintack-full-src']   = esc_url( $largest['url'] );
+	$params['data-twintack-full-width'] = (string) $largest['width'];
+	$params['data-large_image_width']   = (string) $largest['width'];
+	$params['data-twintack-full-height'] = (string) $largest['height'];
+	$params['data-large_image_height']  = (string) $largest['height'];
+
+	return $params;
+}
+add_filter( 'woocommerce_gallery_image_html_attachment_image_params', 'twintack_gallery_full_resolution_params', 20, 2 );
+
+/**
+ * Match gallery anchor href to the raw attachment URL for PhotoSwipe.
+ *
+ * @param string $html          Gallery image HTML.
+ * @param int    $attachment_id Attachment post ID.
+ * @return string
+ */
+function twintack_gallery_full_resolution_html( $html, $attachment_id ) {
+	$largest = twintack_get_largest_attachment_src( $attachment_id );
+
+	if ( ! $largest ) {
+		return $html;
+	}
+
+	return preg_replace(
+		'/(<a\s[^>]*href=")[^"]+(")/i',
+		'$1' . esc_url( $largest['url'] ) . '$2',
+		$html,
+		1
+	);
+}
+add_filter( 'woocommerce_single_product_image_thumbnail_html', 'twintack_gallery_full_resolution_html', 20, 2 );
+
+/**
+ * Skip Jetpack Photon resizing on product pages so full-size URLs stay native.
+ *
+ * @param bool   $skip Whether to skip Photon for this image.
+ * @param string $src  Image URL.
+ * @return bool
+ */
+function twintack_skip_photon_on_product_pages( $skip, $src ) {
+	if ( $skip || ! is_product() ) {
+		return $skip;
+	}
+
+	return true;
+}
+add_filter( 'jetpack_photon_skip_image', 'twintack_skip_photon_on_product_pages', 10, 2 );
+
+/**
+ * Disable WooCommerce core PhotoSwipe before its gallery script initializes.
+ */
+function twintack_disable_wc_product_photoswipe_script() {
+	if ( ! is_product() ) {
+		return;
+	}
+
+	wp_add_inline_script(
+		'wc-single-product',
+		'if ( typeof wc_single_product_params !== "undefined" ) { wc_single_product_params.photoswipe_enabled = false; }',
+		'before'
+	);
+}
+add_action( 'wp_enqueue_scripts', 'twintack_disable_wc_product_photoswipe_script', 99 );
 
 /**
  * Enqueue product gallery scripts with Slick Carousel
@@ -709,14 +849,10 @@ function twintack_enqueue_product_gallery_scripts() {
         
         // Enqueue Slick Slider JS
         wp_enqueue_script('slick', 'https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js', array('jquery'), '1.8.1', true);
-        
-        // Enqueue PhotoSwipe for lightbox functionality
-        wp_enqueue_script('photoswipe', 'https://cdn.jsdelivr.net/npm/photoswipe@5.3.4/dist/photoswipe.umd.min.js', array(), '5.3.4', true);
-        wp_enqueue_script('photoswipe-ui-default', 'https://cdn.jsdelivr.net/npm/photoswipe@5.3.4/dist/photoswipe-ui-default.umd.min.js', array('photoswipe'), '5.3.4', true);
-        
-        // Enqueue PhotoSwipe CSS
-        wp_enqueue_style('photoswipe', 'https://cdn.jsdelivr.net/npm/photoswipe@5.3.4/dist/photoswipe.css', array(), '5.3.4');
-        
+
+        // PhotoSwipe v4 is loaded by WooCommerce (wc-product-gallery-lightbox theme support).
+        // Do not enqueue PhotoSwipe v5 from CDN — it breaks the v4 API used by product-gallery.js.
+
         // Enqueue our custom product gallery CSS
         wp_enqueue_style('twintack-product-gallery', get_stylesheet_directory_uri() . '/css/components/_product-gallery.css', array('slick', 'slick-theme'), filemtime(get_stylesheet_directory() . '/css/components/_product-gallery.css'));
         
