@@ -27,12 +27,158 @@ class TwinTack_Marketing_Product_Layout {
         return self::$instance;
     }
 
+    const MIGRATION_FLAG = 'twintack_marketing_layout_inherit_migrated';
+    const COMPARISON_CLEANUP_FLAG = 'twintack_marketing_comparison_default_cleared';
+    const SHORT_PITCH_CLEANUP_FLAG = 'twintack_marketing_short_pitch_default_cleared';
+
+    /**
+     * Boilerplate short pitch an earlier build saved into product meta. When the
+     * override still matches this exactly it should fall back to the WooCommerce
+     * short description instead.
+     */
+    const LEGACY_DEFAULT_SHORT_PITCH = 'The Twin Tack Grip gives you a locked-in feel that holds up through every swing, in any condition.';
+
     private function __construct() {
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post', array($this, 'save_meta_boxes'), 10, 2);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
         add_action('admin_init', array($this, 'register_settings'));
+        add_action('admin_init', array($this, 'maybe_migrate_layout_meta'));
+        add_action('admin_init', array($this, 'maybe_clear_default_comparison_rows'));
+        add_action('admin_init', array($this, 'maybe_clear_default_short_pitch'));
         add_filter('body_class', array($this, 'body_class'));
+    }
+
+    /**
+     * One-time cleanup of the auto-saved boilerplate short pitch override so the
+     * V2 hero reconnects to each product's WooCommerce short description.
+     */
+    public function maybe_clear_default_short_pitch() {
+        if (get_option(self::SHORT_PITCH_CLEANUP_FLAG)) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        global $wpdb;
+        $wpdb->delete(
+            $wpdb->postmeta,
+            array(
+                'meta_key'   => self::META_PREFIX . 'short_pitch',
+                'meta_value' => self::LEGACY_DEFAULT_SHORT_PITCH,
+            )
+        );
+
+        update_option(self::SHORT_PITCH_CLEANUP_FLAG, '1');
+    }
+
+    /**
+     * One-time cleanup: earlier builds had no "inherit" option, so the per-product
+     * meta box silently wrote 'default' to every product that was saved, permanently
+     * opting it out of the global Marketing V2 toggle. Clear those auto-written
+     * values once so the global setting can apply. Products can still be explicitly
+     * set to Default afterward.
+     */
+    public function maybe_migrate_layout_meta() {
+        if (get_option(self::MIGRATION_FLAG)) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        global $wpdb;
+        $wpdb->delete(
+            $wpdb->postmeta,
+            array(
+                'meta_key'   => self::META_LAYOUT,
+                'meta_value' => 'default',
+            )
+        );
+
+        update_option(self::MIGRATION_FLAG, '1');
+    }
+
+    /**
+     * One-time cleanup for the opt-in "Why TwinTack Wins" comparison chart.
+     *
+     * Earlier builds pre-filled the chart with sample rows; saving a product
+     * persisted them, so the section kept rendering even though it is opt-in now.
+     * Clear any untouched defaults while preserving genuinely customized charts.
+     */
+    public function maybe_clear_default_comparison_rows() {
+        if (get_option(self::COMPARISON_CLEANUP_FLAG)) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $this->clear_default_comparison_rows();
+
+        update_option(self::COMPARISON_CLEANUP_FLAG, '1');
+    }
+
+    /**
+     * Remove comparison rows that exactly match the old boilerplate defaults.
+     */
+    private function clear_default_comparison_rows() {
+        global $wpdb;
+
+        $meta_key = self::META_PREFIX . 'comparison_rows';
+        $rows     = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s",
+                $meta_key
+            )
+        );
+
+        if (empty($rows)) {
+            return;
+        }
+
+        $default = self::default_comparison_rows();
+
+        foreach ($rows as $row) {
+            $value = maybe_unserialize($row->meta_value);
+
+            if (self::comparison_rows_match_default($value, $default)) {
+                delete_post_meta($row->post_id, $meta_key);
+                delete_post_meta($row->post_id, self::META_PREFIX . 'comparison_title');
+            }
+        }
+    }
+
+    /**
+     * Whether stored comparison rows are identical to the boilerplate defaults.
+     *
+     * @param mixed                          $value   Stored comparison rows.
+     * @param array<int,array<string,string>> $default Default comparison rows.
+     * @return bool
+     */
+    private static function comparison_rows_match_default($value, $default) {
+        if (!is_array($value) || count($value) !== count($default)) {
+            return false;
+        }
+
+        foreach ($default as $index => $default_row) {
+            if (!isset($value[$index]) || !is_array($value[$index])) {
+                return false;
+            }
+
+            foreach (array('feature', 'benefit', 'us', 'them') as $key) {
+                $stored = isset($value[$index][$key]) ? (string) $value[$index][$key] : '';
+                if ($stored !== (string) $default_row[$key]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -226,16 +372,21 @@ class TwinTack_Marketing_Product_Layout {
      */
     public function render_layout_meta_box($post) {
         wp_nonce_field('twintack_product_layout_nonce', 'twintack_product_layout_nonce');
-        $layout = get_post_meta($post->ID, self::META_LAYOUT, true) ?: 'default';
+        $layout         = get_post_meta($post->ID, self::META_LAYOUT, true);
+        $global_enabled = self::is_global_v2_enabled();
+        $inherit_label  = $global_enabled
+            ? __('Use global setting (currently: Marketing V2)', 'twintack-marketing')
+            : __('Use global setting (currently: Default)', 'twintack-marketing');
         ?>
         <p>
             <label for="twintack_product_layout"><?php esc_html_e('Product template', 'twintack-marketing'); ?></label>
         </p>
         <select name="twintack_product_layout" id="twintack_product_layout" style="width:100%;">
-            <option value="default" <?php selected($layout, 'default'); ?>><?php esc_html_e('Default', 'twintack-marketing'); ?></option>
-            <option value="marketing-v2" <?php selected($layout, 'marketing-v2'); ?>><?php esc_html_e('Marketing V2', 'twintack-marketing'); ?></option>
+            <option value="" <?php selected($layout, ''); ?>><?php echo esc_html($inherit_label); ?></option>
+            <option value="default" <?php selected($layout, 'default'); ?>><?php esc_html_e('Force Default (legacy)', 'twintack-marketing'); ?></option>
+            <option value="marketing-v2" <?php selected($layout, 'marketing-v2'); ?>><?php esc_html_e('Force Marketing V2', 'twintack-marketing'); ?></option>
         </select>
-        <p class="description"><?php esc_html_e('Use a private duplicate product to preview V2 before enabling site-wide. Set a product to Default to keep the legacy layout when V2 is enabled globally.', 'twintack-marketing'); ?></p>
+        <p class="description"><?php esc_html_e('“Use global setting” follows Marketing → Product Layout. Choose Force Default to keep the legacy layout on this product even when V2 is enabled globally, or Force Marketing V2 to opt this product in regardless of the global setting.', 'twintack-marketing'); ?></p>
         <?php
     }
 
@@ -365,10 +516,15 @@ class TwinTack_Marketing_Product_Layout {
 
         if (isset($_POST['twintack_product_layout'])) {
             $layout = sanitize_text_field(wp_unslash($_POST['twintack_product_layout']));
-            if (!in_array($layout, array('default', 'marketing-v2'), true)) {
-                $layout = 'default';
+            if (!in_array($layout, array('', 'default', 'marketing-v2'), true)) {
+                $layout = '';
             }
-            update_post_meta($post_id, self::META_LAYOUT, $layout);
+            if ('' === $layout) {
+                // Inherit the global setting; no per-product override.
+                delete_post_meta($post_id, self::META_LAYOUT);
+            } else {
+                update_post_meta($post_id, self::META_LAYOUT, $layout);
+            }
         }
 
         $map = array(
@@ -506,7 +662,8 @@ class TwinTack_Marketing_Product_Layout {
 
         if ($product_id) {
             $custom = get_post_meta($product_id, self::META_PREFIX . 'short_pitch', true);
-            if (is_string($custom) && '' !== trim($custom)) {
+            // Ignore the legacy auto-saved boilerplate so it falls back to product data.
+            if (is_string($custom) && '' !== trim($custom) && trim($custom) !== self::LEGACY_DEFAULT_SHORT_PITCH) {
                 return $custom;
             }
         }
