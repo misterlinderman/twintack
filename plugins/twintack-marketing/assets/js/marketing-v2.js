@@ -99,4 +99,46 @@
         var $widget = $(this).closest('[data-tt-v2-tabs]');
         activateTab($widget, $(this).data('tt-v2-tab'));
     });
+
+    function playSilently(video) {
+        var attempt = video.play();
+        if (attempt && typeof attempt.catch === 'function') {
+            attempt.catch(function () {});
+        }
+    }
+
+    function initUgcInlineVideos() {
+        var videos = document.querySelectorAll('[data-tt-v2-ugc-video]');
+        if (!videos.length) {
+            return;
+        }
+
+        Array.prototype.forEach.call(videos, function (video) {
+            // Muted property (not just attribute) is required for programmatic autoplay.
+            video.muted = true;
+            video.defaultMuted = true;
+            playSilently(video);
+        });
+
+        if (!('IntersectionObserver' in window)) {
+            return;
+        }
+
+        // Only play videos that are on screen to save bandwidth and CPU.
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    playSilently(entry.target);
+                } else {
+                    entry.target.pause();
+                }
+            });
+        }, { threshold: 0.25 });
+
+        Array.prototype.forEach.call(videos, function (video) {
+            observer.observe(video);
+        });
+    }
+
+    $(initUgcInlineVideos);
 })(jQuery);

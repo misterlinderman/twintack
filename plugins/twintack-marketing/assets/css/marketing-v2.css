@@ -873,10 +873,16 @@ body.tt-v2-homepage .tt-v2-featured-wrap .twintack-featured-products .container 
 }
 
 .tt-v2-ugc__video-btn img,
+.tt-v2-ugc__video-btn video,
 .tt-v2-ugc__placeholder {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.tt-v2-ugc__video-btn video {
+    display: block;
+    pointer-events: none;
 }
 
 .tt-v2-ugc__play {
@@ -887,6 +893,13 @@ body.tt-v2-homepage .tt-v2-featured-wrap .twintack-featured-products .container 
     height: 56px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.9);
+    opacity: 0.15;
+    transition: opacity 0.25s ease;
+}
+
+.tt-v2-ugc__video-btn:hover .tt-v2-ugc__play,
+.tt-v2-ugc__video-btn:focus-visible .tt-v2-ugc__play {
+    opacity: 1;
 }
 
 .tt-v2-ugc__play::after {

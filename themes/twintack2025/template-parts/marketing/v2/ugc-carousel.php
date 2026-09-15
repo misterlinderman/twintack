@@ -21,6 +21,15 @@ $allowed    = array(
     'br'     => array(),
 );
 
+$video_mime_types = array(
+    'mp4'  => 'video/mp4',
+    'm4v'  => 'video/mp4',
+    'webm' => 'video/webm',
+    'ogv'  => 'video/ogg',
+    'ogg'  => 'video/ogg',
+    'mov'  => 'video/quicktime',
+);
+
 $playable_videos = array();
 foreach ($videos as $video) {
     if (!is_array($video)) {
@@ -30,9 +39,11 @@ foreach ($videos as $video) {
     if ('' === $url) {
         continue;
     }
+    $extension = strtolower(pathinfo(wp_parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
     $playable_videos[] = array(
         'url'   => $url,
         'thumb' => isset($video['poster']) ? $video['poster'] : (isset($video['thumb']) ? $video['thumb'] : ''),
+        'mime'  => isset($video_mime_types[$extension]) ? $video_mime_types[$extension] : '',
     );
 }
 
@@ -57,12 +68,27 @@ if ('' === $heading && '' === $subheading && empty($playable_videos)) {
 
             <div class="tt-v2-ugc__track" data-tt-v2-track>
                 <?php foreach ($playable_videos as $index => $video) :
-                    $url   = $video['url'];
-                    $thumb = $video['thumb'];
+                    $url      = $video['url'];
+                    $thumb    = $video['thumb'];
+                    $mime     = $video['mime'];
+                    $is_file  = '' !== $mime;
                     ?>
                     <article class="tt-v2-ugc__slide" data-tt-v2-slide>
-                        <button type="button" class="tt-v2-ugc__video-btn" data-tt-v2-video="<?php echo esc_url($url); ?>" aria-label="<?php echo esc_attr(sprintf(__('Play video %d', 'twintack2025'), $index + 1)); ?>">
-                            <?php if ($thumb) : ?>
+                        <button type="button" class="tt-v2-ugc__video-btn" data-tt-v2-video="<?php echo esc_url($url); ?>" aria-label="<?php echo esc_attr(sprintf(__('Play video %d with sound', 'twintack2025'), $index + 1)); ?>">
+                            <?php if ($is_file) : ?>
+                                <video
+                                    class="tt-v2-ugc__video"
+                                    data-tt-v2-ugc-video
+                                    muted
+                                    loop
+                                    autoplay
+                                    playsinline
+                                    preload="metadata"
+                                    <?php echo $thumb ? 'poster="' . esc_url($thumb) . '"' : ''; ?>
+                                >
+                                    <source src="<?php echo esc_url($url); ?>" type="<?php echo esc_attr($mime); ?>">
+                                </video>
+                            <?php elseif ($thumb) : ?>
                                 <img src="<?php echo esc_url($thumb); ?>" alt="" loading="lazy">
                             <?php else : ?>
                                 <span class="tt-v2-ugc__placeholder"></span>

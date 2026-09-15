@@ -32,14 +32,15 @@ jQuery(document).ready(function($) {
             
             // Initialize lightbox
             initLightbox($gallery);
-            
-            // Handle variation changes
-            handleVariationChanges($gallery);
         } else {
             // Single image - just initialize lightbox
             applyResolvedSource($gallery.find('.woocommerce-product-gallery__image').first(), resolvedSources[0]);
             initLightbox($gallery);
         }
+
+        // Always bind variation swaps. Single-image products still change the
+        // featured photo when a swatch is clicked.
+        handleVariationChanges($gallery);
 
         neutralizeWooCommerceLightbox($gallery);
         window.setTimeout(function() {
@@ -102,6 +103,12 @@ jQuery(document).ready(function($) {
         $img.attr('data-large_image', resolved.url);
         $img.attr('data-twintack-full-src', resolved.url);
         $imageEl.find('a').first().attr('href', resolved.url);
+
+        if (!$img.attr('data-o_twintack-full-src')) {
+            $img.attr('data-o_twintack-full-src', resolved.url);
+            $img.attr('data-o_twintack-full-width', resolved.width || '');
+            $img.attr('data-o_twintack-full-height', resolved.height || '');
+        }
     }
 
     /**
@@ -639,11 +646,83 @@ jQuery(document).ready(function($) {
         $gallery.find('.twintack-carousel-thumb').first().addClass('active');
     }
 
+    function getVariationTargetImages($gallery) {
+        const $featured = $gallery.find('.woocommerce-product-gallery__image img.wp-post-image');
+        if ($featured.length) {
+            return $featured;
+        }
+
+        return $gallery.find('.slick-slide[data-slick-index="0"] .woocommerce-product-gallery__image img, .woocommerce-product-gallery__wrapper > .woocommerce-product-gallery__image img').first();
+    }
+
+    function applyImageSourceToTargets($targets, url, width, height) {
+        if (!$targets || !$targets.length || !url) {
+            return;
+        }
+
+        $targets.each(function() {
+            const $img = $(this);
+            $img.attr('src', url);
+            $img.removeAttr('srcset sizes');
+            $img.attr('data-src', url);
+            $img.attr('data-large_image', url);
+            $img.attr('data-twintack-full-src', url);
+
+            if (width) {
+                $img.attr('width', width);
+                $img.attr('data-large_image_width', width);
+                $img.attr('data-twintack-full-width', width);
+            }
+
+            if (height) {
+                $img.attr('height', height);
+                $img.attr('data-large_image_height', height);
+                $img.attr('data-twintack-full-height', height);
+            }
+
+            $img.closest('.woocommerce-product-gallery__image').find('a').first().attr('href', url);
+        });
+    }
+
+    function applyVariationImage($gallery, variation) {
+        if (!variation || !variation.image || !variation.image.src) {
+            return;
+        }
+
+        const image = variation.image;
+        const url = image.full_src || image.src;
+        applyImageSourceToTargets(
+            getVariationTargetImages($gallery),
+            url,
+            image.full_src_w || image.src_w,
+            image.full_src_h || image.src_h
+        );
+    }
+
+    function restoreOriginalFeaturedImage($gallery) {
+        const $targets = getVariationTargetImages($gallery);
+        if (!$targets.length) {
+            useFullSizeGalleryImages($gallery);
+            return;
+        }
+
+        const $first = $targets.first();
+        const url = $first.attr('data-o_twintack-full-src') || $first.attr('data-o_src') || $first.attr('src');
+        applyImageSourceToTargets(
+            $targets,
+            url,
+            $first.attr('data-o_twintack-full-width') || $first.attr('data-o_width'),
+            $first.attr('data-o_twintack-full-height') || $first.attr('data-o_height')
+        );
+    }
+
     function handleVariationChanges($gallery) {
         // WooCommerce triggers this when the variation image changes; flexslider is disabled here.
         $gallery.on('woocommerce_gallery_reset_slide_position.twintackGallery', function() {
             resetGalleryToFirstSlide($gallery);
         });
+
+        $(document.body).off('found_variation.twintackGallery reset_data.twintackGallery');
 
         $(document.body).on('found_variation.twintackGallery', 'form.variations_form', function(event, variation) {
             if (!variation) {
@@ -651,17 +730,19 @@ jQuery(document).ready(function($) {
             }
 
             // Run after WooCommerce wc_variations_image_update (20ms timeout).
+            // Apply the variation image from JSON so R2/full-size URLs win over
+            // the original data-twintack-full-src cached at init.
             window.setTimeout(function() {
+                applyVariationImage($gallery, variation);
                 resetGalleryToFirstSlide($gallery);
-                useFullSizeGalleryImages($gallery);
                 $gallery.trigger('woocommerce_gallery_init_zoom');
             }, 30);
         });
 
         $(document.body).on('reset_data.twintackGallery', 'form.variations_form', function() {
             window.setTimeout(function() {
+                restoreOriginalFeaturedImage($gallery);
                 resetGalleryToFirstSlide($gallery);
-                useFullSizeGalleryImages($gallery);
                 $gallery.trigger('woocommerce_gallery_init_zoom');
             }, 30);
         });

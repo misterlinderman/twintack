@@ -1,0 +1,65 @@
+/* assets/css/admin-rtl.css */
+
+/* General RTL styles */
+#advmo .wrap {
+	direction: rtl;
+	text-align: right;
+}
+
+/* Form table styles for RTL */
+#advmo .form-table th {
+	padding: 20px 10px;
+}
+
+#advmo .form-table td {
+	padding: 20px 10px;
+}
+
+/* Checkbox style for RTL. Scoped away from .advmo-checkbox-option, whose
+   control is absolutely positioned and needs no margin. */
+#advmo input[type="checkbox"]:not(.advmo-checkbox-option input) {
+	margin-left: 10px;
+	margin-right: 0;
+}
+
+/* Radio and checkbox options need no RTL override: both use logical
+   properties, so their control gutters and text alignment already flip. */
+
+.advmo-field input[type="text"] {
+	direction: ltr;
+	text-align: left;
+}
+
+/* Header and navigation styles for RTL */
+.advmo-topbar .advmo-header h1 {
+	gap: 0.6rem;
+}
+
+.advmo-topbar .advmo-header a {
+	margin-right: auto;
+	margin-left: 0;
+}
+
+.advmo-topbar .advmo-header a svg {
+	margin-left: 6px;
+	margin-right: 0;
+}
+
+.advmo-topbar .advmo-menu nav a {
+	margin-left: 30px;
+	margin-right: 0;
+}
+
+.advmo-last-check.connected {
+	background: #edfaef;
+	color: #287d3c;
+	border-right: 4px solid #28a745;
+	border-left: none;
+}
+
+.advmo-last-check.disconnected {
+	background: #fff5f5;
+	color: #da1414;
+	border-right: 4px solid #dc3545;
+	border-left: none;
+}

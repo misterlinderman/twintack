@@ -711,49 +711,142 @@ function twintack_get_largest_attachment_src( $attachment_id ) {
 		return null;
 	}
 
-	$metadata = wp_get_attachment_metadata( $attachment_id );
-	$best     = array(
-		'url'    => wp_get_attachment_url( $attachment_id ),
-		'width'  => ! empty( $metadata['width'] ) ? (int) $metadata['width'] : 0,
-		'height' => ! empty( $metadata['height'] ) ? (int) $metadata['height'] : 0,
-	);
-
+	// wp_get_attachment_image_src() / wp_get_attachment_url() honor offloader
+	// URL filters (Cloudflare R2). Do not rebuild size URLs from wp_upload_dir()
+	// — those local /wp-content/uploads/ paths 404 after Smart Local Cleanup.
 	$full = wp_get_attachment_image_src( $attachment_id, 'full' );
-	if ( $full && (int) $full[1] > $best['width'] ) {
-		$best = array(
+	if ( $full && ! empty( $full[0] ) ) {
+		return array(
 			'url'    => $full[0],
 			'width'  => (int) $full[1],
 			'height' => (int) $full[2],
 		);
 	}
 
-	if ( ! empty( $metadata['sizes'] ) && ! empty( $metadata['file'] ) ) {
-		$upload_dir = wp_upload_dir();
-		$base_dir   = dirname( $metadata['file'] );
+	$url      = wp_get_attachment_url( $attachment_id );
+	$metadata = wp_get_attachment_metadata( $attachment_id );
 
-		foreach ( $metadata['sizes'] as $size_data ) {
-			$width = isset( $size_data['width'] ) ? (int) $size_data['width'] : 0;
-
-			if ( $width <= $best['width'] || empty( $size_data['file'] ) ) {
-				continue;
-			}
-
-			$relative = ( $base_dir && '.' !== $base_dir ) ? $base_dir . '/' . $size_data['file'] : $size_data['file'];
-
-			$best = array(
-				'url'    => $upload_dir['baseurl'] . '/' . $relative,
-				'width'  => $width,
-				'height' => isset( $size_data['height'] ) ? (int) $size_data['height'] : 0,
-			);
-		}
-	}
-
-	if ( empty( $best['url'] ) ) {
+	if ( empty( $url ) ) {
 		return null;
 	}
 
-	return $best;
+	return array(
+		'url'    => $url,
+		'width'  => ! empty( $metadata['width'] ) ? (int) $metadata['width'] : 0,
+		'height' => ! empty( $metadata['height'] ) ? (int) $metadata['height'] : 0,
+	);
 }
+
+/**
+ * Rewrite a URL onto the attachment's canonical host (local uploads or R2).
+ *
+ * @param string $url       Image URL that may still use the uploads host.
+ * @param string $canonical Canonical attachment URL from wp_get_attachment_url().
+ * @return string
+ */
+function twintack_align_url_to_attachment_host( $url, $canonical ) {
+	if ( ! $url || ! $canonical ) {
+		return $url;
+	}
+
+	$canonical_host = wp_parse_url( $canonical, PHP_URL_HOST );
+	$url_host       = wp_parse_url( $url, PHP_URL_HOST );
+
+	if ( ! $canonical_host || ! $url_host || $canonical_host === $url_host ) {
+		return $url;
+	}
+
+	$path     = wp_parse_url( $url, PHP_URL_PATH );
+	$basename = $path ? wp_basename( $path ) : '';
+
+	if ( ! $basename ) {
+		return $canonical;
+	}
+
+	return untrailingslashit( dirname( $canonical ) ) . '/' . $basename;
+}
+
+/**
+ * Rewrite every URL in a srcset onto the attachment's canonical host.
+ *
+ * @param string $srcset    Srcset attribute value.
+ * @param string $canonical Canonical attachment URL.
+ * @return string
+ */
+function twintack_align_srcset_to_attachment_host( $srcset, $canonical ) {
+	if ( ! $srcset || ! $canonical ) {
+		return $srcset;
+	}
+
+	$parts = array_map( 'trim', explode( ',', $srcset ) );
+
+	foreach ( $parts as &$part ) {
+		$bits = preg_split( '/\s+/', $part, 2 );
+		if ( empty( $bits[0] ) ) {
+			continue;
+		}
+		$bits[0] = twintack_align_url_to_attachment_host( $bits[0], $canonical );
+		$part    = implode( ' ', $bits );
+	}
+
+	return implode( ', ', $parts );
+}
+
+/**
+ * Keep variation image JSON on the offloaded host after R2 rewrite.
+ *
+ * WooCommerce builds size URLs from upload metadata. After Advanced Media
+ * Offloader moves files to R2, those size URLs can stay on the local uploads
+ * host and fail, so swatches appear to do nothing.
+ *
+ * @param array                $data      Variation data for wc-add-to-cart-variation.
+ * @param WC_Product           $product   Parent product.
+ * @param WC_Product_Variation $variation Variation product.
+ * @return array
+ */
+function twintack_available_variation_offloaded_images( $data, $product, $variation ) {
+	if ( empty( $data['image'] ) || ! is_array( $data['image'] ) ) {
+		return $data;
+	}
+
+	$image_id = $variation ? $variation->get_image_id() : 0;
+	if ( ! $image_id ) {
+		return $data;
+	}
+
+	$canonical = wp_get_attachment_url( $image_id );
+	if ( ! $canonical ) {
+		return $data;
+	}
+
+	$url_keys = array( 'src', 'url', 'full_src', 'thumb_src', 'gallery_thumbnail_src' );
+	foreach ( $url_keys as $key ) {
+		if ( empty( $data['image'][ $key ] ) ) {
+			continue;
+		}
+		$data['image'][ $key ] = twintack_align_url_to_attachment_host( $data['image'][ $key ], $canonical );
+	}
+
+	if ( ! empty( $data['image']['srcset'] ) && is_string( $data['image']['srcset'] ) ) {
+		$data['image']['srcset'] = twintack_align_srcset_to_attachment_host( $data['image']['srcset'], $canonical );
+	}
+
+	$largest = twintack_get_largest_attachment_src( $image_id );
+	if ( $largest ) {
+		$data['image']['full_src']   = $largest['url'];
+		$data['image']['full_src_w'] = $largest['width'];
+		$data['image']['full_src_h'] = $largest['height'];
+
+		if ( empty( $data['image']['src'] ) ) {
+			$data['image']['src']   = $largest['url'];
+			$data['image']['src_w'] = $largest['width'];
+			$data['image']['src_h'] = $largest['height'];
+		}
+	}
+
+	return $data;
+}
+add_filter( 'woocommerce_available_variation', 'twintack_available_variation_offloaded_images', 20, 3 );
 
 /**
  * Output the largest available attachment source for gallery lightbox use.

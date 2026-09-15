@@ -205,6 +205,10 @@ h2.woocommerce-loop-product__title {
     font-weight: 500 !important;
 }
 
+body.post-type-archive-product h2.woocommerce-loop-product__title {
+    color: var(--color-highlight);
+}
+
 .woocommerce ul.products li.product a {
     text-decoration: none;
     display: contents;
@@ -212,7 +216,19 @@ h2.woocommerce-loop-product__title {
 
 .woocommerce ul.products li.product, .woocommerce-page ul.products li.product, .other-products-section .products li {
     padding: 0 1em !important;
-    background: var(--color-primary) !important;
+    background: #fff !important;
+}
+
+body.post-type-archive-product {
+    background-color: #fff;
+    color: #000;
+}
+
+body.post-type-archive-product .woocommerce ul.products li.product,
+body.post-type-archive-product .woocommerce-page ul.products li.product,
+body.post-type-archive-product .product.type-product,
+body.post-type-archive-product .product-variation {
+    background: #fff !important;
 }
 
 .woocommerce ul.products li.product .woocommerce-loop-category__title, .woocommerce ul.products li.product .woocommerce-loop-product__title, .woocommerce ul.products li.product h3 {
@@ -785,12 +801,12 @@ a.button.product_type_simple.add_to_cart_button.ajax_add_to_cart {
     display: none !important;
 }
 
-h1.woocommerce-products-header__title.page-title {
-    color: var(--color-text);
+body.post-type-archive-product h1.woocommerce-products-header__title.page-title {
+    color: #000;
 }
 
-p.woocommerce-result-count {
-    color: var(--color-text);
+body.post-type-archive-product p.woocommerce-result-count {
+    color: #000;
 }
 
 .woocommerce .woocommerce-ordering, .woocommerce-page .woocommerce-ordering {
@@ -805,6 +821,15 @@ p.woocommerce-result-count {
     box-shadow: none;
     background-color: var(--color-text);
     border-radius: 5px;
+}
+
+body.post-type-archive-product .woocommerce ul.products li.product a img {
+    background-color: #fff;
+}
+
+body.post-type-archive-product a.product-variation-link.woocommerce-LoopProduct-link img,
+body.post-type-archive-product a.product-variation-link.woocommerce-LoopProduct-link:hover img {
+    border: none;
 }
 
 
@@ -1008,7 +1033,24 @@ form.woocommerce-ResetPassword .woocommerce-Input, .input-text
     margin: 20px 0px;
     border-radius: 100%;
     background-color: var(--color-highlight);
-    color: black;
+    color: white;
     font-size: .857em;
     z-index: 9;
+}
+
+body.post-type-archive-product .woocommerce span.onsale {
+    color: #fff;
+}
+
+.product-pattern {
+    color: var(--color-background) !important;
+}
+
+body.post-type-archive-product a.product-variation-link.woocommerce-LoopProduct-link img {
+    border: none;
+    border: solid 3px #fff;
+}
+
+body.post-type-archive-product a.product-variation-link.woocommerce-LoopProduct-link:hover img {
+    border: solid 3px #eee;
 }
