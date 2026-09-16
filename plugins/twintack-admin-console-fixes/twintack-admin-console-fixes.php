@@ -3,7 +3,7 @@
  * Plugin Name: TwinTack Admin Console Fixes
  * Plugin URI: https://twintack.com
  * Description: Fixes WordPress admin console errors and Variable Product type recognition issues. Addresses jQuery migration warnings, React component instability, useSelect hook warnings, and wholesale plugin conflicts.
- * Version: 1.0.9
+ * Version: 1.1.1
  * Author: TwinTack Development Team
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -32,7 +32,7 @@ add_action('before_woocommerce_init', function() {
 });
 
 // Define plugin constants
-define('TWINTACK_CONSOLE_FIXES_VERSION', '1.0.6');
+define('TWINTACK_CONSOLE_FIXES_VERSION', '1.1.1');
 define('TWINTACK_CONSOLE_FIXES_PLUGIN_FILE', __FILE__);
 define('TWINTACK_CONSOLE_FIXES_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TWINTACK_CONSOLE_FIXES_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -97,6 +97,7 @@ class TwinTack_Admin_Console_Fixes {
         require_once TWINTACK_CONSOLE_FIXES_PLUGIN_DIR . 'includes/class-console-fixes.php';
         require_once TWINTACK_CONSOLE_FIXES_PLUGIN_DIR . 'includes/class-product-type-fix.php';
         require_once TWINTACK_CONSOLE_FIXES_PLUGIN_DIR . 'includes/class-wholesale-plugin-patch.php';
+        require_once TWINTACK_CONSOLE_FIXES_PLUGIN_DIR . 'includes/class-variation-save-fix.php';
         require_once TWINTACK_CONSOLE_FIXES_PLUGIN_DIR . 'includes/class-nounproject-api.php';
     }
 
@@ -112,6 +113,9 @@ class TwinTack_Admin_Console_Fixes {
         
         // Initialize wholesale plugin patch
         new TwinTack_Wholesale_Plugin_Patch();
+
+        // Save variations in batches so large products do not hit HTTP 400
+        new TwinTack_Variation_Save_Fix();
         
         // Initialize Noun Project API (shared across all TwinTack plugins)
         TwinTack_NounProject_API::get_instance();
