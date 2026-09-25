@@ -261,7 +261,7 @@ function twintack2025_scripts() {
 	wp_style_add_data( 'twintack2025-style', 'rtl', 'replace' );
 
 	// Theme scripts
-	wp_enqueue_script( 'twintack2025-navigation', get_template_directory_uri() . '/js/navigation.js', array(), _S_VERSION, true );
+	wp_enqueue_script( 'twintack2025-navigation', get_template_directory_uri() . '/js/navigation.js', array(), filemtime( get_template_directory() . '/js/navigation.js' ), true );
 	wp_enqueue_script(
 		'twintack2025-header',
 		get_template_directory_uri() . '/js/header.js',

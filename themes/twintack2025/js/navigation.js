@@ -149,51 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!header) return;
 
     const navToggle = header.querySelector('.nav-toggle');
-    const headerControls = header.querySelector('.header-controls');
-    
+
     if (!navToggle) return;
 
-    // Color contrast detection function
-    function getContrastYIQ(r, g, b) {
-        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-        return yiq >= 128 ? 'light' : 'dark';
-    }
-
-    // Function to update navigation contrast
-    function updateNavigationContrast() {
-        if (!headerControls) return;
-
-        const rect = headerControls.getBoundingClientRect();
-        const x = rect.left + (rect.width / 2);
-        const y = rect.top + (rect.height / 2);
-        
-        const elements = document.elementsFromPoint(x, y);
-        let bgColor = 'rgba(0, 0, 0, 0)';
-        
-        // Find the first non-transparent background, excluding header elements
-        for (const element of elements) {
-            if (!header.contains(element)) {
-                const computedStyle = window.getComputedStyle(element);
-                bgColor = computedStyle.backgroundColor;
-                
-                if (bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-                    break;
-                }
-            }
-        }
-
-        const rgb = bgColor.match(/\d+/g);
-        if (rgb && rgb.length >= 3) {
-            const contrast = getContrastYIQ(
-                parseInt(rgb[0]), 
-                parseInt(rgb[1]), 
-                parseInt(rgb[2])
-            );
-            header.dataset.contrast = contrast;
-        } else {
-            header.dataset.contrast = 'light';
-        }
-    }
+    // Header contrast detection was removed 09/25/2026. The masthead is a solid
+    // black bar, so the logo and menu icon stay light. See
+    // docs/FEATURES.md ("Header logo and menu contrast detection").
 
     // Toggle navigation
     navToggle.addEventListener('click', () => {
@@ -201,17 +162,5 @@ document.addEventListener('DOMContentLoaded', () => {
         const newState = currentState === 'closed' ? 'open' : 'closed';
         header.dataset.navState = newState;
         navToggle.setAttribute('aria-expanded', newState === 'open');
-        
-        if (newState === 'open') {
-            header.dataset.contrast = 'dark';
-        } else {
-            // Force immediate contrast check when closing
-            requestAnimationFrame(() => {
-                updateNavigationContrast();
-            });
-        }
     });
-
-    // Initial contrast check
-    updateNavigationContrast();
 });

@@ -358,31 +358,17 @@ a.marquee-link {
 }
 
 .custom-logo-link svg {
+    fill: #fff;
     transition: fill 0.3s ease;
 }
 
-/* Toggle Lines */
+/* Toggle Lines — fixed light color on the solid black masthead.
+   Contrast switching was removed 09/25/2026. See docs/FEATURES.md. */
 .toggle-line {
+    background-color: #fff;
     transition: background-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
     width: 100%;
     height: 6px;
-}
-
-/* Contrast Variations */
-.site-header[data-contrast="light"] .custom-logo-link svg {
-    fill: black !important;
-}
-
-.site-header[data-contrast="dark"] .custom-logo-link svg {
-    fill: white !important;
-}
-
-.site-header[data-contrast="light"] .toggle-line {
-    background-color: black !important;
-}
-
-.site-header[data-contrast="dark"] .toggle-line {
-    background-color: white !important;
 }
 
 /* Navigation Toggle */
@@ -401,7 +387,7 @@ a.marquee-link {
     width: 100%;
     height: 100vh;
     background-color: black;
-    padding: 6rem 2rem 2rem;
+    padding: 6rem 2rem 2rem 4.75rem;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     z-index: 1000;
@@ -414,7 +400,22 @@ a.marquee-link {
     transform: translateX(0);
 }
 
-/* Toggle Animation */
+/* Toggle Animation — hamburger becomes the tray close control */
+.site-header[data-nav-state="open"] .header-controls {
+    overflow: visible;
+    width: auto;
+    background: transparent;
+    justify-content: flex-start;
+}
+
+.site-header[data-nav-state="open"] .custom-logo-link {
+    display: none;
+}
+
+.site-header[data-nav-state="open"] .nav-toggle {
+    margin: 0.25rem 0 0 0.25rem;
+}
+
 .site-header[data-nav-state="open"] .toggle-line:nth-child(1) {
     transform: translateY(9px) rotate(45deg);
 }
@@ -430,7 +431,7 @@ a.marquee-link {
 /* Mobile Styles */
 @media (max-width: 767px) {
     .nav-panels {
-        padding: 5rem 1rem 1rem;
+        padding: 6rem 1rem 1rem 4.75rem;
         overflow-y: auto;
         max-height: 100vh;
     }
@@ -758,21 +759,11 @@ div.product-menu a.product-link:hover {
     }
 }
 
-/* Update contrast variations */
-.site-header[data-contrast="light"] .custom-logo-link svg {
-    fill: white !important;
-}
-
-.site-header[data-contrast="dark"] .custom-logo-link svg {
-    fill: lightgrey !important;
-}
-
-.site-header[data-contrast="light"] .toggle-line {
-    background-color: white !important;
-}
-
-.site-header[data-contrast="dark"] .toggle-line {
-    background-color: lightgray !important;
+/* Phone: tray covers the viewport */
+@media (max-width: 480px) {
+    .nav-panels {
+        width: 100%;
+    }
 }
 
 /* Add transitions */

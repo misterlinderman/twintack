@@ -79,8 +79,8 @@ a.marquee-link:hover {
 header#masthead {
     padding: 2.5em;
     display: flex;
-    background: linear-gradient(90deg, black, transparent);
-    backdrop-filter: blur(10px);
+    background: /*linear-gradient(90deg, black, transparent)*/ black;
+    /*backdrop-filter: blur(10px);*/
 }
 
 [data-nav-state="open"] .header-controls::before {
