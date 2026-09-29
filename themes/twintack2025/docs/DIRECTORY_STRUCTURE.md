@@ -97,7 +97,8 @@ The `templates` directory contains custom page templates:
 
 The `js` directory contains JavaScript files for client-side functionality:
 
-- Navigation scripts
+- `navigation.js` — menu toggle. Logo and icon contrast sampling was removed 09/25/2026; see `docs/FEATURES.md`
+- `header.js` — marquee rotation and carousel-dot contrast
 - Product gallery scripts
 - Custom interactive elements
 
@@ -105,8 +106,9 @@ The `js` directory contains JavaScript files for client-side functionality:
 
 The `css` directory contains CSS files for styling:
 
-- Main stylesheets
-- Component-specific styles
+- `main.css` — imports component styles, including `_header.css`
+- `components/_header.css` — masthead, logo, menu icon, and tray layout
+- `components/_demo-style-adjustments.css` — solid black masthead background
 - Responsive styles
 
 ### `/dist` - Compiled Assets

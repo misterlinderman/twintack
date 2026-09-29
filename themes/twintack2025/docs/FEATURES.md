@@ -108,17 +108,19 @@ This document catalogs the features of the TwinTack theme, serving as both docum
 - Marquee configuration class (`inc/marquee/class-marquee-configuration.php`)
 - Marquee template parts (`template-parts/marquee/`)
 
-**Status**: Implemented
+**Status**: Implemented. Carousel-dot contrast in `js/header.js` still samples the active slide. Header logo and menu-icon contrast does not.
 
 ---
 
 ### Custom Header Configurations
 
-**Description**: Flexible header layouts and configurations.
+**Description**: Flexible header layouts and configurations. As of 09/25/2026 the masthead is a solid black bar. The logo and menu icon stay white. While the tray is open, the logo is hidden and the hamburger is the close X. See **Header logo and menu contrast detection** below for tray widths, spacing, and how to restore contrast sampling.
 
 **Implementation**:
 - Header configuration class (`class-header-configuration.php`)
 - Header template parts (`template-parts/header/`)
+- Header and tray styles (`css/components/_header.css`, masthead background in `css/components/_demo-style-adjustments.css`)
+- Menu toggle (`js/navigation.js`)
 
 **Status**: Implemented
 
