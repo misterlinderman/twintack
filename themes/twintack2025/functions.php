@@ -28,6 +28,7 @@ require_once get_template_directory() . '/inc/class-category-customizer.php';
 require_once get_template_directory() . '/inc/header/class-header-configuration.php';//remove once marquee is working
 require_once get_template_directory() . '/inc/marquee/class-marquee-configuration.php';
 require_once get_template_directory() . '/inc/team/class-team-member.php';
+require_once get_template_directory() . '/inc/header/class-custom-grip-inquiry-fields.php';
 // Console fixes moved to plugin: twintack-admin-console-fixes
 
 

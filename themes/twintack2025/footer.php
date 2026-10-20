@@ -27,7 +27,7 @@
 			<div class="footer-column">
 				<h3>Products</h3>
 				<nav class="footer-nav">
-					<a href="/twintack-custom-grips/">Custom Grips</a>
+					<a href="/custom-grip-inquiry/">Custom Grips</a>
 					<a href="/shop/">Shop All</a>
 					<a href="/shop/?product_cat=baseball">Bat Grips</a>
 					<a href="/shop/?product_cat=fishing">Fishing Grips</a>

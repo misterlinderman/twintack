@@ -55,7 +55,7 @@
             <div class="nav-panels">
                 <!-- Custom Grips Navigation -->
                 <div class="nav-section">
-                    <h2><a class="custom-grips-link" href="/twintack-custom-grips/">CUSTOM GRIPS</a></h2>
+                    <h2><a class="custom-grips-link" href="/custom-grip-inquiry/">CUSTOM GRIPS</a></h2>
                 </div>
                 <!-- Models Navigation -->
                 <div class="nav-section">
